@@ -16,12 +16,12 @@
 <meta property="og:site_name" content="Joner">
 <meta property="og:description" content="看到身边许多大佬都有自己的博客，然后正好有租了几个月的服务器，遂决定，搭一个博客，用来记录自己学习中遇到的一些问题以及解决方法，记录一下成长经历，希望能够坚持下去吧。">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://yoursite.com/2019/03/21/博客的搭建/D:/Entertainment/STU/Bolg/source/_posts/博客的搭建/maven.png">
-<meta property="og:updated_time" content="2019-03-21T07:58:11.091Z">
+<meta property="og:image" content="http://yoursite.com/2019/03/21/博客的搭建/maven.png">
+<meta property="og:updated_time" content="2019-03-21T07:59:47.438Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="博客的搭建">
 <meta name="twitter:description" content="看到身边许多大佬都有自己的博客，然后正好有租了几个月的服务器，遂决定，搭一个博客，用来记录自己学习中遇到的一些问题以及解决方法，记录一下成长经历，希望能够坚持下去吧。">
-<meta name="twitter:image" content="http://yoursite.com/2019/03/21/博客的搭建/D:/Entertainment/STU/Bolg/source/_posts/博客的搭建/maven.png">
+<meta name="twitter:image" content="http://yoursite.com/2019/03/21/博客的搭建/maven.png">
   
     <link rel="alternative" href="/atom.xml" title="Joner" type="application/atom+xml">
   
@@ -220,7 +220,7 @@
 <p>第二步修改启动类，使启动类继承<code>SpringBootServletInitializer</code>类，并重写<code>configure</code>方法</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyWebApplication</span> <span class="keyword">extends</span> <span class="title">SpringBootServletInitializer</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        SpringApplication.run(MyWebApplication.class, args);</span><br><span class="line">    &#125;</span><br><span class="line">     <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 发布项目</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@param</span> builder</span></span><br><span class="line"><span class="comment">     * <span class="doctag">@return</span></span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> SpringApplicationBuilder <span class="title">configure</span><span class="params">(SpringApplicationBuilder builder)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> builder.sources(<span class="keyword">this</span>.getClass());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>然后在<code>maven</code>中执行 <code>clean</code> 和 <code>install</code>命令，这里截图以IDEA</p>
-<p><img src="/2019/03/21/博客的搭建/D:/Entertainment\STU\Bolg\source\_posts\博客的搭建\maven.png" alt="maven"></p>
+<p><img src="/2019/03/21/博客的搭建/maven.png" alt="maven"></p>
 <p>之后就可以在java做项目目录看见生成的<code>jar</code>包，将其上传到服务器，在其目录中下使用<code>java -jar jar包的名字</code>启动项目</p>
 <p>可以使用<code>java -jar jar包的名字 &amp;</code>来使项目后台运行</p>
 <h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
@@ -330,16 +330,6 @@
 </article>
 
   
-<nav id="article-nav">
-  
-  
-    <a href="/2019/03/21/博客搭建/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">博客搭建</div>
-      <i class="icon-circle-right"></i>
-    </a>
-  
-</nav>
-
 
 <aside class="wrap-side-operation">
     <div class="mod-side-operation">
