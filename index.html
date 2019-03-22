@@ -150,6 +150,122 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-全国大学生信息安全竞赛基础知识学习" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/03/22/全国大学生信息安全竞赛基础知识学习/">全国大学生信息安全竞赛基础知识学习</a>
+    </h1>
+  
+
+        
+        <a href="/2019/03/22/全国大学生信息安全竞赛基础知识学习/" class="archive-article-date">
+  	<time datetime="2019-03-22T09:17:10.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-03-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="全国大学生信息安全竞赛基础知识学习"><a href="#全国大学生信息安全竞赛基础知识学习" class="headerlink" title="全国大学生信息安全竞赛基础知识学习"></a>全国大学生信息安全竞赛基础知识学习</h1><ul>
+<li>Linux下的MySQL</li>
+<li>Linux下的常见问题</li>
+<li>root用户远程登陆</li>
+<li>设置对登录者的警告</li>
+<li>开启history时间记录</li>
+</ul>
+<p>最近开始准备全国大学生信息安全竞赛，因为之前学过的东西寥寥无几，所以开始学习一些比较基础的知识，下面这些基础知均是从根据比赛的内容准备的，其中很多东西都是刚接触，所以可能会有错误。</p>
+<h2 id="linux下的MySQL"><a href="#linux下的MySQL" class="headerlink" title="linux下的MySQL"></a>linux下的MySQL</h2><h3 id="MySQL介绍"><a href="#MySQL介绍" class="headerlink" title="MySQL介绍"></a>MySQL介绍</h3><blockquote>
+<p>MySQL 是一个小型关系数据库管理系统，与其他大型数据可管理系统（例如Oracle、DB2、SQL Server 等）相比，MySQL规模小、功能有限吗，但是他体积小、速度快、成本低，而且他提供的功能对于稍微复杂的应用来说足以，这些特性使得MySQL成为了世界上最受欢迎的数据库。</p>
+</blockquote>
+<h3 id="对应习题"><a href="#对应习题" class="headerlink" title="对应习题"></a>对应习题</h3><blockquote>
+<p><strong>简述客户机-服务器软件</strong></p>
+</blockquote>
+<p>服务器-客户机，即Client-Server(C/S)结构，通常采取两层结构，这是一种网路架构，通常再该网络架构下软件分为客户端和服务器。服务器负责数据的管理，客户机负责完成于用户的交互任务。</p>
+<p>服务器是整个应用系统资源的存储与管理中心，多个客户端各自处理相应的功能，共同实现完整应用。在C/S节结构中，客户端的请求被传送到数据库服务器，数据库服务器进行处理后，将结果返回给用户，实现减少网络数据传输量。</p>
+<p>用户使用应用程序时首先启动客户端，通过有关命令告知服务器进行连接以完成各种操作，而服务器则按照请示提供相应的服务，每个客户端实例都可以向一个服务器或者应用程序服务器发出请求。</p>
+<p>这种系统的特点就是，客户端和服务器子啊不同一台计算机上运行，这些客户端和服务端程序通常归属不同的计算机。</p>
+<p>主从式架构通过不同的途径应用于很多不同类型的应用程序，比如，现在人们最熟悉的在因特网上使用的网页。例如，当顾客想要在当当网站上买书的时候，电脑和网页浏览器就被当作一个客户端，同时，组成当当网的电脑、数据库和应用程序就被当做服务器。当顾客的网页浏览向当当网请求搜寻数据库相关图书时，当当网服务器从当当网的数据库中找出所有该类型的图书信息，结合成一个网页，再发送回顾客的浏览器。服务器端一般使用高性能的计算机，并配合使用不同类型的数据库，比如Oracle、Sybase或者是MySQL等；客户端需要安装专门的软件，比如专门开发的客户端工具浏览器等。</p>
+<h2 id="Linux下的常见问题"><a href="#Linux下的常见问题" class="headerlink" title="Linux下的常见问题"></a>Linux下的常见问题</h2><h3 id="dmesg都有哪些作用"><a href="#dmesg都有哪些作用" class="headerlink" title="dmesg都有哪些作用"></a><code>dmesg</code>都有哪些作用</h3><p>功能：显示开机信息</p>
+<p>语法：<code>dmasg[-cn][-s &lt;缓冲区大小&gt;]</code></p>
+<p>补充说明：<code>kernel</code>将开机信息存储在<code>ring buffer</code>中，若是开机时来不及看信息，可以利用<code>dmesg</code>查看，开机信息也保存在<code>/var/log/dmesg</code>中。</p>
+<p>参数：</p>
+<ul>
+<li><code>-c</code>显示信息后，清除<code>ring buffer</code>中内容</li>
+<li><code>-s&lt;缓冲区大小&gt;</code>预设值为8196，刚好等于<code>ring buffer</code> 的大小。</li>
+<li><code>-n</code>设置记录信息的层级</li>
+</ul>
+<p>主要应用</p>
+<p>dmesg用于显示内核缓冲区(kernel-ring buffer)内容，内核将各种消息存放在这里。在系统引时，内核将与硬件和模块初始化相关的信息填到这个缓冲区中。内核缓冲区中的消息对于诊断系统问题很有用处。在运行dmesg时，显示了大量信息。通常通过less或grep使用管道查看dmesg的输出，这样可以更容易找到待查看的信息</p>
+<h2 id="root用户远程登录"><a href="#root用户远程登录" class="headerlink" title="root用户远程登录"></a>root用户远程登录</h2><blockquote>
+<p>在Linux中，root几乎拥有所有的权限，一旦root用户密码外泄，对于服务器而言将是致命的威胁，禁止root用户通过ssh的远程方式登录，这样即使root用户密码外泄也能够保障服务器的安全，请说明如何禁止root用户通过ssh的远程方式登录？</p>
+</blockquote>
+<p>在新建普通用户后，将<code>root</code>用户通过ssh远程登录的方式禁用，就可以只新建的普通用户通过ssh的方式远程登录，修改<code>/etc/ssh/sshd_config</code>配置文件，将其中的<code>PermitRootLogin</code>注释去掉，并将后面参数改为<code>no</code></p>
+<blockquote>
+<p>拓展:修改默认的22端口，继续在<code>sshd_config</code>文件中查找<code>#port 22</code> 将注释去掉，并将22改为其他端口号，注意端口号不要和其他冲突。</p>
+</blockquote>
+<p>修改后重启ssh服务，命令：<code>sudo service sshd restart</code> </p>
+<h2 id="设置对登陆者的警告"><a href="#设置对登陆者的警告" class="headerlink" title="设置对登陆者的警告"></a>设置对登陆者的警告</h2><p>修改Linux系统中的<code>banner</code>信息，Linux 下登录提示是记录在<code>/etc/issue</code>和<code>/etc/motd</code>中的，两者的区别是<code>/etc/issue</code>在用户登陆前显示，而<code>/etc/motd</code>是在登录后显示。</p>
+<p>【例】在<code>/etc/issue</code>文件中加入登录警告，<code>cat &gt;/etc/issue</code>文件中加入登录警告：<code>cat &gt; /etc/issue &lt;&lt; EOF Warning：The system is owned by supersss Unauthorized access to this system is prohibited!!!</code></p>
+<p>【例】在<code>/etc/motd</code>文件里加入对登录成功者的警告：<code>cat &gt; /etc/motd &lt;&lt;EOF Warning:The system is owned  by supersss What do you will be monitored and logged!!!</code></p>
+<h2 id="开启history时间记录"><a href="#开启history时间记录" class="headerlink" title="开启history时间记录"></a>开启history时间记录</h2><p>通过开启history的时间记录，执行history命令时，先前执行的命令的时间也显示出来了，在<code>/etc/profile</code>的最后添加一下内容,再执行 <code>source /etc/profile</code>即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#设置历史命令的文件大小</span><br><span class="line">HISTFILESIZE=1000000</span><br><span class="line">#历史命令条数</span><br><span class="line">HISTSIZE=100000</span><br><span class="line">#记录每条历史命令的执行时间</span><br><span class="line">HISTTIMEFORMAT=”%Y-%m-%d_%H:%M:%S”</span><br><span class="line">export HISTFILESIZE  HISTSIZE HISTTIMEFORMAT</span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">安全竞赛</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/03/22/全国大学生信息安全竞赛基础知识学习/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-博客的搭建" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -317,6 +433,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">安全竞赛</a>
+              </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">博客搭建</a>
