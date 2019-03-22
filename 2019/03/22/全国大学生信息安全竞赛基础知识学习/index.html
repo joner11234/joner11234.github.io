@@ -371,24 +371,6 @@
   
 
   
-  {% if site.comment_gitment_repo %}
-<div id="gitmentContainer"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
-<script>
-    var gitment = new Gitment({
-        id: 'Fri Mar 22 2019 17:17:10 GMT+0800',
-        owner: '{{site.github_username}}',
-        repo: '{{site.comment_gitment_repo}}',
-        oauth: {
-            client_id: '{{site.comment_gitment_clientId}}',
-            client_secret: '{{site.comment_gitment_clientSecret}}',
-        },
-    });
-    gitment.render('gitmentContainer')
-</script>
-{% endif %}
-  
 
 
           </div>
