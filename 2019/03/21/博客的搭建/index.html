@@ -384,20 +384,23 @@
   
 
   
-  <div id="gitment-ctn"></div> 
-<link rel="stylesheet" href="https://jjeejj.github.io/css/gitment.css">
-<script src="https://jjeejj.github.io/js/gitment.js"></script>
-var gitment = new Gitment({
-  id: '{{ page.date }}',
-  owner: 'joner11234',
-  repo: 'joner11234.github.io',
-  oauth: {
-    client_id: '0094bc395f005b21bd99',
-    client_secret: 'e23050db9a2fae52acca0f8af1da67ab17651b14',
-  },
-})
-gitment.render('gitment-ctn')
-
+  {% if site.comment_gitment_repo %}
+<div id="gitmentContainer"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+    var gitment = new Gitment({
+        id: 'Thu Mar 21 2019 15:57:03 GMT+0800',
+        owner: '{{site.github_username}}',
+        repo: '{{site.comment_gitment_repo}}',
+        oauth: {
+            client_id: '{{site.comment_gitment_clientId}}',
+            client_secret: '{{site.comment_gitment_clientSecret}}',
+        },
+    });
+    gitment.render('gitmentContainer')
+</script>
+{% endif %}
   
 
 
