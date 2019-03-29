@@ -16,7 +16,7 @@
 <meta property="og:site_name" content="Joner的博客">
 <meta property="og:description" content="sqli-labs介绍 sqlmap的简单使用">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-03-24T06:29:42.634Z">
+<meta property="og:updated_time" content="2019-03-27T12:34:05.078Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="通过sqli-labs学习sql注入">
 <meta name="twitter:description" content="sqli-labs介绍 sqlmap的简单使用">
@@ -180,7 +180,7 @@
 <li><a href="https://github.com/Audi-1/sqli-labs" target="_blank" rel="noopener">sqli-labs</a></li>
 </ul>
 </blockquote>
-<p>下面开始各个关卡的通关记录，下面使用的是网上有人搭建好的网站，sqli-labs一共有75个关卡，虽然现在有很多种工具可以进行注入，例如<code>sqlmap</code>，但是了解sql注入的原理还是很重要的，了解原理后再使用工具会更加深刻理解工具的作用，前面的关卡会写的比较详细，后面将会简略写。</p>
+<p>下面开始各个关卡的通关记录，下面使用的是网上有人搭建好的网站，sqli-labs一共有75个关卡，虽然现在有很多种工具可以进行注入，例如<code>sqlmap</code>，但是了解sql注入的原理还是很重要的，了解原理后再使用工具会更加深刻理解工具的作用，前面的关卡会写的比较详细，后面将会简略写，文中一些部分参考《MYSQL注入天书》</p>
 <p>​    浏览器使用的是火狐浏览器，插件<code>Hackbar</code></p>
 <h3 id="Less-1"><a href="#Less-1" class="headerlink" title="Less-1"></a>Less-1</h3><ul>
 <li><p><a href="http://43.247.91.228:84/Less-1/" target="_blank" rel="noopener">题目地址</a></p>
@@ -554,6 +554,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">sqli-labs 布尔型盲注 延时注入</a>
+              </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">sql注入 盲注</a>

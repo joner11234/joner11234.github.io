@@ -150,6 +150,88 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-sqli-labs-6-7-布尔型盲注-延时注入" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/">sqli-labs 6-7 布尔型盲注 延时注入</a>
+    </h1>
+  
+
+        
+        <a href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/" class="archive-article-date">
+  	<time datetime="2019-03-29T15:07:32.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-03-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <blockquote>
+<h2 id="Less-6"><a href="#Less-6" class="headerlink" title="Less-6"></a>Less-6</h2><p><a href="http://43.247.91.228:84/Less-6/" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>类型:布尔型盲注</p>
+<p>这一关的的注入方法和第五关相同，只是sql查询语句不同，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-6/?id=1 &apos; and 1=2 --+ # 页面正常</span><br><span class="line">http://43.247.91.228:84/Less-6/?id=1 &quot; and 1=2 --+  #页面异常</span><br></pre></td></tr></table></figure>
+<p>这里通过看源码可知，是对id参数进行了处理</p>
+        
+          <a class="article-more-a" href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/#more">more >></a>
+        
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">sqli-labs 布尔型盲注 延时注入</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-sqli-labs-2-5-初识盲注" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -560,6 +642,10 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
             <input type="checkbox" q-on="click:toggleTag(e)" q-attr="checked:showTags">
           </label>
           <ul class="article-tag-list" q-show="showTags">
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">sqli-labs 布尔型盲注 延时注入</a>
+              </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">sql注入 盲注</a>
