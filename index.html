@@ -170,7 +170,7 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="XSS主流防护技术"><a href="#XSS主流防护技术" class="headerlink" title="XSS主流防护技术"></a>XSS主流防护技术</h2><h3 id="过滤"><a href="#过滤" class="headerlink" title="过滤"></a>过滤</h3><p>过滤，顾名思义，就是将提交上来的数据中的敏感词汇直接过滤掉。例如对<code>&quot;&lt;script&gt;&quot;、&quot;&lt;a&gt;&quot;、&quot;&lt;img&gt;</code>“等标签进行过滤，有的是直接删除这类标签中的内容，有的是过滤掉之类标签中的on事件或是’javascript’等字符串，让他们达不到预期的DOM效果。</p>
+        <p>这一篇主要介绍一些xss攻击中的一些主流防护技术，以及常见的绕过技巧，在最后记录了一些常用的语句，记录下来用于以后查询。</p>
         
           <a class="article-more-a" href="/2019/03/31/XSS注入常用语句/#more">more >></a>
         
@@ -828,14 +828,6 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">xss</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">xss challenges</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">sqli-labs</a>
               </li>
              
@@ -845,6 +837,14 @@ return o(i(t),arguments.length<2?void 0:u(arguments[1]))}})},function(t,n,r){var
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">延时注入</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">xss</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">xss challenges</a>
               </li>
              
               <li class="article-tag-list-item">
