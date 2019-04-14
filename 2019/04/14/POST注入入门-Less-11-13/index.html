@@ -8,20 +8,20 @@
   <link rel="dns-prefetch" href="http://yoursite.com">
   <title>POST注入入门-Less-11-13 | Joner的博客</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="Less-11  POST POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交  打开Less-11关卡，界面如图所示  下面使用之前10关上闭合语句的方法，如果这个语句判断的是用户名和密码是否匹配，那么可以将匹配密码这一段注释掉，并且该为真语句，那就实现了绕过了判断，进入到登录界面。  提交后提示Your Login name:admin Your Password:admin 这">
+  <meta name="description" content="Less-11  POST  POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交">
 <meta name="keywords" content="sqli-labs,POST注入">
 <meta property="og:type" content="article">
 <meta property="og:title" content="POST注入入门-Less-11-13">
 <meta property="og:url" content="http://yoursite.com/2019/04/14/POST注入入门-Less-11-13/index.html">
 <meta property="og:site_name" content="Joner的博客">
-<meta property="og:description" content="Less-11  POST POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交  打开Less-11关卡，界面如图所示  下面使用之前10关上闭合语句的方法，如果这个语句判断的是用户名和密码是否匹配，那么可以将匹配密码这一段注释掉，并且该为真语句，那就实现了绕过了判断，进入到登录界面。  提交后提示Your Login name:admin Your Password:admin 这">
+<meta property="og:description" content="Less-11  POST  POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交">
 <meta property="og:locale" content="default">
 <meta property="og:image" content="http://yoursite.com/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment/STU/Bolg/source/_posts/POST注入入门-Less-11-13/POST.png">
 <meta property="og:image" content="http://yoursite.com/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment/STU/Bolg/source/_posts/POST注入入门-Less-11-13/2.png">
-<meta property="og:updated_time" content="2019-04-14T13:43:50.603Z">
+<meta property="og:updated_time" content="2019-04-14T13:46:12.989Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="POST注入入门-Less-11-13">
-<meta name="twitter:description" content="Less-11  POST POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交  打开Less-11关卡，界面如图所示  下面使用之前10关上闭合语句的方法，如果这个语句判断的是用户名和密码是否匹配，那么可以将匹配密码这一段注释掉，并且该为真语句，那就实现了绕过了判断，进入到登录界面。  提交后提示Your Login name:admin Your Password:admin 这">
+<meta name="twitter:description" content="Less-11  POST  POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交">
 <meta name="twitter:image" content="http://yoursite.com/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment/STU/Bolg/source/_posts/POST注入入门-Less-11-13/POST.png">
   
     <link rel="alternative" href="/atom.xml" title="Joner的博客" type="application/atom+xml">
@@ -174,8 +174,9 @@
       
         <h2 id="Less-11"><a href="#Less-11" class="headerlink" title="Less-11"></a>Less-11</h2><blockquote>
 <p> POST</p>
-<p>POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交</p>
+<p> POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交</p>
 </blockquote>
+<a id="more"></a>
 <p>打开Less-11关卡，界面如图所示</p>
 <p><img src="/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment\STU\Bolg\source\_posts\POST注入入门-Less-11-13\POST.png" alt></p>
 <p>下面使用之前10关上闭合语句的方法，如果这个语句判断的是用户名和密码是否匹配，那么可以将匹配密码这一段注释掉，并且该为真语句，那就实现了绕过了判断，进入到登录界面。</p>
