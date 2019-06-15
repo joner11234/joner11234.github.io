@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>心脏滴血漏洞简单分析与复现 | Joner的博客</title>
+  
+  
+  
+  <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<div class="Shell">
+    <aside class="SideBar">
+    <section class="avatar" style="background-image: url()">
+        <div class="av-pic" style="background-image: url()">
+        </div>
+    </section>
+    <section class="menu">
+        <div>Joner的博客</div>
+        
+            <div>通透</div>
+        
+        <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
+          
+        </ul>
+    </section>
+    <section class="media">
+        
+    </section>
+</aside>
+
+    <div class="container">
+        <div data-pager-shell>
+            <div>
+  <article class="ContentView">
+    <header class="PageTitle">
+        <h1>心脏滴血漏洞简单分析与复现</h1>
+    </header>
+
+    <section>
+      <p>  2014年4月7日，OpenSSL发布安全公告，在OpenSSL1.0.1和OpenSSL 1.0.2 Beta1中存在严重漏洞。由于未能正确检测用户输入参数的长度，攻击者可以利用该漏洞，远程读取存在漏洞版本的OpenSSL服务器内存中64K的数据，获取内存中的用户名、密码、个人相关信息以及服务器的证书等私密信息。</p>
+<a id="more"></a>
+<h2 id="漏洞成因"><a href="#漏洞成因" class="headerlink" title="漏洞成因"></a>漏洞成因</h2><p>​    Heartbleed漏洞是由于未能在memcpy()调用受害用户输入内容作为长度参数之前正确进行边界检查。攻击者可以追踪OpenSSL所分配的64KB缓存、将超出必要范围的字节信息复制到缓存当中再返回缓存内容，这样一来受害者的内存内容就会以每次64KB的速度进行泄露。</p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><pre><code>最初人们为了网络通信安全，就开始使用安全协议进行加密通信，SSL（Secure Socket Layer）就是一种安全协议。随着开源软件的流行，有人写了一款叫  OpenSSL  的开源程序供大家方便地对通信进行SSL加密，后来这款软件便在互联网中被广泛应用。我们在浏览器地址栏常见的 https 前缀的网址以及那把小锁图标，通常就是指该网站经过 SSL 证书加密。
+</code></pre><p>​    OpenSSL 有一个叫 Heartbeat （心跳检测）的拓展，问题就出在这个拓展上，这也是漏洞被命名为“心脏出血”的直接原因。</p>
+<p>​    所谓心跳检测，就是建立一个  Client Hello 问询来检测对方服务器是不是正常在线 ，服务器发回 Server hello，表明正常树立SSL通讯。就像我们打电话时会问对方 “喂听得到吗？”一样。</p>
+<p>​    每次问询都会附加一个问询的字符长度 pad length，bug 来了，如果这个 pad length 大于实际的长度，服务器仍是会回来相同规模的字符信息，于是形成了内存里信息的越界访问。</p>
+<p>​    就这样，每发起一个心跳，服务器就能泄露一点点数据（理论上最多泄露  64K），这些数据里可能包括用户的登录账号密码、电子邮件甚至是加密秘钥等信息，也可能并没有包含这些信息，但攻击者可以不断利用 “心跳”来获取更多的信息。就这样，服务器一点一点泄露越来越多的信息。</p>
+<h2 id="漏洞复现环境"><a href="#漏洞复现环境" class="headerlink" title="漏洞复现环境"></a>漏洞复现环境</h2><p>攻击机：Kali Linux</p>
+<p>靶机：Bee-Box环境</p>
+<p>靶机可以直接下载虚拟机镜像，直接在虚拟机打开即可。</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/2.png" alt></p>
+<ul>
+<li><a href="https://sourceforge.net/projects/bwapp/files/bee-box/" target="_blank" rel="noopener">下载链接</a></li>
+</ul>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>下载好之后打开终端，通过<code>ifconfig</code>命令查看虚拟机ip地址</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/1.png" alt></p>
+<p>通过查看bee-box漏洞信息，发现在8443端口存在心脏滴血漏洞</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/4.png" alt></p>
+<p>使用nmap扫描靶机ip的8443端口看是否存在心脏滴血漏洞</p>
+<p>命令<code>nmap -sV -p 8443 --script ssl-heartbleed.nse 192.168.31.127</code></p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/5.png" alt></p>
+<p>存在漏洞，打开msf，进行攻击</p>
+<p>使用<code>search heartbleed</code>查找攻击模块</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/6.png" alt></p>
+<p>使用第一个<code>use auxiliary/scanner/ssl/openssl_heartbleed</code>，使用<code>show options</code>查看需要设置的参数</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/7.png" alt></p>
+<p>设置 RHOST、RPOST</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set RHOST 10.10.10.146</span><br><span class="line">set RPOST 8443</span><br><span class="line">set verbose true #设置成true才能看到泄露的信息</span><br><span class="line">run</span><br></pre></td></tr></table></figure>
+<p>运行后可以看到 靶机的64KB信息，如果有人此时在登录web应用，还可以直接抓到账号密码等信息。</p>
+<p><img src="/2019/05/21/心脏滴血漏洞简单分析与复现/8.png" alt></p>
+
+
+      
+
+    </section>
+    
+      <section class="ArticleMeta">
+          <div>
+            发布于&nbsp;
+            <time datetime="2019-05-21T07:30:38.000Z" itemprop="datePublished">
+              2019-05-21
+            </time>
+          </div>
+          
+            <div>
+              tags: 
+  <li class="meta-text">
+  { <a href="/tags/漏洞复现/">漏洞复现</a> }
+  </li>
+
+
+            </div>
+          
+      </section>
+    
+    
+</article>
+
+  
+</div>
+
+            <footer>
+    <div>© 2019 - Joner </div>
+    <div>
+        <span>
+            Powered by <a href="https://hexo.io">Hexo</a>
+        </span>
+        ,
+        <span>
+            Theme - <a href="https://github.com/nameoverflow/hexo-theme-icalm">Icalm</a>
+        </span>
+    </div>
+</footer>
+
+        </div>
+    </div>
+</div>
+<script src="/js/pager/dist/singlepager.js"></script>
+<script>
+var sp = new Pager('data-pager-shell')
+
+</script>
+</body>
+</html>

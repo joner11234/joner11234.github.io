@@ -7,6 +7,7 @@
   <title>Joner的博客</title>
   
   
+  
   <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
   <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
   <link rel="stylesheet" href="/css/style.css">
@@ -25,6 +26,14 @@
             <div>通透</div>
         
         <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
           
         </ul>
     </section>
@@ -69,6 +78,10 @@
       
         <p>  2014年4月7日，OpenSSL发布安全公告，在OpenSSL1.0.1和OpenSSL 1.0.2 Beta1中存在严重漏洞。由于未能正确检测用户输入参数的长度，攻击者可以利用该漏洞，远程读取存在漏洞版本的OpenSSL服务器内存中64K的数据，获取内存中的用户名、密码、个人相关信息以及服务器的证书等私密信息。</p>
         
+          <div class="more-link">
+            <a href="/2019/05/21/心脏滴血漏洞简单分析与复现/#more">Read On »</a>
+          </div>
+        
       
     </div>
 </article>
@@ -105,6 +118,10 @@
     <div>
       
         <p>下面主要记录各种类型的注入，有些类型已经在前面使用过了，还有几种没有接触过的，这里只是简单的记录，并没有将具体的代码进行分析，以后会详细学一下。</p>
+        
+          <div class="more-link">
+            <a href="/2019/04/15/SQL注入类型总结/#more">Read On »</a>
+          </div>
         
       
     </div>
@@ -150,6 +167,10 @@
 <p> POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交</p>
 </blockquote>
         
+          <div class="more-link">
+            <a href="/2019/04/14/POST注入入门-Less-11-13/#more">Read On »</a>
+          </div>
+        
       
     </div>
 </article>
@@ -186,6 +207,10 @@
     <div>
       
         <p>  数据链路层属于计算机网络的底层，主要使用两种信道，点对点信道和广播信道，其中，点对点信道，顾名思义使用一对一的对点通信方式，广播信道使用一对多的广播通信方式。从安全角度来说，在数据链路层的攻击主要是局域网内部的安全。</p>
+        
+          <div class="more-link">
+            <a href="/2019/04/13/计算机网络-数据链路层/#more">Read On »</a>
+          </div>
         
       
     </div>
@@ -228,6 +253,10 @@
       
         <p>SQLMap是一个自动化的SQL注入工具，它的主要功能是扫描，内置了很多绕过插件，支持的数据库有MySQL、Oracle、PostgreSQL、Microsoft SQL Server、Microsoft Access、IBM DB2、SQLite、Firebird、Sybase和SAP Max DB。其强大功能有数据库指纹识别、数据库枚举、数据提取、访问目标文件系统。</p>
         
+          <div class="more-link">
+            <a href="/2019/04/08/SQLMap使用/#more">Read On »</a>
+          </div>
+        
       
     </div>
 </article>
@@ -264,6 +293,10 @@
     <div>
       
         <p>本篇中将介绍一些渗透环境搭建的过程，这些环境将用于以后的实战练习，下面搭建的一些漏洞环境需要依赖一些具体的服务，这里只列出需要提前安装好的环境,主要的是后面介绍渗透测试环境的搭建。</p>
+        
+          <div class="more-link">
+            <a href="/2019/04/08/渗透环境搭建/#more">Read On »</a>
+          </div>
         
       
     </div>
@@ -306,6 +339,10 @@
       
         <p>这一关开始接触另一种盲注的方法-基于时间的盲注，它于基于布尔的盲注的不同之处就是参照的东西不同，布尔盲注使根据页面的不同来判断结果，而基于时间的盲注是结合if和sleep()函数来通过时间延迟判断结果是否正确。</p>
         
+          <div class="more-link">
+            <a href="/2019/04/05/sqli-labs-Less9-10基于时间的盲注/#more">Read On »</a>
+          </div>
+        
       
     </div>
 </article>
@@ -346,6 +383,10 @@
     <div>
       
         <p>这一关开始接触另一种盲注的方法-基于时间的盲注，它于基于布尔的盲注的不同之处就是参照的东西不同，布尔盲注使根据页面的不同来判断结果，而基于时间的盲注是结合if和sleep()函数来通过时间延迟判断结果是否正确。</p>
+        
+          <div class="more-link">
+            <a href="/2019/04/05/sqli-labs-Less9-基于时间的盲注/#more">Read On »</a>
+          </div>
         
       
     </div>
@@ -392,6 +433,10 @@
       
         <p>本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，看了一下网上一些脚本的写法，自己写了一下，通过这个脚本，学习了一些Python的函数和库，更详细深入的了解了盲注自动化注入的过程。</p>
         
+          <div class="more-link">
+            <a href="/2019/04/04/sqli-labs8-编写脚本进行注入/#more">Read On »</a>
+          </div>
+        
       
     </div>
 </article>
@@ -432,6 +477,10 @@
     <div>
       
         <p>下面记录的是 XSS challenges stage 12-15关的通关过程，主要涉及IE8 的一些内容和行内样式注入，其中有一些查了网上的资料才做出来，还有两个实际是没有做出来的，这里先记录下来，等有时间再继续研究。</p>
+        
+          <div class="more-link">
+            <a href="/2019/04/02/XSS-challengs-12-15-通关记录/#more">Read On »</a>
+          </div>
         
       
     </div>

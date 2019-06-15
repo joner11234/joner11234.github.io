@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>SQL注入类型总结 | Joner的博客</title>
+  
+  
+  
+  <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<div class="Shell">
+    <aside class="SideBar">
+    <section class="avatar" style="background-image: url()">
+        <div class="av-pic" style="background-image: url()">
+        </div>
+    </section>
+    <section class="menu">
+        <div>Joner的博客</div>
+        
+            <div>通透</div>
+        
+        <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
+          
+        </ul>
+    </section>
+    <section class="media">
+        
+    </section>
+</aside>
+
+    <div class="container">
+        <div data-pager-shell>
+            <div>
+  <article class="ContentView">
+    <header class="PageTitle">
+        <h1>SQL注入类型总结</h1>
+    </header>
+
+    <section>
+      <p>下面主要记录各种类型的注入，有些类型已经在前面使用过了，还有几种没有接触过的，这里只是简单的记录，并没有将具体的代码进行分析，以后会详细学一下。</p>
+<a id="more"></a>
+<h2 id="Union注入"><a href="#Union注入" class="headerlink" title="Union注入"></a>Union注入</h2><blockquote>
+<p>UNION 操作符用于合并两个或多个 SELECT 语句的结果集。</p>
+<p>请注意，UNION 内部的 SELECT 语句必须拥有相同数量的列。列也必须拥有相似的数据类型。同时，每条 SELECT 语句中的列的顺序必须相同。</p>
+</blockquote>
+<p>所以可以在存在注入的地方利用Union语句查询其他语句，注意要把id的值改为一个错误值，这样能返回出union后面查询的结果。</p>
+<h2 id="Boolean注入"><a href="#Boolean注入" class="headerlink" title="Boolean注入"></a>Boolean注入</h2><p>代码根据数据库查询结果只返回正确和错误，而不返回任何数据，所以只能根据页面的正确和错误的特征来判断语句是否执行成功。</p>
+<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>当数据库语句执行错误时，会将错误信息输出出来，如果存在宝座注入，就可以想办法构造一些语句，使数据通过错误信息输出出来。</p>
+<blockquote>
+<p>首先了解下updatexml()函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; UPDATEXML (XML_document, XPath_string, new_value); </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>第一个参数：XML_document是String格式，为XML文档对象的名称，文中为Doc </p>
+<p>第二个参数：XPath_string (Xpath格式的字符串) </p>
+<p>第三个参数：new_value，String格式，替换查找到的符合条件的数据 </p>
+<p>作用：改变文档中符合条件的节点的值</p>
+<p>改变XML_document中符合XPATH_string的值</p>
+</blockquote>
+<p>报错注入的注入语句为<code>updatexml(1,concat(0x7e,(SELECT user()),0x7e),1)</code>,其中的concat()函数是将其连成一个字符串，因此不会符合XPATH_string的格式，从而出现格式错误，爆出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR 1105 (HY000): XPATH syntax error: &apos;:root@localhost&apos;</span><br></pre></td></tr></table></figure>
+<p>还有其他的用于报错注入的语句</p>
+<p><strong>ExtractValue</strong><br>测试语句如下</p>
+<p>and extractvalue(1, concat(0x5c, (select table_name from information_schema.tables limit 1)));</p>
+<p><strong>floor</strong></p>
+<p>可以通过如下一些利用代码</p>
+<p><code>and select 1 from (select count(*),concat(version(),floor(rand(0)*2))x from information_schema.tables group by x)a);</code></p>
+<p><code>and (select count(*) from (select 1 union   select null union   select  !1)x group by concat((select table_name from information_schema.tables  limit 1),floor(rand(0)*2)));</code></p>
+<h2 id="时间注入"><a href="#时间注入" class="headerlink" title="时间注入"></a>时间注入</h2><p>时间注入和布尔注入非常类似，时间注入是根据页面相应的时间来进行判断，这里使用的是if判断语句和sleep()函数。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if(length(database())&gt;1,sleep(5),1)</span><br></pre></td></tr></table></figure>
+<p>这个语句的意思是，如果数据库名字长度大于1，那么mysql休眠5秒钟，否则执行1，查询1的时间大约几毫秒，所以查看页面响应时间可以轻松知道语句是否正确执行。</p>
+<h2 id="堆叠查询注入"><a href="#堆叠查询注入" class="headerlink" title="堆叠查询注入"></a>堆叠查询注入</h2><p>堆叠查询注入是执行多条语句，因为多个语句可以用分号隔开，所以可以利用这个特点来执行别的语句，堆叠注入语句为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;;select if(substr(user(),1,1)=&apos;r&apos;,sleep(5),1) #</span><br></pre></td></tr></table></figure>
+<p>可以看出这里也用到了时间注入的盲注语句，使用堆叠注入时通常无法获得第二个语句的数据，所以大多使用盲注的语句来获得具体数据。</p>
+<h2 id="宽字节注入"><a href="#宽字节注入" class="headerlink" title="宽字节注入"></a>宽字节注入</h2><p>当id是使用单引号包围的，但是处理程序会将传入的单引号被反斜线转义，这时，如果数据库的编码为GBK就可以使用宽字节注入，这是在地址后先加一个<code>%df</code>再加单引号，因为反斜杠的编码为<code>%5c</code>在GBK编码中，<code>%df%5c</code>是繁体字”運”，所以这时候单引号逃逸，导致mysql数据库错误。</p>
+<h2 id="Cookie注入"><a href="#Cookie注入" class="headerlink" title="Cookie注入"></a>Cookie注入</h2><p>通过$_COOKIE能够获取浏览器cookie中的数据，所以如果网页是使用cookie传递数据，并且没有进行过滤，就会造成cookie注入，可以通过burp suite抓取数据包并进行修改。</p>
+<h2 id="base64注入"><a href="#base64注入" class="headerlink" title="base64注入"></a>base64注入</h2><blockquote>
+<p>base64</p>
+<p>Base64是网络上最常见的用于传输8Bit<a href="https://baike.baidu.com/item/%E5%AD%97%E8%8A%82%E7%A0%81/9953683" target="_blank" rel="noopener">字节码</a>的编码方式之一，Base64就是一种基于64个可打印字符来表示二进制数据的方法。可查看RFC2045～RFC2049，上面有MIME的详细规范。</p>
+<p>Base64编码是从二进制到字符的过程，可用于在<a href="https://baike.baidu.com/item/HTTP" target="_blank" rel="noopener">HTTP</a>环境下传递较长的标识信息。例如，在Java Persistence系统Hibernate中，就采用了Base64来将一个较长的唯一<a href="https://baike.baidu.com/item/%E6%A0%87%E8%AF%86%E7%AC%A6/7105638" target="_blank" rel="noopener">标识符</a>（一般为128-bit的UUID）编码为一个字符串，用作HTTP<a href="https://baike.baidu.com/item/%E8%A1%A8%E5%8D%95/5380322" target="_blank" rel="noopener">表单</a>和HTTP GET URL中的参数。在其他应用程序中，也常常需要把二进制<a href="https://baike.baidu.com/item/%E6%95%B0%E6%8D%AE%E7%BC%96%E7%A0%81/10173270" target="_blank" rel="noopener">数据编码</a>为适合放在URL（包括隐藏<a href="https://baike.baidu.com/item/%E8%A1%A8%E5%8D%95%E5%9F%9F/3788809" target="_blank" rel="noopener">表单域</a>）中的形式。此时，采用Base64编码具有不可读性，需要解码后才能阅读。</p>
+<p>Base64由于以上优点被广泛应用于计算机的各个领域，然而由于输出内容中包括两个以上“符号类”字符（+, /, =)，不同的应用场景又分别研制了Base64的各种“变种”。为统一和规范化Base64的输出，Base62x被视为无符号化的改进版本。</p>
+</blockquote>
+<p>base64注入是针对传递的参数被base64加密后的注入点进行注入。这种方式常用来绕过一些WAF的检测。sqlmap的扩展模块<code>–tamper base64encode</code>就可用于base64注入</p>
+<h2 id="XFF注入"><a href="#XFF注入" class="headerlink" title="XFF注入"></a>XFF注入</h2><p>X-Forwarded-For简称XFF头，它代表了客户端的真实IP，通过修改他的值就可以伪造客户端IP。</p>
+<p>1）判断是否存在注入</p>
+<p>使用Burp的Repeater模块对请求进行修改，分别修改X-Forwarded-For的值如下所示：</p>
+<p>X-Forwarded-for: 127.0.0.1</p>
+<p>X-Forwarded-for: 127.0.0.1’</p>
+<p>X-Forwarded-for: 127.0.0.1’ and 1=1#</p>
+<p>X-Forwarded-for: 127.0.0.1’ and 1=2#</p>
+<p>访问的结果如下，说明存在SQL注入漏洞。</p>
+
+
+      
+
+    </section>
+    
+      <section class="ArticleMeta">
+          <div>
+            发布于&nbsp;
+            <time datetime="2019-04-15T14:00:37.000Z" itemprop="datePublished">
+              2019-04-15
+            </time>
+          </div>
+          
+            <div>
+              tags: 
+  <li class="meta-text">
+  { <a href="/tags/sql注入/">sql注入</a> }
+  </li>
+
+
+            </div>
+          
+      </section>
+    
+    
+</article>
+
+  
+</div>
+
+            <footer>
+    <div>© 2019 - Joner </div>
+    <div>
+        <span>
+            Powered by <a href="https://hexo.io">Hexo</a>
+        </span>
+        ,
+        <span>
+            Theme - <a href="https://github.com/nameoverflow/hexo-theme-icalm">Icalm</a>
+        </span>
+    </div>
+</footer>
+
+        </div>
+    </div>
+</div>
+<script src="/js/pager/dist/singlepager.js"></script>
+<script>
+var sp = new Pager('data-pager-shell')
+
+</script>
+</body>
+</html>

