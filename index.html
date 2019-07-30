@@ -173,7 +173,7 @@
     <!-- 文章简介 -->
     <div class="article-content">
       <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
-        
+        <p>第一种实现的思路是生成<code>powershell</code>和<code>base64</code>代码，将他们嵌入到js文件中，当从网页复制内容时，并不会意识到同时复制了恶意代码，所以这种方式比较隐蔽，当用户将复制的内容放到<code>cmd</code>中运行时，就会后台运行<code>powershell</code>，并且反弹shell，以下是在关闭杀毒软件情况下的具体实现。</p>
       </div>
     </div>
     <div class="article-footer">
