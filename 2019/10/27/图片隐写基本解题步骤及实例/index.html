@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>一道姿势较多的隐写题 | Joner</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="MISC, CTF, 比赛题解,">
+  
+
+
+  
+    <meta name="description" content="致力于CTF比赛学习以及网络安全研究">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>一道姿势较多的隐写题</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-10-27
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>​    在隐写的解题中，对不同类型隐写文件的解题，一般都有一定的步骤，下面是最近巅峰极客的一道隐写题目的比较详细的解题步骤，其中一些隐写方式也是遇到后再百度了才知道的，其实也都是一些基本的知识串到了一起，只要能耐心把隐写的基础都看完，看到这些文件一般都会知道应该怎么解题，所以基础还是比较重要的。</p>
+<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p><img src="/2019/10/27/图片隐写基本解题步骤及实例/leaf.png" alt></p>
+<p>原题解压后就是这张图片，没有其他提示，因为是杂项，所以首先想到的就是图片隐写，先使用一些基本命令查看一下文件的情况</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">strings leaf.png			</span><br><span class="line"><span class="meta">#</span>打印文件中可打印的字符，经常用来发现文件中的一些提示信息或是一些特殊的编码信息，常常用来发现题目的突破口。</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/069-01-09.png" alt></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">binwalk leaf.png</span><br><span class="line"><span class="meta">#</span> 本是一个固件的分析工具，比赛中常用来发现多个文件粘合再在一起的情况。根据文件头去识别一个文件中夹杂的其他文件</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/493-03-06.png" alt></p>
+<p>可以看到两个命令得到的信息都差不多，其中有个flag.xml非常明显，所以那里面可能就是题解或者是提示。另外第二个命令上看到里面有一个存在leaf.pyc的压缩文件，所以下面使用foremost命令分解一下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">foremost leaf.png	#自动化切割文件</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/844-04-35.png" alt></p>
+<p>切割后得到一个png文件和一个zip文件，zip文件存在解压密码，一般这种情况可以考虑是不是zip伪加密，不是的话再考虑破解密码或者找密码，但是之前看到了一个flag.xml所以还是先处理那个，foremost并没有把那些有xml的压缩包分离出来，看那些xml文件感觉是某种文件里的东西，百度了一下</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027131706268.png" alt="image-20191027131706268"></p>
+<p>那看来是里面有个docx文件，这里使用手动分离，看起来比较形象，自己创建一个docx文件，使用winhex这个工具打开</p>
+<p>看到文件头是下面这个</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027134323788.png" alt="image-20191027134323788"></p>
+<p>到leaf.png里面去找一下，找到后从那个位置拖到最后，然后复制到新文件，命名为123.docx</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027134750355.png" alt="image-20191027134750355"></p>
+<p>生成文件后将后缀改成zip，解压后看到了flag.xml文件内容<img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027141016563.png" alt="image-20191027141016563"></p>
+<p>里面什么字都没有，但是细心点可以发现每个空是由tab键或者四个空格构成的，所以将tab转为0，空格的转为1，下面是脚本，当然也可以手动转换，但是有点慢</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">file=open('flag.xml','rb')</span><br><span class="line">data = file.read()</span><br><span class="line">for i in data:</span><br><span class="line">	if i==32:</span><br><span class="line">		print(0,end="")</span><br><span class="line">	elif i==9:</span><br><span class="line">		print(1,end="")</span><br></pre></td></tr></table></figure>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027141341563.png" alt="image-20191027141341563"></p>
+<p>再使用工具将二进制转换为字符串得到前一段的flag</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027141452032.png" alt="image-20191027141452032"></p>
+<p>然后要获得后面一段flag，想到了先打开这个文档看看</p>
+<p>打开是一堆base64加密，解密后就是一篇普通文章，但是注意到最后发现了隐藏的字，就是下面标出的红字，说是在这个文档里还有东西。</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/213-24-56.png" alt></p>
+<p>学习了base64之后就可以很快推断出这个base64隐写，隐写真是无处不在，这里只写一下base64隐写的原理，不介绍base64了。</p>
+<p> <img src="/2019/10/27/图片隐写基本解题步骤及实例/base64_3.jpg" alt="table3"> </p>
+<blockquote>
+<p>  解码过程将上面的示例从下向上看即可，即先丢弃编码后面的‘=’，然后将每个base64字符对应索引转为6bit的二 进制数，再8个一组转为ASCII码字符完成解码，最后若剩下不足8位的，则全部丢弃。    所以上图紫色方框中的bit位在解码时会被丢弃，换句话说，紫色方框中的bit值不会对解码结果产生影响。一个简 单直观的例子就是QUJDRA==和QUJDRC==解码后都是ABCD。由此我们便可以将隐藏信息插入这些bit位中实现隐写。  </p>
+</blockquote>
+<p>用网上搜到的解密脚本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="string">base64隐写解密</span></span><br><span class="line"><span class="string">"""</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_base64_diff_value</span><span class="params">(s1, s2)</span>:</span></span><br><span class="line">    base64chars = <span class="string">'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'</span></span><br><span class="line">    res = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> xrange(len(s2)):</span><br><span class="line">        <span class="keyword">if</span> s1[i] != s2[i]:</span><br><span class="line">            <span class="keyword">return</span> abs(base64chars.index(s1[i]) - base64chars.index(s2[i]))</span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">solve_stego</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">with</span> open(<span class="string">'1.txt'</span>, <span class="string">'rb'</span>) <span class="keyword">as</span> f:</span><br><span class="line">        file_lines = f.readlines()</span><br><span class="line">        bin_str = <span class="string">''</span></span><br><span class="line">        <span class="keyword">for</span> line <span class="keyword">in</span> file_lines:</span><br><span class="line">            steg_line = line.replace(<span class="string">'\n'</span>, <span class="string">''</span>)</span><br><span class="line">            norm_line = line.replace(<span class="string">'\n'</span>, <span class="string">''</span>).decode(<span class="string">'base64'</span>).encode(<span class="string">'base64'</span>).replace(<span class="string">'\n'</span>, <span class="string">''</span>)</span><br><span class="line">            diff = get_base64_diff_value(steg_line, norm_line)</span><br><span class="line">            <span class="keyword">print</span> diff</span><br><span class="line">            pads_num = steg_line.count(<span class="string">'='</span>)</span><br><span class="line">            <span class="keyword">if</span> diff:</span><br><span class="line">                bin_str += bin(diff)[<span class="number">2</span>:].zfill(pads_num * <span class="number">2</span>)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                bin_str += <span class="string">'0'</span> * pads_num * <span class="number">2</span></span><br><span class="line">            <span class="keyword">print</span> goflag(bin_str)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">goflag</span><span class="params">(bin_str)</span>:</span></span><br><span class="line">    res_str = <span class="string">''</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">0</span>, len(bin_str), <span class="number">8</span>):</span><br><span class="line">        res_str += chr(int(bin_str[i:i + <span class="number">8</span>], <span class="number">2</span>))</span><br><span class="line">    <span class="keyword">return</span> res_str</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    solve_stego()</span><br></pre></td></tr></table></figure>
+<p>下面是运行结果，最后解密的内容为  I4mtHek3y@ 用这个可以解压那个压缩包</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/331-53-35.png" alt="331-53-35"></p>
+<p>压缩包中是一个pyc文件</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/413-07-23.png" alt></p>
+<p>这是python运行时编译的中间文件，然后pyc文件也是有隐写的，就叫做pyc文件隐写，这个在CTF-wiki中有写，只需要使用stegosaurus这个工具就可以得到隐写的内容。</p>
+<p><img src="/2019/10/27/图片隐写基本解题步骤及实例/image-20191027140809411.png" alt="image-20191027140809411"></p>
+<p>最后得到flag{2806105f-ec43-57f3-8cb4-1add2793f508}</p>
+<p>这道题中使用的隐写方式比较多，比如说通过图片隐写将压缩包和docx文件藏到图片中，又在docx文件中使用白色字来隐藏提示，还有其中的base64隐写，以及在docx文件中的flag.xml的tab和空格形成的二进制转换字符串的隐写，最后还有一个pyc文件隐写，可以说这是一道很好的考察基础的题目，用到的姿势非常多。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p> <a href="https://cltheorem.github.io/2018/10/base64隐写/" target="_blank" rel="noopener">https://cltheorem.github.io/2018/10/base64%E9%9A%90%E5%86%99/</a> </p>
+<p> <a href="https://wiki.x10sec.org/misc/other/pyc/" target="_blank" rel="noopener">https://wiki.x10sec.org/misc/other/pyc/</a> </p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://yoursite.com/2019/10/27/图片隐写基本解题步骤及实例/</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+    <div id="reward">
+  
+  <button id="reward-btn">
+    
+    <span>递可乐</span>
+  </button>
+  <div id="reward-qrcode">
+    
+      <div class="reward-qrcode--container">
+        <img class="qrcode-img" src="/images/alipay.png" alt="支付宝扫一扫">
+        <p class="qrcode-meta">支付宝扫一扫</p>
+      </div>
+    
+  </div>
+
+</div>
+
+<script>
+  (() => {
+    let button = document.querySelector('#reward-btn'),
+      qrcode = document.querySelector('#reward-qrcode'),
+      display = false;
+    
+    button.addEventListener('click', () => {
+      qrcode.style.display = display ? 'none' : 'block'
+      display = !display
+    }, false)
+  })()
+</script>
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/MISC-CTF-比赛题解/">
+              #MISC, CTF, 比赛题解
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/2019/09/16/Java反序列化检测及漏洞复现/" target="_self">Java反序列化检测及漏洞复现</a>
+      </div>
+    
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>
