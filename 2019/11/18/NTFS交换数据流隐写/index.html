@@ -7,12 +7,12 @@
   
   
   
-  <title>归档: 2019/4 | Joner</title>
+  <title>NTFS交换数据流隐写 | Joner</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="Blog">
+    <meta name="keywords" content="CTF, MISC, 隐写,,">
   
 
 
@@ -142,155 +142,173 @@
   })
 </script>
 
-      <div class="container">
-  <div class="timeline">
-  <span class="archive-move-on"></span>
-  <span class="archive-page-counter">
-    
-      <span>Wow! 一共有 27 篇文章</span>
-    
-  </span>
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
   
+
+<div class="post">
+  <h1 class="article-title">
+    <span>NTFS交换数据流隐写</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-11-18
+    </span>
+    
+    
+  </div>
+
   
-    <div class="collection-title">
-      <h2>
-        <span>2019</span>
-      </h2>
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h1 id="NTFS流隐写"><a href="#NTFS流隐写" class="headerlink" title="NTFS流隐写"></a>NTFS流隐写</h1><blockquote>
+<p> NTFS文件系统时windows NT内核系列操作系统支持的、专门为网络和磁盘配额的，文件加密等管理安全特性设计的磁盘格式。NTFS比FAT文件系统更加稳定，更能也更为强大。<br>NTFS数据流文件也被称为 Alternate data streams，简称ADS，是NTFS文件系统的一个特性之一，允许单独的数据流文件存在，同时也允许文件附着多个数据流，除了主文件流之外还允许许多非主文件流寄生在主文件流中，使用资源派生的方式来维持与文件的相关信息，并且这些寄生的数据流文件我们使用资源管理器无法看到。</p>
+</blockquote>
+<h2 id="交换数据流"><a href="#交换数据流" class="headerlink" title="交换数据流"></a>交换数据流</h2><p>Windows NTFS文件系统的交换数据流（Alternate Data Steams, ADS）可以追溯到Windows NT3.1，为了满足Windows系统和苹果HFS（Hierachical File System） 系统的交互需求诞生了交换数据流。NTFS使用的交换数据流来存储文件的相关元数据，包括安全信息、原作者以及其他元数据。<br>对于隐藏文件，Windows NTFS中的交换数据流事一种简单并且隐蔽的方式。</p>
+<h2 id="利用系统命令隐藏文件"><a href="#利用系统命令隐藏文件" class="headerlink" title="利用系统命令隐藏文件"></a>利用系统命令隐藏文件</h2><p>在一个空文件夹中新建一个txt文件，命名为flag.txt,输入要显示的内容<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">notepad flag.txt</span><br></pre></td></tr></table></figure></p>
+<p><img src="/2019/11/18/NTFS交换数据流隐写/D:/文档\图片\截屏\906-07-47.png" alt="3c39214a9aceba215c6b8e6bce8c23f6.png"><br>接下来，执行如下命令使用上面生成的文件创建第一个交换数据流</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">notepad flag.txt:hide.txt</span><br></pre></td></tr></table></figure>
+<p>然后输入要隐藏显示的内容，如下图所示<br><img src="/2019/11/18/NTFS交换数据流隐写/530-10-25.png" alt="affc237159012f5b673d99ec68df3a93.png"><br>保存之后使用<code>dir</code>命令查看当前文件夹下的文件<br><img src="/2019/11/18/NTFS交换数据流隐写/583-59-02.png" alt="253db97be9efbd0fb5d2257ac2405eb7.png"><br>如图，只显示一个文件</p>
+<p>常用的浏览技术对交换数据流都是免疫的，创建成功后，显示的文件大小也没有变化，所以通过一般手段是看不到这个隐藏文件的。一个文件可以创建多个交换数据流，使用相同的命令，注意隐藏文件不要使用相同的文件名。<br>因为开启针对文件交换数据流的扫描效率特别低，会比关闭状态下降低90%的扫描速度，所以很多查杀病毒的软件都默认关闭了这个功能。</p>
+<h2 id="例题演示"><a href="#例题演示" class="headerlink" title="例题演示"></a>例题演示</h2><p>在深思杯·省大学生网络安全技能大赛中有一道隐写题，就是和NTFS数据流隐写相关的，题目名字是你真的很不错，下载下来是一个<code>rar</code>后缀的压缩包，如下图所示，题目后来的提示是<code>使用WinRAR解压</code><br><img src="/2019/11/18/NTFS交换数据流隐写/545-54-10.png" alt="a5d9d4cd496a3a99b69615f96634b481.png"><br>这次比赛中其他题目下载下来压缩包一般是<code>zip</code>后缀和<code>7z</code>后缀，唯有这个是<code>rar</code>后缀，而且提示是使用WinRAR，这里有一个点就是，WinRAR是支持NTFS数据流压缩的，如果使用不支持NTFS数据流压缩的软件进行解压，会丢失隐藏的数据，因此这个题目提示使用WinRAR打开。<br>使用WinRAR解压后，直接使用NtfsStreamsEditor扫描解压出的目录<br><img src="/2019/11/18/NTFS交换数据流隐写/947-42-46.png" alt="12395ad12158ec59f93e2145c5a3b957.png"><br>可以看到扫描出了一个隐藏的png文件，使用软件的导出功能讲文件导出，就可以之间看到flag了。</p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><ul>
+<li><a href="https://blog.csdn.net/qq_41079177/article/details/102964134" target="_blank" rel="noopener">NTFS文件隐写</a></li>
+<li>《数据隐藏技术揭秘》</li>
+</ul>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://yoursite.com/2019/11/18/NTFS交换数据流隐写/</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
     </div>
   
   
   
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/15/SQL注入类型总结/">
-          <span>SQL注入类型总结</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-15
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/14/POST注入入门-Less-11-13/">
-          <span>POST注入入门-Less-11-13</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-14
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/13/计算机网络-数据链路层/">
-          <span>计算机网络-数据链路层</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-13
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/08/SQLMap使用/">
-          <span>SQLMap使用</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-08
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/08/渗透环境搭建/">
-          <span>渗透环境搭建</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-08
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/05/sqli-labs-Less9-基于时间的盲注/">
-          <span>sqli-labs Less9-10 基于时间的盲注</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-05
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/05/sqli-labs-Less9-10基于时间的盲注/">
-          <span>sqli-labs Less9-10 基于时间的盲注</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-05
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/04/sqli-labs8-编写脚本进行注入/">
-          <span>sqli-labs8 编写脚本进行注入</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-04
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/04/02/XSS-challengs-12-15-通关记录/">
-          <span>XSS challengs 12-15 通关记录</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        04-02
-      </div>
-    </header>
-  </article>
-  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
 </div>
-  <nav class="page-navigation">
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+    <div id="reward">
+  
+    <p id="reward-meta">点一下康康？</p>
+  
+  <button id="reward-btn">
+    
+    <span>送可乐</span>
+  </button>
+  <div id="reward-qrcode">
+    
+      <div class="reward-qrcode--container">
+        <img class="qrcode-img" src="/images/alipay.png" alt="支付宝扫一扫">
+        <p class="qrcode-meta">支付宝扫一扫</p>
+      </div>
+    
+  </div>
+
+</div>
+
+<script>
+  (() => {
+    let button = document.querySelector('#reward-btn'),
+      qrcode = document.querySelector('#reward-qrcode'),
+      display = false;
+    
+    button.addEventListener('click', () => {
+      qrcode.style.display = display ? 'none' : 'block'
+      display = !display
+    }, false)
+  })()
+</script>
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/CTF-MISC-隐写/">
+              #CTF, MISC, 隐写,
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/2019/10/27/图片隐写基本解题步骤及实例/" target="_self">一道姿势较多的隐写题</a>
+      </div>
     
     
   </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
 </div>
+
 
       <footer>
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
