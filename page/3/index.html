@@ -275,11 +275,8 @@
     <!-- 文章简介 -->
     <div class="article-content">
       <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
-        <ul>
-<li>XSS定义</li>
-<li>XSS分类</li>
-<li>XSS靶场1-4关</li>
-<li>总结</li></ul>
+        <p>XSS, 即为（Cross Site Scripting）, 中文名为跨站脚本, 是发生在<strong>目标用户的浏览器</strong>层面上的，当渲染DOM树的过程成发生了<strong>不在预期内</strong>执行的JS代码时，就发生了XSS攻击。</p>
+<p>跨站脚本的重点不在‘跨站’上，而在于‘脚本’上。大多数XSS攻击的主要方式是嵌入一段远程或者第三方域上的JS代码。实际上是在目标网站的作用域下执行了这段js代码。</p>
       </div>
     </div>
     <div class="article-footer">
@@ -335,9 +332,6 @@
     <div class="article-content">
       <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
         <p>下面写的是sqli-labs6-7关的注入过程，其中第七关涉及一些导入文件的注入方式，参考相应的书简单记录了一些注入的方法。</p>
-<h2 id="Less-6"><a href="#Less-6" class="headerlink" title="Less-6"></a>Less-6</h2><p> <a href="http://43.247.91.228:84/Less-6/" target="_blank" rel="noopener">地址</a></p>
-<p>类型:布尔型盲注</p>
-<p>这一关的的注入方法和第五关相同，只是sql查询语句不同</p>
       </div>
     </div>
     <div class="article-footer">
@@ -392,12 +386,7 @@
     <!-- 文章简介 -->
     <div class="article-content">
       <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
-        <ul>
-<li>Less-2</li>
-<li>Less-3</li>
-<li>Less-4</li>
-<li>Less-5</li>
-</ul>
+        <p>这篇文章主要记录了sqlilabs 2-5关的内容，其中在第五关开始接触盲注。</p>
       </div>
     </div>
     <div class="article-footer">
@@ -452,9 +441,7 @@
     <!-- 文章简介 -->
     <div class="article-content">
       <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
-        <ul>
-<li>sqli-labs介绍</li>
-<li>sqlmap的简单使用</li></ul>
+        <p>sqli-labs是一位印度程序员写的一个用来学习sql注入的游戏教程，前面使用的是<code>apache+mysql+php</code>,后面几个关卡中的需要用到<code>tomcat+java+mysql</code>，下面是他的项目地址，可以自行搭建，这里就赘述环境的安装了，在之前文章中有写过一部分，网上也有搭建好的平台供大家学习使用。</p>
       </div>
     </div>
     <div class="article-footer">

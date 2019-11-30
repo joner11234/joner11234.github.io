@@ -172,7 +172,10 @@
 
   <div class="article-content">
     <div class="markdown-body">
-      <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-6/?id=1 &apos; and 1=2 --+ # 页面正常</span><br><span class="line">http://43.247.91.228:84/Less-6/?id=1 &quot; and 1=2 --+  #页面异常</span><br></pre></td></tr></table></figure>
+      <h2 id="Less-6"><a href="#Less-6" class="headerlink" title="Less-6"></a>Less-6</h2><p> <a href="http://43.247.91.228:84/Less-6/" target="_blank" rel="noopener">地址</a></p>
+<p>类型:布尔型盲注</p>
+<p>这一关的的注入方法和第五关相同，只是sql查询语句不同</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-6/?id=1 &apos; and 1=2 --+ # 页面正常</span><br><span class="line">http://43.247.91.228:84/Less-6/?id=1 &quot; and 1=2 --+  #页面异常</span><br></pre></td></tr></table></figure>
 <p>这里通过看源码可知，是对id参数进行了处理</p>
 <p><code>$id = &#39;&quot;&#39;.$id.&#39;&quot;&#39;;</code></p>
 <p>sql查询语句为<code>$sql=&quot;SELECT * FROMusers WHERE id=$id LIMIT 0,1&quot;;</code></p>
