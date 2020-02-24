@@ -149,6 +149,55 @@
   
   <div class="post">
     <h1 class="article-title">
+      <a href="/2019/07/30/两种利用js反弹shell的方式/">
+        <span>两种利用js反弹shell的方式</span>
+      </a>
+    </h1>
+    <!-- PC端文章信息 -->
+    <div class="article-top-meta pc-view">
+      <span>
+        发布时间 : 2019-07-30
+      </span>
+    </div>
+    <!-- 移动端文章信息 -->
+    <div class="article-top-meta mobile-view">
+      <span>
+        发布 : 2019-07-30
+      </span>
+      
+      
+    </div>
+    
+    <!-- 文章简介 -->
+    <div class="article-content">
+      <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
+        <p>第一种实现的思路是生成<code>powershell</code>和<code>base64</code>代码，将他们嵌入到js文件中，当从网页复制内容时，并不会意识到同时复制了恶意代码，所以这种方式比较隐蔽，当用户将复制的内容放到<code>cmd</code>中运行时，就会后台运行<code>powershell</code>，并且反弹shell，以下是在关闭杀毒软件情况下的具体实现。</p>
+      </div>
+    </div>
+    <div class="article-footer">
+      <div class="article-meta pull-left">
+        <!-- 分类pc端可见 -->
+        <span class="pc-view">
+          
+        <span>
+          
+            <i class="iconfont icon-06tags"></i>标签:
+            
+              <span class="span--tag">
+                <a href="/tags/msf/">
+                  #msf
+                </a>
+              </span>
+            
+                    
+        </span>
+      </span></div>
+      
+    </div>
+  </div>
+  
+  <div class="post">
+    <h1 class="article-title">
       <a href="/2019/07/20/文件上传/">
         <span>文件上传</span>
       </a>
@@ -596,67 +645,6 @@
               <span class="span--tag">
                 <a href="/tags/sqli-labs/">
                   #sqli-labs
-                </a>
-              </span>
-            
-              <span class="span--tag">
-                <a href="/tags/盲注/">
-                  #盲注
-                </a>
-              </span>
-            
-                    
-        </span>
-      </span></div>
-      
-    </div>
-  </div>
-  
-  <div class="post">
-    <h1 class="article-title">
-      <a href="/2019/04/04/sqli-labs8-编写脚本进行注入/">
-        <span>sqli-labs8 编写脚本进行注入</span>
-      </a>
-    </h1>
-    <!-- PC端文章信息 -->
-    <div class="article-top-meta pc-view">
-      <span>
-        发布时间 : 2019-04-04
-      </span>
-    </div>
-    <!-- 移动端文章信息 -->
-    <div class="article-top-meta mobile-view">
-      <span>
-        发布 : 2019-04-04
-      </span>
-      
-      
-    </div>
-    
-    <!-- 文章简介 -->
-    <div class="article-content">
-      <div class="markdown-body article-content--inner" v-html="mdToHtml(psg.summary)">
-        <p>本篇主要记录的是sqli-labs 8 写的注入脚本，使用Python3编写，看了一下网上一些脚本的写法，自己写了一下，通过这个脚本，学习了一些Python的函数和库，更详细深入的了解了盲注自动化注入的过程。</p>
-      </div>
-    </div>
-    <div class="article-footer">
-      <div class="article-meta pull-left">
-        <!-- 分类pc端可见 -->
-        <span class="pc-view">
-          
-        <span>
-          
-            <i class="iconfont icon-06tags"></i>标签:
-            
-              <span class="span--tag">
-                <a href="/tags/sqli-labs/">
-                  #sqli-labs
-                </a>
-              </span>
-            
-              <span class="span--tag">
-                <a href="/tags/sql注入/">
-                  #sql注入
                 </a>
               </span>
             

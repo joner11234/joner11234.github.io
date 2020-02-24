@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>i春秋新春战疫部分题目writeup | Joner</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="CTF,WriteUp,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>i春秋新春战疫部分题目writeup</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-02-24
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="MISC-code-in-morse"><a href="#MISC-code-in-morse" class="headerlink" title="MISC-code_in_morse"></a>MISC-code_in_morse</h2><p>这道题下载后是一个数据包，所以首先是需要分析数据包，打开先追踪一下HTTP流看看，往下一滑就看到了一堆摩斯电码</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/941-51-38.png" alt></p>
+<p>正好题目名字中说code in morse ，估计这段莫斯电码就是关键，放到解密网站上解一下，解出来是下面这些东西</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/532-19-07.png" alt></p>
+<p>这样一看，感觉是base64，用base64解码后是乱码，然后基本就是一直卡在这，经过各种尝试，最后还是想不到往下怎么做，这道题最后就只走到这里。下面是看了writeup后的复现。</p>
+<p>前面的思路都对，到了解base那里出了错，下面来看一下base编码的特点</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/592-54-19.png" alt></p>
+<p>看一下特点大概就懂了，16 32 64 这三种编码在编码后的区别特别明显，就是编码后的字符，结合这些特点一看，上面得到的应该是base32编码，但是到网上的解码网站解码，又都显示解码失败</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224200324242.png" alt="image-20200224200324242"></p>
+<p>之后看WriteUp里是用的python解码，解码后存成1.png，为什么存成png格式呢因为到这个网站( <a href="http://www.tomeko.net/online_tools/base32.php?lang=en" target="_blank" rel="noopener">http://www.tomeko.net/online_tools/base32.php?lang=en</a> )分析后发现了png的字样，就推测是png文件</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224201223164.png" alt="image-20200224201223164"></p>
+<p>脚本是这样写的,非常简单</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> base64</span><br><span class="line">ba32 = <span class="string">""</span></span><br><span class="line"><span class="keyword">with</span> open(<span class="string">"base64.txt"</span>) <span class="keyword">as</span> f:</span><br><span class="line">    b32=f.read()</span><br><span class="line"><span class="keyword">with</span> open(<span class="string">"1.png"</span>,<span class="string">"wb"</span>) <span class="keyword">as</span> f:</span><br><span class="line">    f.write(base64.b32decode(ba32))</span><br></pre></td></tr></table></figure>
+<p>运行后得到一张这个</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224201433846.png" alt="image-20200224201433846"></p>
+<p>这个应该是一个机票条码，之前做题遇见过，解码后得到一个网址，打开得到一张图片(怪不得第一天结束后群里一直在发这个图，原来是这的….)</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/1yPXJ1.jpg" alt="1yPXJ1"></p>
+<p>然后开始常规流程，先看看文件信息，然后看到了这个</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224201831811.png" alt="image-20200224201831811"></p>
+<p>想到了之前遇见过F5隐写，所以就比较敏感，直接先试试是不是，在F5隐写工具目录下执行如下命令，后得到一个output.txt，里面就是flag。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java Extract 1yPXJ1.jpg</span><br></pre></td></tr></table></figure>
+<h2 id="简单的招聘系统"><a href="#简单的招聘系统" class="headerlink" title="简单的招聘系统"></a>简单的招聘系统</h2><p>打开之后是一个简单的登录框，只有登录和注册功能，先看一看网页源码，没有提示，再扫一下目录，没有东西，再试一试注册，注册不了，后来才知道是能注册的，重新下发后能注册了，然后看了一下有这么两个页面感觉会有东西</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224203517047.png" alt="image-20200224203517047"></p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224203539875.png" alt="image-20200224203539875"></p>
+<p>说明存在admin用户，看他们赛后说好多测出XSS的，打了一通没打到cookie，这里我倒是没有测那个，我看到有admin用户我就去爆破了，用户名admin，密码6000弱密码，点上之后就去干别的了，过一会密码跑出来了，密码admin888，登录之后多了个这个</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224204120681.png" alt="image-20200224204120681"></p>
+<p>感觉就是注入了，一看我感觉是二次注入，因为这里的查询之后会显示那个个人简介，然后就照着二次注入做的，后来看WriteUp,仿佛可以搜索框注入，还有可以登录框注入，这个题非预期有点多。</p>
+<p>然后就是常规的报错注入语句，没有什么过滤，首先将注入语句写道admin的Profile更新，之后搜索admin的key。</p>
+<p>payload</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">'or updatexml(2,concat(0x7e,(database())),0) or'</span><br></pre></td></tr></table></figure>
+<h2 id="ezupload"><a href="#ezupload" class="headerlink" title="ezupload"></a>ezupload</h2><p>这个题目过于简单，这里只简单描述，首先上传webshell，这里没什么拦截的地方，抓包把文件后缀改成php就行，之后连接一句话，在服务器根目录发现flag文件，但是没有读取权限，然后旁边还有个readflag文件，在模拟终端中运行一下这个文件获得flag，没想到有这么简单的题。</p>
+<h2 id="blacklist"><a href="#blacklist" class="headerlink" title="blacklist"></a>blacklist</h2><p>发现框 直接试试注入，一看肯定是注入了，之后使用注入语句出现了提示</p>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/C:/Users\Joner\AppData\Roaming\Typora\typora-user-images\image-20200224205443302.png" alt="image-20200224205443302"></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">return</span> preg_match(<span class="string">"/set|prepare|alter|rename|select|update|delete|drop|insert|where|\./i"</span>,$inject);</span><br></pre></td></tr></table></figure>
+<p>搜了一下，这是一道修改后的题，在关键词检测的地方增加了<code>set</code>、<code>prepare</code>、<code>alter</code>、<code>rename</code>等，也就是说网上能搜到的那些修改表和使用set的姿势都不能用，那肯定是由别的姿势，当时我没有研究出来，后来看WriteUp，又学到了一个新姿势。</p>
+<p>首先是堆叠注入，然后使用mysql的handler进行处理。</p>
+<p>假设有表flag。我们可以可以使用handler对表名进行操作</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">handler flag <span class="keyword">open</span> <span class="keyword">as</span> byc;</span><br></pre></td></tr></table></figure>
+<p>之后就可以读取表中数据</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">handler byc <span class="built_in">read</span> first；</span><br><span class="line">handler byc <span class="built_in">read</span> next;</span><br></pre></td></tr></table></figure>
+<p>所以在这道题中，首先通过<code>1&#39;;show tables;#</code>,得到flag表<code>FlagHere</code>，之后使用下面的语句得到flag</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1'</span>; handler `FlagHere` open <span class="keyword">as</span> `byc`;handler `byc` read next;<span class="meta">#</span></span><br></pre></td></tr></table></figure>
+<p><img src="/2020/02/24/i春秋新春战疫部分题目writeup/image-20200224210247031.png" alt="image-20200224210247031"></p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p> <a href="https://www.cnblogs.com/linguanh/p/11205256.html" target="_blank" rel="noopener">https://www.cnblogs.com/linguanh/p/11205256.html</a> </p>
+<p>jianshu.com/p/b0a130fe5c4d</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://yoursite.com/2020/02/24/i春秋新春战疫部分题目writeup/</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+    <div id="reward">
+  
+    <p id="reward-meta">点一下康康？</p>
+  
+  <button id="reward-btn">
+    
+    <span>送可乐</span>
+  </button>
+  <div id="reward-qrcode">
+    
+      <div class="reward-qrcode--container">
+        <img class="qrcode-img" src="/images/alipay.png" alt="支付宝扫一扫">
+        <p class="qrcode-meta">支付宝扫一扫</p>
+      </div>
+    
+  </div>
+
+</div>
+
+<script>
+  (() => {
+    let button = document.querySelector('#reward-btn'),
+      qrcode = document.querySelector('#reward-qrcode'),
+      display = false;
+    
+    button.addEventListener('click', () => {
+      qrcode.style.display = display ? 'none' : 'block'
+      display = !display
+    }, false)
+  })()
+</script>
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/CTF/">
+              #CTF
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/WriteUp/">
+              #WriteUp
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/2019/12/01/i春秋CTF答题夺旗赛第三季-Web部分Writeup/" target="_self">i春秋CTF答题夺旗赛第三季-Web部分Writeup</a>
+      </div>
+    
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>
