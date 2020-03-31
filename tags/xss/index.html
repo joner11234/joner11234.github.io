@@ -7,7 +7,7 @@
   
   
   
-  <title>标签: XSS | Joner</title>
+  <title>标签: xss | Joner</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
@@ -155,7 +155,7 @@
     <div class="collection-title">
       <h2>
         
-          <span>标签 : XSS</span>
+          <span>标签 : xss</span>
         
       </h2>
     </div>
@@ -165,40 +165,12 @@
   <article class="posts-collapse">
     <header>
       <h2>
-        <a href="/2019/04/02/XSS-challengs-12-15-通关记录/">
-          <span>XSS challengs 12-15 通关记录</span>
+        <a href="/2019/03/30/初识XSS攻击-XSS-Challenges闯关1-4/">
+          <span>初识XSS攻击 XSS Challenges闯关1-4</span>
         </a>
       </h2>
       <div class="post-meta">
-        04-02
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/03/31/XSS-challengs5-11通过过程/">
-          <span>XSS challengs5-11通过过程</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        03-31
-      </div>
-    </header>
-  </article>
-  
-  
-  <article class="posts-collapse">
-    <header>
-      <h2>
-        <a href="/2019/03/31/XSS注入常用语句/">
-          <span>XSS注入常用语句</span>
-        </a>
-      </h2>
-      <div class="post-meta">
-        03-31
+        03-30
       </div>
     </header>
   </article>
@@ -367,6 +339,27 @@ document.querySelector(".back-to-top").addEventListener("click", backToTop, fals
       return;
     }
     $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>
+n() {
       $(".post img").each(function () {
         if($(this).parent().get(0).tagName.toLowerCase() === "a") {
           return;
