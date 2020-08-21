@@ -175,7 +175,7 @@
       <h3 id="SQLMap入门"><a href="#SQLMap入门" class="headerlink" title="SQLMap入门"></a>SQLMap入门</h3><p>这里以sql–labs Less-1为例，介绍sqlmap的基本使用方法</p>
 <h4 id="判断是否存在注入"><a href="#判断是否存在注入" class="headerlink" title="判断是否存在注入"></a>判断是否存在注入</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1</span><br></pre></td></tr></table></figure>
 <p>结果如下所示</p>
-<p><img src="/article/D:/Entertainment\STU\Bolg\source\_posts\SQLMap使用\1.png" alt></p>
+<p><img src="/article/936c561b/Entertainment\STU\Bolg\source\_posts\SQLMap使用\1.png" alt></p>
 <p>可以看到检测到了系统、数据库、php的信息，上面还有注入点信息以及相应的payload</p>
 <h4 id="判断文本种的请求是否存在注入"><a href="#判断文本种的请求是否存在注入" class="headerlink" title="判断文本种的请求是否存在注入"></a>判断文本种的请求是否存在注入</h4><p>SQLMap可以加载文件中的HTTP请求，这样就不用手动设置其他参数，</p>
 <h4 id="查询数据库中的信息"><a href="#查询数据库中的信息" class="headerlink" title="查询数据库中的信息"></a>查询数据库中的信息</h4><p>查询所有数据库<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --dbs</code></p>

