@@ -194,6 +194,14 @@
 <p><img src="/article/55ad7b37/090-14-06.png" alt></p>
 <h2 id="升级完整版"><a href="#升级完整版" class="headerlink" title="升级完整版"></a>升级完整版</h2><p>打开linux终端，输入下面的命令升级完整版，经过<strong>很长时间</strong>后，即可升级为完整版。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install kali-liunx-full</span><br></pre></td></tr></table></figure></p>
 <p><img src="/article/55ad7b37/256-00-45.png" alt></p>
+<p>注意：</p>
+<p>目前在2019.3版本以后的，元数据包得到了大量的改变，例如：</p>
+<blockquote>
+<p>kali-linux-default 现在是默认的kali linux元数据包</p>
+<p>kali-linux-full 变为 kali-linux-large</p>
+<p><strong>kali-linux-all</strong> 变为 <strong>kali-linux-everything</strong></p>
+<p>kali-linux-top10 变为 kali-tools-top10</p>
+</blockquote>
 <p>但是升级完整版后有一个问题，在桌面系统上并没有像原生kali系统一样分类列出各种工具，而且一些工具使用会出现错误。但是轻度使用的话，这些东西没有很大的影响。</p>
 <h2 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h2><h3 id="打开系统"><a href="#打开系统" class="headerlink" title="打开系统"></a>打开系统</h3><p>打开Linux子系统可以点击图标打开、但是这样的中终端有点丑<br>或者在cmd上输入<code>bash</code>，即可进入Linux系统，这里我使用的Terminal是美化了的。想要美化的可以百度一下相关的教程。</p>
 <h3 id="系统重启"><a href="#系统重启" class="headerlink" title="系统重启"></a>系统重启</h3><p>使用子系统执行<code>reboot</code>命令不会重启，需要直接开关相应的服务或者使用命令行重启，使用管理员权限打开cmd(不是linux的终端),之后输入下面两个命令进行重启。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">net stop LxssManager        #关闭服务</span><br><span class="line">net start LxssManager       #开启服务</span><br></pre></td></tr></table></figure></p>
