@@ -187,7 +187,7 @@
 <h2 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h2><h3 id="前端验证"><a href="#前端验证" class="headerlink" title="前端验证"></a>前端验证</h3><p>这种验证码是在前端由JS生成并验证，所以生成和验证过程中不会和服务器进行交互</p>
 <h4 id="测试方法"><a href="#测试方法" class="headerlink" title="测试方法"></a>测试方法</h4><p>一般这样的验证码不会特别复杂，进行验证时，查看浏览器审查元素中的网络，或者查看抓包软件记录，若其中不存在和服务器交互的数据包，则可以猜测是前端验证，这时候，只需要把JS禁用就可以绕过验证，或者直接在Burp中进行提交数据(因为验证码不是服务端生成，所以前端不会向后端发送验证码)</p>
 <h3 id="验证码直接输出在前端"><a href="#验证码直接输出在前端" class="headerlink" title="验证码直接输出在前端"></a>验证码直接输出在前端</h3><p>这类验证码生成的不是图片，而是直接生成的HTML代码，这就导致了可以直接查看前端代码查看验证码内容，同样可以直接写脚本进行提取，如图(图片来自Wooyun)</p>
-<p><img src="/article/5d927c8d/D:%5CEntertainment%5CSTU%5CBlog%5Csource%5C_posts%5C%E9%A1%B5%E9%9D%A2%E5%9B%BE%E7%89%87%E9%AA%8C%E8%AF%81%E7%A0%81%E6%B5%8B%E8%AF%95%E6%80%9D%E8%B7%AF-1%5C1600606766931-098b0807-8d16-4a54-be3b-47992b1a26f4.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/%5C%E9%A1%B5%E9%9D%A2%E5%9B%BE%E7%89%87%E9%AA%8C%E8%AF%81%E7%A0%81%E6%B5%8B%E8%AF%95%E6%80%9D%E8%B7%AF-1%5C1600606766931-098b0807-8d16-4a54-be3b-47992b1a26f4.png" alt="image.png"></p>
 <h2 id="服务端"><a href="#服务端" class="headerlink" title="服务端"></a>服务端</h2><h3 id="验证码无效"><a href="#验证码无效" class="headerlink" title="验证码无效"></a>验证码无效</h3><p>在一些新开发的系统或者不成熟的系统中，开发人员可能为了测试方便，没有配置随机验证码，或者是直接没有写完这个功能，此时输入特定验证码或者任何验证码都可以验证成功。</p>
 <h4 id="测试方法-1"><a href="#测试方法-1" class="headerlink" title="测试方法"></a>测试方法</h4><p>如果在输入验证码时，任意验证都可以验证成功就说明存在验证码无效的问题，另外如果输入了正确验证码却验证失败，可以尝试Fuzz简单的数组或者字母，如8888、1111、123456，这可能是为了方便测试，设置的固定验证码。</p>
 <h3 id="验证码存在固定有效期"><a href="#验证码存在固定有效期" class="headerlink" title="验证码存在固定有效期"></a>验证码存在固定有效期</h3><p>系统在生成一个验证码后，在一段时间内，这个验证码都是有效的，导致可以在一段时间内使用该验证码进行爆破或者其他测试。</p>
@@ -196,39 +196,39 @@
 <h4 id="测试方法-3"><a href="#测试方法-3" class="headerlink" title="测试方法"></a>测试方法</h4><p>与上一个类似，在验证后验证码没有立即刷新，验证密码失败固定次数后验证码失效，放在Burp的爆破模块里跑几次就无法验证了</p>
 <h3 id="验证码生成结果可控"><a href="#验证码生成结果可控" class="headerlink" title="验证码生成结果可控"></a>验证码生成结果可控</h3><p>另外有的系统在请求验证码的字段中，存在验证码字符的范围，例如?range=0123456789,如果存在类似的参数，可以将它设为单个字符或者重复的字符，以此来达到生成固定字符的目的；或者有的流程就像前面前后端分离的验证码实现方案中一样，前端生成随机数，服务端根据随机数生成验证码，如果服务端生成函数存在问题，传入相同随机数时，生成的验证码相同，或者生成的验证码是可被预测的。</p>
 <h2 id="验证码自身"><a href="#验证码自身" class="headerlink" title="验证码自身"></a>验证码自身</h2><h3 id="验证码易于识别"><a href="#验证码易于识别" class="headerlink" title="验证码易于识别"></a>验证码易于识别</h3><p>验证码自身问题主要还是生成的验证码过于简单，导致可以借助OCR软件进行识别，在Burp中也有一些插件可以对这种简单的 二维码进行识别，例如PKAV HTTP Fuzzer、reCAPTCHA。这些插件的实现原理一般都是获取返回的验证码图片，然后调用验证码识别接口或者本地进行识别，所以识别的准确度与验证码自身、训练模型都有关系。</p>
-<p><img src="/article/5d927c8d/D:%5CEntertainment%5CSTU%5CBlog%5Csource%5C_posts%5C%E9%A1%B5%E9%9D%A2%E5%9B%BE%E7%89%87%E9%AA%8C%E8%AF%81%E7%A0%81%E6%B5%8B%E8%AF%95%E6%80%9D%E8%B7%AF-1%5C1600651659173-1a89e281-c807-43ce-9ef5-8a5b4f567050.png" alt="image.png" style="zoom: 67%;"></p>
+<p><img src="/article/5d927c8d/%5C%E9%A1%B5%E9%9D%A2%E5%9B%BE%E7%89%87%E9%AA%8C%E8%AF%81%E7%A0%81%E6%B5%8B%E8%AF%95%E6%80%9D%E8%B7%AF-1%5C1600651659173-1a89e281-c807-43ce-9ef5-8a5b4f567050.png" alt="image.png" style="zoom: 67%;"></p>
 <h2 id="传输流程"><a href="#传输流程" class="headerlink" title="传输流程"></a>传输流程</h2><h3 id="生成的验证码使用Cookie传输"><a href="#生成的验证码使用Cookie传输" class="headerlink" title="生成的验证码使用Cookie传输"></a>生成的验证码使用Cookie传输</h3><p>服务端会将生成的验证码传输到客户端，其中传输过程中有的系统会直接将验证码放在Cookie中</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600614088045-e5ea9670-7f19-4167-b2e8-2832060cbe81.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600614088045-e5ea9670-7f19-4167-b2e8-2832060cbe81.png" alt="image.png"></p>
 <h3 id="获取验证码的响应包存在验证码"><a href="#获取验证码的响应包存在验证码" class="headerlink" title="获取验证码的响应包存在验证码"></a>获取验证码的响应包存在验证码</h3><p>这个也是之前经常存在的漏洞，在重新获取验证码时，会发送一个请求包，在响应包中会直接发回验证码，这个时候就可以写一个脚本获取验证码来绕过，或者是同Burp中的Macros功能，自动提取并替换验证码。</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600607551191-79b2b186-cd11-41e7-a71a-c8c4f0a17e4d.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600607551191-79b2b186-cd11-41e7-a71a-c8c4f0a17e4d.png" alt="image.png"></p>
 <h3 id="返回的验证码图片中存在验证码文本"><a href="#返回的验证码图片中存在验证码文本" class="headerlink" title="返回的验证码图片中存在验证码文本"></a>返回的验证码图片中存在验证码文本</h3><p>在返回验证码的时候，会将生成的验证码文本内容放在图片后面返回</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600648016651-c2d47c8f-9ec7-4c81-9eab-cdb94e7ce643.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600648016651-c2d47c8f-9ec7-4c81-9eab-cdb94e7ce643.png" alt="image.png"></p>
 <h2 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h2><h3 id="没有进行非空判断"><a href="#没有进行非空判断" class="headerlink" title="没有进行非空判断"></a>没有进行非空判断</h3><p>这种根据不同的系统可能会有很多种测试方法，例如当后台对验证码的参数没有进行严格校验时候，可以将验证码参数值置为空、将参数改为数组或者直接删除这个参数，这些都是有可能绕过验证码的</p>
 <h3 id="验证后没有销毁会话"><a href="#验证后没有销毁会话" class="headerlink" title="验证后没有销毁会话"></a>验证后没有销毁会话</h3><p>这个问题是验证逻辑的错误，属于验证流程的问题，但是存在于服务端，它是在校验验证码后没有将会话销毁，这样会导致一个验证码能够反复利用，这也是存在最多的一种验证码漏洞，直接的后果就是验证码完全失去了它的作用。</p>
 <h4 id="测试方法-4"><a href="#测试方法-4" class="headerlink" title="测试方法"></a>测试方法</h4><p>直接一直使用同样的包进行发送，查看返回结果，另外可以删除请求包中的某些字段来进行测试，例如Cookie、Session或者请求的其他参数</p>
 <h2 id="Burp中Morse的使用"><a href="#Burp中Morse的使用" class="headerlink" title="Burp中Morse的使用"></a>Burp中Morse的使用</h2><p>这里是自己写的一个示例，其中存在的问题是在请求验证码时，服务端会将验证码的内容返回回来，因此可以直接将返回包中的验证码输入进行验证</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612344078-5b6c53f2-04cb-42a8-b772-4036888bbd0f.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600612344078-5b6c53f2-04cb-42a8-b772-4036888bbd0f.png" alt="image.png"></p>
 <p>那么这时候可以自己编写脚本将得到的验证码拿到下一步进行验证，或者使用Burp中的Macros，下面是使用方法</p>
-<h3 id="设置宏"><a href="#设置宏" class="headerlink" title="设置宏"></a>设置宏</h3><p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612547412-69d227a8-644c-482a-b28c-deb4e2221a51.png" alt="image.png" style="zoom:67%;"></p>
+<h3 id="设置宏"><a href="#设置宏" class="headerlink" title="设置宏"></a>设置宏</h3><p><img src="/article/5d927c8d/1600612547412-69d227a8-644c-482a-b28c-deb4e2221a51.png" alt="image.png" style="zoom:67%;"></p>
 <p>首先设置宏，在图示位置点击添加</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612625067-6a7d7b5d-168b-4f99-a5e3-0aec47e1b9b3.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600612625067-6a7d7b5d-168b-4f99-a5e3-0aec47e1b9b3.png" alt="image.png" style="zoom:67%;"></p>
 <p>添加后会自动弹出历史包，这里选择这两个我们要用到的包，一个是请求验证码，一个是验证验证码的包</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612709356-cda79653-1102-40d9-ba98-c0bea31b05b4.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600612709356-cda79653-1102-40d9-ba98-c0bea31b05b4.png" alt="image.png" style="zoom:67%;"></p>
 <p>然后选择第一个获取验证码的包(因为是先获取验证码在验证)，点击Configure item 进行设置</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612811228-f9a92075-81e8-453e-a1a0-7cf901814c13.png" alt="image.png" style="zoom:67%;"></p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600612870045-b989ff84-8d8c-409f-b7f2-70c66751edd7.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600612811228-f9a92075-81e8-453e-a1a0-7cf901814c13.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600612870045-b989ff84-8d8c-409f-b7f2-70c66751edd7.png" alt="image.png" style="zoom:67%;"></p>
 <p>之后设置获取字段的名字，这里的名字设置成与验证包里的变量相同的名字，然后下面用鼠标选择，它会自动识别前后的内容</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613001339-e3f20c0d-f028-49e6-a849-1e30ff289f1e.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600613001339-e3f20c0d-f028-49e6-a849-1e30ff289f1e.png" alt="image.png" style="zoom:67%;"></p>
 <p>然后回到刚才的地方，设置第二个包，这里它会自动识别提交的参数，只需要选择对应的参数，然后选择数据来源为获取验证码的包，这里第一个包。</p>
 <h3 id="设置会话处理规则"><a href="#设置会话处理规则" class="headerlink" title="设置会话处理规则"></a>设置会话处理规则</h3><p>接下来设置会话处理规则，刚才设置的只是一个动作，这里的设置是设置在什么时候启用这个宏</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613113333-8298d7fc-8b40-4f8e-8dbd-47b95934e839.png" alt="image.png"></p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613176572-051e5027-d54f-4ddb-bf48-ccd012988374.png" alt="image.png" style="zoom:67%;"></p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613239500-94aa500f-994f-426d-8f1d-ea19e299f485.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600613113333-8298d7fc-8b40-4f8e-8dbd-47b95934e839.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600613176572-051e5027-d54f-4ddb-bf48-ccd012988374.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600613239500-94aa500f-994f-426d-8f1d-ea19e299f485.png" alt="image.png" style="zoom:67%;"></p>
 <p>这里选择图示的选项，在后面选择修改包中captcha的内容，之后选择OK</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613316342-06bc4d5b-de4d-4698-8db3-d50cd2546516.png" alt="image.png" style="zoom:67%;"></p>
+<p><img src="/article/5d927c8d/1600613316342-06bc4d5b-de4d-4698-8db3-d50cd2546516.png" alt="image.png" style="zoom:67%;"></p>
 <p>下面设置Scope,其中可以设置动作生效的模块，例如可以只选择爆破模块，中间是URL的范围，最下面是参数的范围，这些都可以根据具体情况进行设定，设定好后OK</p>
 <p>然后就可以到Repeater或者爆破模块中进行测试了，这里再爆破模块进行了测试</p>
-<p><img src="/article/5d927c8d/Entertainment\STU\Blog\source\_posts\页面图片验证码测试思路-1\1600613489351-79c1217f-c24d-412d-af1d-5220d4c13e9a.png" alt="image.png"></p>
+<p><img src="/article/5d927c8d/1600613489351-79c1217f-c24d-412d-af1d-5220d4c13e9a.png" alt="image.png"></p>
 <p>可以看到所有的都是验证码正确，<strong>注意使用爆破的时候要设置单线程</strong></p>
 <h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>对于上述的验证码问题，单从验证码方面来说，造成的影响并不是很大，但是验证码一旦失效，可用的地方还是很多的，例如有的后台验证码可重复使用，那么就可以直接对后台的用户或者密码进行爆破，以此来步步深入，或者有的接口验证码失效，那么就可以利用这个接口来遍历或者爆破一些信息。这样的例子还有很多，结合实际情况进行利用，就能加大这个漏洞的影响。</p>
 <p><a href="https://blog.csdn.net/weixin_39190897/article/details/86539542" target="_blank" rel="noopener">https://blog.csdn.net/weixin_39190897/article/details/86539542</a></p>
