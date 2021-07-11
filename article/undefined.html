@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>SQL注入类型总结 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sql注入,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>SQL注入类型总结</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-15
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="Union注入"><a href="#Union注入" class="headerlink" title="Union注入"></a>Union注入</h2><blockquote>
+<p>UNION 操作符用于合并两个或多个 SELECT 语句的结果集。</p>
+<p>请注意，UNION 内部的 SELECT 语句必须拥有相同数量的列。列也必须拥有相似的数据类型。同时，每条 SELECT 语句中的列的顺序必须相同。</p>
+</blockquote>
+<p>所以可以在存在注入的地方利用Union语句查询其他语句，注意要把id的值改为一个错误值，这样能返回出union后面查询的结果。</p>
+<h2 id="Boolean注入"><a href="#Boolean注入" class="headerlink" title="Boolean注入"></a>Boolean注入</h2><p>代码根据数据库查询结果只返回正确和错误，而不返回任何数据，所以只能根据页面的正确和错误的特征来判断语句是否执行成功。</p>
+<h2 id="报错注入"><a href="#报错注入" class="headerlink" title="报错注入"></a>报错注入</h2><p>当数据库语句执行错误时，会将错误信息输出出来，如果存在宝座注入，就可以想办法构造一些语句，使数据通过错误信息输出出来。</p>
+<blockquote>
+<p>首先了解下updatexml()函数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt; UPDATEXML (XML_document, XPath_string, new_value); </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>第一个参数：XML_document是String格式，为XML文档对象的名称，文中为Doc </p>
+<p>第二个参数：XPath_string (Xpath格式的字符串) </p>
+<p>第三个参数：new_value，String格式，替换查找到的符合条件的数据 </p>
+<p>作用：改变文档中符合条件的节点的值</p>
+<p>改变XML_document中符合XPATH_string的值</p>
+</blockquote>
+<p>报错注入的注入语句为<code>updatexml(1,concat(0x7e,(SELECT user()),0x7e),1)</code>,其中的concat()函数是将其连成一个字符串，因此不会符合XPATH_string的格式，从而出现格式错误，爆出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR 1105 (HY000): XPATH syntax error: &apos;:root@localhost&apos;</span><br></pre></td></tr></table></figure>
+<p>还有其他的用于报错注入的语句</p>
+<p><strong>ExtractValue</strong><br>测试语句如下</p>
+<p>and extractvalue(1, concat(0x5c, (select table_name from information_schema.tables limit 1)));</p>
+<p><strong>floor</strong></p>
+<p>可以通过如下一些利用代码</p>
+<p><code>and select 1 from (select count(*),concat(version(),floor(rand(0)*2))x from information_schema.tables group by x)a);</code></p>
+<p><code>and (select count(*) from (select 1 union   select null union   select  !1)x group by concat((select table_name from information_schema.tables  limit 1),floor(rand(0)*2)));</code></p>
+<h2 id="时间注入"><a href="#时间注入" class="headerlink" title="时间注入"></a>时间注入</h2><p>时间注入和布尔注入非常类似，时间注入是根据页面相应的时间来进行判断，这里使用的是if判断语句和sleep()函数。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if(length(database())&gt;1,sleep(5),1)</span><br></pre></td></tr></table></figure>
+<p>这个语句的意思是，如果数据库名字长度大于1，那么mysql休眠5秒钟，否则执行1，查询1的时间大约几毫秒，所以查看页面响应时间可以轻松知道语句是否正确执行。</p>
+<h2 id="堆叠查询注入"><a href="#堆叠查询注入" class="headerlink" title="堆叠查询注入"></a>堆叠查询注入</h2><p>堆叠查询注入是执行多条语句，因为多个语句可以用分号隔开，所以可以利用这个特点来执行别的语句，堆叠注入语句为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&apos;;select if(substr(user(),1,1)=&apos;r&apos;,sleep(5),1) #</span><br></pre></td></tr></table></figure>
+<p>可以看出这里也用到了时间注入的盲注语句，使用堆叠注入时通常无法获得第二个语句的数据，所以大多使用盲注的语句来获得具体数据。</p>
+<h2 id="宽字节注入"><a href="#宽字节注入" class="headerlink" title="宽字节注入"></a>宽字节注入</h2><p>当id是使用单引号包围的，但是处理程序会将传入的单引号被反斜线转义，这时，如果数据库的编码为GBK就可以使用宽字节注入，这是在地址后先加一个<code>%df</code>再加单引号，因为反斜杠的编码为<code>%5c</code>在GBK编码中，<code>%df%5c</code>是繁体字”運”，所以这时候单引号逃逸，导致mysql数据库错误。</p>
+<h2 id="Cookie注入"><a href="#Cookie注入" class="headerlink" title="Cookie注入"></a>Cookie注入</h2><p>通过$_COOKIE能够获取浏览器cookie中的数据，所以如果网页是使用cookie传递数据，并且没有进行过滤，就会造成cookie注入，可以通过burp suite抓取数据包并进行修改。</p>
+<h2 id="base64注入"><a href="#base64注入" class="headerlink" title="base64注入"></a>base64注入</h2><blockquote>
+<p>base64</p>
+<p>Base64是网络上最常见的用于传输8Bit<a href="https://baike.baidu.com/item/%E5%AD%97%E8%8A%82%E7%A0%81/9953683" target="_blank" rel="noopener">字节码</a>的编码方式之一，Base64就是一种基于64个可打印字符来表示二进制数据的方法。可查看RFC2045～RFC2049，上面有MIME的详细规范。</p>
+<p>Base64编码是从二进制到字符的过程，可用于在<a href="https://baike.baidu.com/item/HTTP" target="_blank" rel="noopener">HTTP</a>环境下传递较长的标识信息。例如，在Java Persistence系统Hibernate中，就采用了Base64来将一个较长的唯一<a href="https://baike.baidu.com/item/%E6%A0%87%E8%AF%86%E7%AC%A6/7105638" target="_blank" rel="noopener">标识符</a>（一般为128-bit的UUID）编码为一个字符串，用作HTTP<a href="https://baike.baidu.com/item/%E8%A1%A8%E5%8D%95/5380322" target="_blank" rel="noopener">表单</a>和HTTP GET URL中的参数。在其他应用程序中，也常常需要把二进制<a href="https://baike.baidu.com/item/%E6%95%B0%E6%8D%AE%E7%BC%96%E7%A0%81/10173270" target="_blank" rel="noopener">数据编码</a>为适合放在URL（包括隐藏<a href="https://baike.baidu.com/item/%E8%A1%A8%E5%8D%95%E5%9F%9F/3788809" target="_blank" rel="noopener">表单域</a>）中的形式。此时，采用Base64编码具有不可读性，需要解码后才能阅读。</p>
+<p>Base64由于以上优点被广泛应用于计算机的各个领域，然而由于输出内容中包括两个以上“符号类”字符（+, /, =)，不同的应用场景又分别研制了Base64的各种“变种”。为统一和规范化Base64的输出，Base62x被视为无符号化的改进版本。</p>
+</blockquote>
+<p>base64注入是针对传递的参数被base64加密后的注入点进行注入。这种方式常用来绕过一些WAF的检测。sqlmap的扩展模块<code>–tamper base64encode</code>就可用于base64注入</p>
+<h2 id="XFF注入"><a href="#XFF注入" class="headerlink" title="XFF注入"></a>XFF注入</h2><p>X-Forwarded-For简称XFF头，它代表了客户端的真实IP，通过修改他的值就可以伪造客户端IP。</p>
+<p>1）判断是否存在注入</p>
+<p>使用Burp的Repeater模块对请求进行修改，分别修改X-Forwarded-For的值如下所示：</p>
+<p>X-Forwarded-for: 127.0.0.1</p>
+<p>X-Forwarded-for: 127.0.0.1’</p>
+<p>X-Forwarded-for: 127.0.0.1’ and 1=1#</p>
+<p>X-Forwarded-for: 127.0.0.1’ and 1=2#</p>
+<p>访问的结果如下，说明存在SQL注入漏洞。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/undefined.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sql注入/">
+              #sql注入
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/fdae567a.html" target="_self">POST注入入门-Less-11-13</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/f98ca180.html" target="_self">心脏滴血漏洞简单分析与复现</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

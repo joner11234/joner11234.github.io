@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>全国大学生信息安全竞赛基础知识学习 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="安全竞赛,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>全国大学生信息安全竞赛基础知识学习</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-03-22
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <ul>
+<li>Linux下的MySQL</li>
+<li>Linux下的常见问题</li>
+<li>root用户远程登陆</li>
+<li>设置对登录者的警告</li>
+<li>开启history时间记录</li>
+</ul>
+<h2 id="linux下的MySQL"><a href="#linux下的MySQL" class="headerlink" title="linux下的MySQL"></a>linux下的MySQL</h2><h3 id="MySQL介绍"><a href="#MySQL介绍" class="headerlink" title="MySQL介绍"></a>MySQL介绍</h3><blockquote>
+<p>MySQL 是一个小型关系数据库管理系统，与其他大型数据可管理系统（例如Oracle、DB2、SQL Server 等）相比，MySQL规模小、功能有限吗，但是他体积小、速度快、成本低，而且他提供的功能对于稍微复杂的应用来说足以，这些特性使得MySQL成为了世界上最受欢迎的数据库。</p>
+</blockquote>
+<h3 id="对应习题"><a href="#对应习题" class="headerlink" title="对应习题"></a>对应习题</h3><blockquote>
+<p><strong>简述客户机-服务器软件</strong></p>
+</blockquote>
+<p>服务器-客户机，即Client-Server(C/S)结构，通常采取两层结构，这是一种网路架构，通常再该网络架构下软件分为客户端和服务器。服务器负责数据的管理，客户机负责完成于用户的交互任务。</p>
+<p>服务器是整个应用系统资源的存储与管理中心，多个客户端各自处理相应的功能，共同实现完整应用。在C/S节结构中，客户端的请求被传送到数据库服务器，数据库服务器进行处理后，将结果返回给用户，实现减少网络数据传输量。</p>
+<p>用户使用应用程序时首先启动客户端，通过有关命令告知服务器进行连接以完成各种操作，而服务器则按照请示提供相应的服务，每个客户端实例都可以向一个服务器或者应用程序服务器发出请求。</p>
+<p>这种系统的特点就是，客户端和服务器子啊不同一台计算机上运行，这些客户端和服务端程序通常归属不同的计算机。</p>
+<p>主从式架构通过不同的途径应用于很多不同类型的应用程序，比如，现在人们最熟悉的在因特网上使用的网页。例如，当顾客想要在当当网站上买书的时候，电脑和网页浏览器就被当作一个客户端，同时，组成当当网的电脑、数据库和应用程序就被当做服务器。当顾客的网页浏览向当当网请求搜寻数据库相关图书时，当当网服务器从当当网的数据库中找出所有该类型的图书信息，结合成一个网页，再发送回顾客的浏览器。服务器端一般使用高性能的计算机，并配合使用不同类型的数据库，比如Oracle、Sybase或者是MySQL等；客户端需要安装专门的软件，比如专门开发的客户端工具浏览器等。</p>
+<h2 id="Linux下的常见问题"><a href="#Linux下的常见问题" class="headerlink" title="Linux下的常见问题"></a>Linux下的常见问题</h2><h3 id="dmesg都有哪些作用"><a href="#dmesg都有哪些作用" class="headerlink" title="dmesg都有哪些作用"></a><code>dmesg</code>都有哪些作用</h3><p>功能：显示开机信息</p>
+<p>语法：<code>dmasg[-cn][-s &lt;缓冲区大小&gt;]</code></p>
+<p>补充说明：<code>kernel</code>将开机信息存储在<code>ring buffer</code>中，若是开机时来不及看信息，可以利用<code>dmesg</code>查看，开机信息也保存在<code>/var/log/dmesg</code>中。</p>
+<p>参数：</p>
+<ul>
+<li><code>-c</code>显示信息后，清除<code>ring buffer</code>中内容</li>
+<li><code>-s&lt;缓冲区大小&gt;</code>预设值为8196，刚好等于<code>ring buffer</code> 的大小。</li>
+<li><code>-n</code>设置记录信息的层级</li>
+</ul>
+<p>主要应用</p>
+<p>dmesg用于显示内核缓冲区(kernel-ring buffer)内容，内核将各种消息存放在这里。在系统引时，内核将与硬件和模块初始化相关的信息填到这个缓冲区中。内核缓冲区中的消息对于诊断系统问题很有用处。在运行dmesg时，显示了大量信息。通常通过less或grep使用管道查看dmesg的输出，这样可以更容易找到待查看的信息</p>
+<h2 id="root用户远程登录"><a href="#root用户远程登录" class="headerlink" title="root用户远程登录"></a>root用户远程登录</h2><blockquote>
+<p>在Linux中，root几乎拥有所有的权限，一旦root用户密码外泄，对于服务器而言将是致命的威胁，禁止root用户通过ssh的远程方式登录，这样即使root用户密码外泄也能够保障服务器的安全，请说明如何禁止root用户通过ssh的远程方式登录？</p>
+</blockquote>
+<p>在新建普通用户后，将<code>root</code>用户通过ssh远程登录的方式禁用，就可以只新建的普通用户通过ssh的方式远程登录，修改<code>/etc/ssh/sshd_config</code>配置文件，将其中的<code>PermitRootLogin</code>注释去掉，并将后面参数改为<code>no</code></p>
+<blockquote>
+<p>拓展:修改默认的22端口，继续在<code>sshd_config</code>文件中查找<code>#port 22</code> 将注释去掉，并将22改为其他端口号，注意端口号不要和其他冲突。</p>
+</blockquote>
+<p>修改后重启ssh服务，命令：<code>sudo service sshd restart</code> </p>
+<h2 id="设置对登陆者的警告"><a href="#设置对登陆者的警告" class="headerlink" title="设置对登陆者的警告"></a>设置对登陆者的警告</h2><p>修改Linux系统中的<code>banner</code>信息，Linux 下登录提示是记录在<code>/etc/issue</code>和<code>/etc/motd</code>中的，两者的区别是<code>/etc/issue</code>在用户登陆前显示，而<code>/etc/motd</code>是在登录后显示。</p>
+<p>【例】在<code>/etc/issue</code>文件中加入登录警告，<code>cat &gt;/etc/issue</code>文件中加入登录警告：<code>cat &gt; /etc/issue &lt;&lt; EOF Warning：The system is owned by supersss Unauthorized access to this system is prohibited!!!</code></p>
+<p>【例】在<code>/etc/motd</code>文件里加入对登录成功者的警告：<code>cat &gt; /etc/motd &lt;&lt;EOF Warning:The system is owned  by supersss What do you will be monitored and logged!!!</code></p>
+<h2 id="开启history时间记录"><a href="#开启history时间记录" class="headerlink" title="开启history时间记录"></a>开启history时间记录</h2><p>通过开启history的时间记录，执行history命令时，先前执行的命令的时间也显示出来了，在<code>/etc/profile</code>的最后添加一下内容,再执行 <code>source /etc/profile</code>即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#设置历史命令的文件大小</span><br><span class="line">HISTFILESIZE=1000000</span><br><span class="line">#历史命令条数</span><br><span class="line">HISTSIZE=100000</span><br><span class="line">#记录每条历史命令的执行时间</span><br><span class="line">HISTTIMEFORMAT=”%Y-%m-%d_%H:%M:%S”</span><br><span class="line">export HISTFILESIZE  HISTSIZE HISTTIMEFORMAT</span><br></pre></td></tr></table></figure>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/49b8e53c.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/安全竞赛/">
+              #安全竞赛
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/51ef88ce.html" target="_self">通过sqli-labs学习sql注入</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

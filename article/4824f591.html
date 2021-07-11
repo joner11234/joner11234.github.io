@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>电子取证-Windows日志分析 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="电子取证,日志分析,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>电子取证-Windows日志分析</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-12-08
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>本文首发<a href="https://bbs.ichunqiu.com/thread-59348-1-1.html" target="_blank" rel="noopener">i春秋</a>，未经允许禁止转载</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在上节Windows取证基础中简单介绍了取证的分类以及内存取证的基础知识，在取证中，不仅仅是通过内存进行取证，还可以在其他方向进行信息提取，下面将通过对日志文件的分析，来进一步了解Windows取证的相关知识，这里所说的日志文件也就是Windows中自带的日志记录程序生成的文件，其中记录着Windows系统及其各种服务运行的细节，如各种系统服务的启动、运行、关闭等信息，它是用于帮助系统管理员在其计算机上发现并解决问题，另外它对于取证和应急响应起着非常重要的作用。</p>
+<h2 id="日志简介"><a href="#日志简介" class="headerlink" title="日志简介"></a>日志简介</h2><p>Windows系统默认以二进制XML Windows事件日志记录格式（由.evtx扩展名指定）将日志存储在％SystemRoot％\System32\Winevt\logs目录中。日志也可以使用日志订阅远程存储。对于远程日志记录，运行Windows Event Collector服务的远程系统订阅其他系统生成的日志。</p>
+<h3 id="日志类型"><a href="#日志类型" class="headerlink" title="日志类型"></a>日志类型</h3><p>不同类型的日志放在不同的位置，这里主要介绍三种日志，应用程序日志、安全日志以及系统日志，其中这三种日志记录的位置和记录信息如下</p>
+<table>
+<thead>
+<tr>
+<th>日志类型</th>
+<th>日志位置</th>
+<th>存储内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>安全日志</td>
+<td><code>%SystemRoot%\System32\Winevt\Logs\Security.evtx</code></td>
+<td>记录系统的安全审计事件，包含各种类型的登录日志、对象访问日志、进程追踪日志、特权使用、帐号管理、策略变更、系统事件。安全日志也是调查取证中最常用到的日志。</td>
+</tr>
+<tr>
+<td>系统日志</td>
+<td><code>%SystemRoot%\System32\Winevt\Logs\System.evtx</code></td>
+<td>记录操作系统组件产生的事件，主要包括驱动程序、系统组件和应<code></code>用软件的崩溃以及数据丢失错误等</td>
+</tr>
+<tr>
+<td>应用程序日志</td>
+<td><code>%SystemRoot%\System32\Winevt\Logs\Application.evtx</code></td>
+<td>包含由应用程序或系统程序记录的事件，主要记录程序运行方面的事<code>件，例如数据库程序可以在应用程序日志中记录文件错误，程序开</code>发人员可以自行决定监视哪些事件。</td>
+</tr>
+</tbody>
+</table>
+<p>默认设置下，安全性日志是关闭的，管理员可以使用组策略来启动安全性日志，或者在注册表中设置审核策略，以便当安全性日志满后使系统停止响应。</p>
+<h3 id="事件ID字段"><a href="#事件ID字段" class="headerlink" title="事件ID字段"></a>事件ID字段</h3><ul>
+<li>Log Name：存储事件的事件日志的名称，在处理从同一系统提取的大量日志时很有用。</li>
+<li>Source：生成事件的服务，Microsoft组件或应用程序。</li>
+<li>Event ID：分配给每种已审计活动类型的代码。</li>
+<li>Level：分配给相关事件的严重性。</li>
+<li>User：在记录事件时，触发活动或源正在运行的用户上下文的用户帐户。注意，该字段通常表示“系统”而不是记录事件原因的用户</li>
+<li>OpCode：由生成日志的源分配</li>
+<li>Logged：记录事件的本地系统日期和时间</li>
+<li>Task Category：由生成日志的源分配</li>
+<li>keywords：用于对事件进行分组或排序。</li>
+<li>Computer：记录事件的计算机。当检查从多个系统收集的日志时，此功能很有用，但不应被视为导致事件的设备</li>
+<li>Description：一个文本块，其中记录了特定于所记录事件的其他信息，对于取证人员来说，这通常是最重要的字段。</li>
+</ul>
+<p><img src="/article/4824f591/1606209300341-e33c2647-8a1c-4069-b7e0-c1398defaaf3.png" alt="image.png"></p>
+<h3 id="查看本地日志"><a href="#查看本地日志" class="headerlink" title="查看本地日志"></a>查看本地日志</h3><p>有的Windows系统的审核功能在默认状态下并没有启用，建议开启审核策略，若日后系统出现故障、安全事故则可以查看系统的日志文件，排除故障，追查入侵者的信息等。按照如下方法设置</p>
+<p><strong>设置方法：**</strong>开始 → 管理工具 → 本地安全策略 → 本地策略 → 审核策略**</p>
+<p><img src="/article/4824f591/1606014917568-687f982f-35c5-4226-b3c6-4fae4dd55dbf.png" alt="image.png"></p>
+<p>Windows在默认状态下，也会记录一些简单的日志，日志默认大小 20M，在Windows上可以通过使用Win+R打开运行框，输入<strong>eventvwr.msc</strong>打开事件查看器，当使用默认的审核策略时，显示的日志内容仅仅是一些简单的内容，当修改审核策略之后，日志记录的内容会有所增加</p>
+<p><img src="/article/4824f591/1605967875510-6383d949-b660-4410-81ba-3fc8d9ff01b9.png" alt="image.png"></p>
+<p>对于Windows事件日志分析，不同的EVENT ID代表了不同的意义，下面是一下常用到的事件ID</p>
+<table>
+<thead>
+<tr>
+<th>事件ID</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1102</td>
+<td>审核日志已清除</td>
+</tr>
+<tr>
+<td>1104</td>
+<td>安全日志现已满</td>
+</tr>
+<tr>
+<td>4608</td>
+<td>Windows正在启动</td>
+</tr>
+<tr>
+<td>4609</td>
+<td>Windows正在关闭</td>
+</tr>
+<tr>
+<td>4616</td>
+<td>系统时间已更改。</td>
+</tr>
+<tr>
+<td>4625</td>
+<td>帐户无法登录</td>
+</tr>
+<tr>
+<td>4624</td>
+<td>帐户已成功登录</td>
+</tr>
+<tr>
+<td>4634</td>
+<td>帐户已注销</td>
+</tr>
+<tr>
+<td>4647</td>
+<td>用户启动的注销</td>
+</tr>
+<tr>
+<td>4672</td>
+<td>使用超级用户（如管理员）进行登录</td>
+</tr>
+<tr>
+<td>4720</td>
+<td>创建用户</td>
+</tr>
+<tr>
+<td>4657</td>
+<td>注册表值已修改</td>
+</tr>
+<tr>
+<td>4741</td>
+<td>已创建计算机帐户</td>
+</tr>
+<tr>
+<td>4742</td>
+<td>计算机帐户已更改</td>
+</tr>
+<tr>
+<td>4743</td>
+<td>计算机帐户已删除</td>
+</tr>
+</tbody>
+</table>
+<p>在打开事件查看器后，你可能会发现其中记录了很多发生的错误事件，但是在使用计算机的过程中并没有感知到，这是因为一些错误在后来的启动中进行了自我纠正。</p>
+<h2 id="账户登录和登录事件"><a href="#账户登录和登录事件" class="headerlink" title="账户登录和登录事件"></a>账户登录和登录事件</h2><p>帐户登录是Microsoft的身份验证术语。登录是用于指代获得资源访问权限的帐户的术语。帐户登录和登录事件都将记录在安全事件日志中。域帐户的身份验证（帐户登录）由Windows网络中的域控制器执行。本地帐户（那些存在于本地SAM文件中而不是作为Active Directory一部分的帐户）由它们所在的本地系统进行身份验证。帐户登录事件将由执行身份验证的系统记录。组策略可以轻松设置帐户登录和登录事件的审核。随着新版本Windows的发布，Microsoft默认继续启用更多日志记录，管理员应定期查看其审核策略，以确保系统能记录更多有效日志。</p>
+<p>登录事件将在事件描述中包含类型代码。该代码的含义如下：</p>
+<table>
+<thead>
+<tr>
+<th>登录类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>交互式，例如在系统的键盘和屏幕上登录，或使用第三方远程访问工具（如VNC）进行远程登录。这种类型的登录将在会话期间将用户的凭据缓存在RAM中，并且可能将用户的凭据缓存在磁盘上。</td>
+</tr>
+<tr>
+<td>3</td>
+<td>网络（即从网络上的其他位置连接到此计算机上的共享文件夹）。这表示非交互式登录，它不会在RAM或磁盘上缓存用     户的凭据。</td>
+</tr>
+<tr>
+<td>4</td>
+<td>批处理（即计划任务）批处理登录类型由批处理服务器使用，其中进程可以代表用户执行而无需其直接干预</td>
+</tr>
+<tr>
+<td>5</td>
+<td>服务（服务由服务控制管理器启动）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>解锁（即具有密码保护的屏幕）</td>
+</tr>
+<tr>
+<td>8</td>
+<td>NetworkCleartext用户从网络登录到此计算机。用户密码以未加密的形式传递到身份验证程序包。内置身份验证将所有哈希     凭据打包，然后再通过网络发送它们。凭据不会以纯文本（也称为明文）遍历网络。最常表示使用“基本身份验证”登录IIS。</td>
+</tr>
+<tr>
+<td>9</td>
+<td>NewCredentials（例如，具有RunAs或具有备用凭据的网络驱动器映射）。此登录类型似乎未在任何事件中显示。如果要     跟踪尝试使用备用凭据登录的用户，请查找事件ID 4648。</td>
+</tr>
+<tr>
+<td>10</td>
+<td>RemoteInteractive（终端服务，远程桌面或远程协助）。有关更多详细信息，请参见本节末尾的有关RDP的注释。</td>
+</tr>
+<tr>
+<td>11</td>
+<td>CachedInteractive（使用缓存的域凭据登录，例如在离开网络时登录到便携式计算机时）没有联系域控制器来验证凭据</td>
+</tr>
+</tbody>
+</table>
+<p>在这里需要注意的是关于尝试登录系统的远程主机。据所涉及的系统，<strong>通过RDP失败的登录可能会记录为Type 3而不是Type 10</strong>。</p>
+<p>可以通过查询事件描述的故障信息部分来确定有关故障原因的更多信息。在此处找到的状态码提供了有关事件的其他详细信息，如下图</p>
+<p><img src="/article/4824f591/1606280657246-9210a82e-98f8-45e9-bb23-89e911c4cb68.png" alt="image.png"></p>
+<p>图中得到的状态码为0x000006a，可以通过下面的表来查询不同的状态码代表的信息</p>
+<table>
+<thead>
+<tr>
+<th>状态码</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0xC0000064</td>
+<td>用户名不存在</td>
+</tr>
+<tr>
+<td>0xC000006A</td>
+<td>用户名正确但是密码错误</td>
+</tr>
+<tr>
+<td>0xC0000234</td>
+<td>用户被锁定</td>
+</tr>
+<tr>
+<td>0xC0000072</td>
+<td>账户被禁用</td>
+</tr>
+<tr>
+<td>0xC000006F</td>
+<td>用户尝试在他的星期几或一天中的时间限制之外登录</td>
+</tr>
+<tr>
+<td>0xC0000070</td>
+<td>工作站限制或违反身份验证策略的情况（在域控制器上查找事件ID 4820）</td>
+</tr>
+<tr>
+<td>0xC0000193</td>
+<td>帐户到期</td>
+</tr>
+<tr>
+<td>0xC0000071</td>
+<td>密码过期</td>
+</tr>
+<tr>
+<td>0xC0000133</td>
+<td>DC与其他计算机之间的时钟太不同步</td>
+</tr>
+<tr>
+<td>0xC0000224</td>
+<td>用户需要在下次登录时更改密码</td>
+</tr>
+<tr>
+<td>0xC0000225</td>
+<td>Windows发生错误，没有风险</td>
+</tr>
+<tr>
+<td>0xc000015b</td>
+<td>用户尚未在此计算机上被授予请求的登录类型（也称为登录权限）</td>
+</tr>
+</tbody>
+</table>
+<p>根据表中的信息，可以看到，当前事件的状态码对应的是用户名正确但是密码错误</p>
+<h2 id="FTP爆破实例"><a href="#FTP爆破实例" class="headerlink" title="FTP爆破实例"></a>FTP爆破实例</h2><blockquote>
+<p>在这里靶机开启了FTP服务，攻击机对其用户密码进行了爆破 并进行了登录</p>
+</blockquote>
+<p>通过查看日志，可以看到有大量的登录记录，并且登录失败，这里初步猜测是靶机遭到了爆破</p>
+<p><img src="/article/4824f591/1606026025890-4bbd86ef-3cf5-4000-9b7f-468a802955f8.png" alt="image.png"></p>
+<p>通过使用事件查看器的筛选日志，可以筛选出登录失败的次数，打开事件查看器，选择右侧的筛选当前日志</p>
+<p><img src="/article/4824f591/1606025857663-80b9b13a-2a70-4707-bd83-c7cdb4d8ab17.png" alt="image.png"></p>
+<p>在所有事件ID处写入要过滤的事件ID，根据上面表中的内容我们可知，4625为登录失败，4624为登录成功，我们填入4624点击确定，可以看到有2097个失败记录</p>
+<p><img src="/article/4824f591/1606026138751-e8f1cdf3-e714-44c9-80f5-df900cfc6b45.png" alt="image.png"></p>
+<p>筛选4624可以看到有几次登录成功的记录</p>
+<p><img src="/article/4824f591/1606026312903-bc85af22-d59a-4d8f-aba6-d7c14f8bd3e0.png" alt="image.png"></p>
+<p>这里为了便于分析，将日志保存下来用其他工具进行分析，首先选择清除筛选器，保证保存的是完整的日志，然后选择将所有事件另存为，选择一个位置保存下来</p>
+<h3 id="Log-Parser-Lizard介绍以及使用"><a href="#Log-Parser-Lizard介绍以及使用" class="headerlink" title="Log Parser Lizard介绍以及使用"></a>Log Parser Lizard介绍以及使用</h3><blockquote>
+<p>一款强大好用的日志分析工具，使用这款软件可以方便用户对服务器日志、网站日志等进行直观用户的分析，支持基于文本的日志文件、XML 文件、CSV（逗号分隔符）文件以及注册表、文件系统等内容，它可以把相应的分析结果以图形的形式展现出来，大大地方便了运营人员，有需要的不要错过。您的计算机记录了几乎所有发生在幕后的操作，即使它并不总是在可访问的地方显示这些信息。系统事件、错误和许多其他此类活动由操作系统记录和保存，以防您需要解决某个问题，并且您必须确切地知道您的计算机在特定时间在做什么。日志分析蜥蜴使您能够跟踪这些信息，并查看详细的报告，无论何时您想知道有关您的系统的状态。您的计算机记录了几乎所有发生在幕后的操作，即使它并不总是在可访问的地方显示这些信息。系统事件、错误和许多其他此类活动由操作系统记录和保存，以防您需要解决某个问题，并且您必须确切地知道您的计算机在特定时间在做什么。日志分析使您能够跟踪这些信息，并查看详细的报告，无论何时您想知道有关您的系统的状态。</p>
+</blockquote>
+<p>下载后打开软件，可以看到主界面，这里选择打开文件，选择之前我们导出的日志文件</p>
+<p><img src="/article/4824f591/1606034117449-57d90174-3c78-4e5c-8b5e-19c14d4bc618.png" alt="image.png"></p>
+<p>然后就进入到了编写查询语句的界面，这里默认的语句是查询前100条内容，然后我们可以在这里写上自己的语句进行查询<img src="/article/4824f591/1606034290453-80aab503-88f3-4ba6-b24f-70fd97bb6637.png" alt="image.png"></p>
+<p>这里查询一下登录失败的事件，也就是EventID为4625的事件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM &apos;D:\crack.evtx&apos; WHERE EventID=4625</span><br></pre></td></tr></table></figure>
+<p>然后点击右上角的运行按钮，等执行完毕就可以点击右侧的Result Grid查看结果</p>
+<p><img src="/article/4824f591/1606034669849-3664bb47-0902-4327-bed5-163b23a0ea87.png" alt="image.png"></p>
+<p>上面查询的是所有内容，这里只查询我们想知道的内容，先看语句和结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT EXTRACT_TOKEN(Strings,10,&apos;|&apos;) AS type ,EXTRACT_TOKEN(Strings,5,&apos;|&apos;) AS Username,count(EXTRACT_TOKEN(Strings,5,&apos;|&apos;)) AS times FROM &apos;D:\crack.evtx&apos; WHERE EventID=4625 group by Username,type</span><br></pre></td></tr></table></figure>
+<p><img src="/article/4824f591/1606046209540-60075ff4-9a97-4b98-a142-0ed4dbd47104.png" alt="image.png"></p>
+<p>这里显示攻击者使用<code>w4rnIn9</code>这个用户名爆破了1125次，使用到的登录类型是<strong>网络明文</strong></p>
+<p>下面对上面使用到的sql语句进行讲解， <code>EXTRACT_TOKEN</code> 函数是对字符串进行分割，用法是 <code>EXTRACT_TOKEN(列名,字段数,&#39;分隔符&#39;)</code> ,这里使用的第5个字段是尝试登录的用户名，第10个字段是登录的类型， <code>count()</code> 函数会返回指定列的数目，GROUP BY 语句用于结合合计函数，根据一个或多个列对结果集进行分组。那么这里这个语句就很好理解了，就是查询出尝试登录的用户名并计数，然后根据登录类型和用户名进行分组。</p>
+<p>下面查询登录成功的事件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT EXTRACT_TOKEN(Strings,5,&apos;|&apos;) AS Username,count(EXTRACT_TOKEN(Strings,5,&apos;|&apos;)) FROM &apos;D:\crack.evtx&apos; WHERE EventID=4624 GROUP BY Username</span><br></pre></td></tr></table></figure>
+<p><img src="/article/4824f591/1606047760583-2eead719-1878-4b7d-a87b-8711c2676f26.png" alt="image.png"></p>
+<p>可以看到攻击者登录成功了两次</p>
+<p>那么根据上面使用的登录方式，可以大概推断出尝试登录的是FTP，经过查看，靶机确实开启了FTP，这里仅仅记录的登录成功和失败的信息，详细信息可以查看FTP的日志，FTP日志的位置在 <code>%systemroot%/system32/logfiles/msftpsvc1/</code> 默认每天一个日志，将得到的日志拿出来，在Log Parser Lizard中打开，执行默认的查询语句可以看到其中的字段和内容<img src="/article/4824f591/1606052026076-10b7c31f-e91e-4440-8737-9311897ccc22.png" alt="image.png"></p>
+<p>其中对于各种操作，FTP也有特定的状态码</p>
+<table>
+<thead>
+<tr>
+<th>状态码</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>150</td>
+<td>文件状态良好，打开数据连接</td>
+</tr>
+<tr>
+<td>200</td>
+<td>命令成功</td>
+</tr>
+<tr>
+<td>202</td>
+<td>命令未实现</td>
+</tr>
+<tr>
+<td>211</td>
+<td>系统状态或系统帮助响应</td>
+</tr>
+<tr>
+<td>212</td>
+<td>目录状态</td>
+</tr>
+<tr>
+<td>213</td>
+<td>文件状态</td>
+</tr>
+<tr>
+<td>214</td>
+<td>帮助信息，信息仅对人类用户有用</td>
+</tr>
+<tr>
+<td>215</td>
+<td>名字系统类型</td>
+</tr>
+<tr>
+<td>220</td>
+<td>对新用户服务准备好</td>
+</tr>
+<tr>
+<td>221</td>
+<td>服务关闭控制连接，可以退出登录</td>
+</tr>
+<tr>
+<td>225</td>
+<td>数据连接打开，无传输正在进行</td>
+</tr>
+<tr>
+<td>226</td>
+<td>关闭数据连接，请求的文件操作成功</td>
+</tr>
+<tr>
+<td>227</td>
+<td>进入被动模式</td>
+</tr>
+<tr>
+<td>230</td>
+<td>用户登录</td>
+</tr>
+<tr>
+<td>250</td>
+<td>请求的文件操作完成</td>
+</tr>
+<tr>
+<td>257</td>
+<td>创建”PATHNAME”</td>
+</tr>
+<tr>
+<td>331</td>
+<td>用户名正确，需要口令</td>
+</tr>
+<tr>
+<td>332</td>
+<td>登录时需要帐户信息</td>
+</tr>
+<tr>
+<td>350</td>
+<td>请求的文件操作需要进一步命令</td>
+</tr>
+<tr>
+<td>421</td>
+<td>连接用户过多</td>
+</tr>
+<tr>
+<td>425</td>
+<td>不能打开数据连接</td>
+</tr>
+<tr>
+<td>426</td>
+<td>关闭连接，中止传输</td>
+</tr>
+<tr>
+<td>450</td>
+<td>请求的文件操作未执行</td>
+</tr>
+<tr>
+<td>451</td>
+<td>中止请求的操作：有本地错误</td>
+</tr>
+<tr>
+<td>452</td>
+<td>未执行请求的操作：系统存储空间不足</td>
+</tr>
+<tr>
+<td>500</td>
+<td>格式错误，命令不可识别</td>
+</tr>
+<tr>
+<td>501</td>
+<td>参数语法错误</td>
+</tr>
+<tr>
+<td>502</td>
+<td>命令未实现</td>
+</tr>
+<tr>
+<td>503</td>
+<td>命令顺序错误</td>
+</tr>
+<tr>
+<td>504</td>
+<td>此参数下的命令功能未实现</td>
+</tr>
+<tr>
+<td>530</td>
+<td>账号或密码错误</td>
+</tr>
+<tr>
+<td>532</td>
+<td>存储文件需要帐户信息</td>
+</tr>
+<tr>
+<td>550</td>
+<td>未执行请求的操作</td>
+</tr>
+<tr>
+<td>551</td>
+<td>请求操作中止：页类型未知</td>
+</tr>
+<tr>
+<td>552</td>
+<td>请求的文件操作中止，存储分配溢出</td>
+</tr>
+<tr>
+<td>553</td>
+<td>未执行请求的操作：文件名不合法</td>
+</tr>
+</tbody>
+</table>
+<p>因此可以通过状态码来筛选结果，例如这里大致统计登录失败的用户和次数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT cs-uri-stem,count(cs-uri-stem) AS times FROM &apos;D:\u_ex201122.log&apos; where cs-uri-stem &lt;&gt; &apos;***&apos; and cs-uri-stem &lt;&gt; &apos;&quot;&quot;&apos; GROUP BY cs-uri-stem order by times desc</span><br></pre></td></tr></table></figure>
+<p><img src="/article/4824f591/1606053415228-c108d42f-62c3-4ddb-8dbf-15d3060a68e0.png" alt="image.png"></p>
+<p>可以看到这里主要对这些用户进行了爆破，下面通过查询事件，查询出登录后的用户进行了哪些操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT cs-method,cs-uri-stem,sc-status,x-fullpath FROM &apos;D:\u_ex201122.log&apos; WHERE cs-username = &apos;test-PC\w4rnIn9&apos;</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>cs-method</th>
+<th>cs-uri-stem</th>
+<th>sc-status</th>
+<th>x-fullpath</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PASS</td>
+<td>***</td>
+<td>230</td>
+<td>/</td>
+</tr>
+<tr>
+<td>opts</td>
+<td>utf8+on</td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>syst</td>
+<td></td>
+<td>215</td>
+<td></td>
+</tr>
+<tr>
+<td>site</td>
+<td>help</td>
+<td>214</td>
+<td></td>
+</tr>
+<tr>
+<td>PWD</td>
+<td></td>
+<td>257</td>
+<td></td>
+</tr>
+<tr>
+<td>PASS</td>
+<td>***</td>
+<td>230</td>
+<td>/</td>
+</tr>
+<tr>
+<td>opts</td>
+<td>utf8+on</td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>syst</td>
+<td></td>
+<td>215</td>
+<td></td>
+</tr>
+<tr>
+<td>site</td>
+<td>help</td>
+<td>214</td>
+<td></td>
+</tr>
+<tr>
+<td>PWD</td>
+<td></td>
+<td>257</td>
+<td></td>
+</tr>
+<tr>
+<td>TYPE</td>
+<td>A</td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>PASV</td>
+<td></td>
+<td>227</td>
+<td></td>
+</tr>
+<tr>
+<td>DataChannelOpened</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>DataChannelClosed</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>LIST</td>
+<td></td>
+<td>226</td>
+<td>/</td>
+</tr>
+<tr>
+<td>ControlChannelClosed</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>noop</td>
+<td></td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>CWD</td>
+<td>/</td>
+<td>250</td>
+<td>/</td>
+</tr>
+<tr>
+<td>noop</td>
+<td></td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>CWD</td>
+<td>/</td>
+<td>250</td>
+<td>/</td>
+</tr>
+<tr>
+<td>PWD</td>
+<td></td>
+<td>257</td>
+<td></td>
+</tr>
+<tr>
+<td>CWD</td>
+<td>/</td>
+<td>250</td>
+<td>/</td>
+</tr>
+<tr>
+<td>TYPE</td>
+<td>I</td>
+<td>200</td>
+<td></td>
+</tr>
+<tr>
+<td>PASV</td>
+<td></td>
+<td>227</td>
+<td></td>
+</tr>
+<tr>
+<td>DataChannelOpened</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SIZE</td>
+<td>secret.txt</td>
+<td>213</td>
+<td>/secret.txt</td>
+</tr>
+<tr>
+<td>DataChannelClosed</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>RETR</td>
+<td>secret.txt</td>
+<td>226</td>
+<td>/secret.txt</td>
+</tr>
+</tbody>
+</table>
+<p>可以看到攻击者在登录后，下载了secret.txt文件，这里通过整个分析过程，就梳理出了攻击者的攻击流程，首先攻击者通过ftp账户爆破，获取了w4rnIn9的用户密码，然后登录ftp服务器，下载了secret.txt文件</p>
+<h2 id="远程桌面爆破实例"><a href="#远程桌面爆破实例" class="headerlink" title="远程桌面爆破实例"></a>远程桌面爆破实例</h2><p>本实例中模拟通过日志发现异常登陆者信息的过程，在查看日志时，发现大量登录失败事件，查看详情</p>
+<p><img src="/article/4824f591/1606281652895-5c660eba-6f73-4e47-a97b-656d8aa6297b.png" alt="image.png"></p>
+<h3 id="使用Log-Parse-Lizard分析"><a href="#使用Log-Parse-Lizard分析" class="headerlink" title="使用Log Parse Lizard分析"></a>使用Log Parse Lizard分析</h3><p>推测可能是远程桌面登录，于是将日志导出，用Log Parse Lizard进行分析，这里直接查询远程桌面的登录ip</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT TimeGenerated AS Date, EXTRACT_TOKEN(Strings, 8, &apos;|&apos;) as LogonType, EXTRACT_TOKEN(Strings, 18, &apos;|&apos;) AS SourceIP, EXTRACT_TOKEN(Strings, 19, &apos;|&apos;) AS Sport FROM &apos;D:\rdp.evtx&apos; WHERE EventID = &apos;4624&apos; AND SourceIP NOT IN (&apos;&apos;;&apos;-&apos;) AND LogonType = &apos;10&apos; ORDER BY timegenerated DESC</span><br></pre></td></tr></table></figure>
+<p><img src="/article/4824f591/1606118589150-68226a95-405a-4d62-a995-b801cc52379f.png" alt="image.png"></p>
+<p>这里远程桌面的常用ip是 <code>192.168.233.1</code> 出现了一个异常登录ip，下面查询异常登录的用户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT TimeGenerated AS Date, EXTRACT_TOKEN(Strings, 8, &apos;|&apos;) as LogonType, EXTRACT_TOKEN(Strings, 18, &apos;|&apos;) AS SourceIP, EXTRACT_TOKEN(Strings, 5, &apos;|&apos;) AS Username FROM &apos;D:\rdp.evtx&apos; WHERE EventID = &apos;4624&apos; AND SourceIP  IN (&apos;192.168.233.128&apos;) AND LogonType = &apos;10&apos; ORDER BY timegenerated DESC</span><br></pre></td></tr></table></figure>
+<p><img src="/article/4824f591/1606118953644-684cf999-67d7-47c6-bdaf-c6f98ad9c1ff.png" alt="image.png"></p>
+<p>这里就能查询到异常登录的用户和ip了</p>
+<h2 id="远程桌面爆破防护"><a href="#远程桌面爆破防护" class="headerlink" title="远程桌面爆破防护"></a>远程桌面爆破防护</h2><h3 id="添加安全策略"><a href="#添加安全策略" class="headerlink" title="添加安全策略"></a>添加安全策略</h3><p>管理员可以通过帐户锁定策略保护主机免受暴力破解攻击，在<strong>管理工具 &gt;本地安全策略&gt; 帐户策略 &gt; 帐户锁定策略</strong>中配置下面的几个策略</p>
+<p>帐户锁定持续时间：用于定义锁定帐户保持时间段的策略，直到自动解锁或由管理员重置。当用户超过帐户锁定阈值设置的登录尝试时，它将锁定帐户指定的时间。</p>
+<p>帐户锁定阈值：定义失败登录尝试次数的策略，将在帐户锁定持续时间指定的某段时间内锁定帐户。它将允许最大数量指定尝试登录您的帐户。</p>
+<p>被锁账户锁定计数器：用于定义登录尝试失败后必须经过的时间段的策略。重置时间必须小于或等于帐户锁定时间。</p>
+<p>具体设置的次数和时间根据实际情况定，这里只给出一个实例</p>
+<p><img src="/article/4824f591/1606295036878-685eefd5-21a3-46c0-a8d8-d19fef818d72.png" alt="image.png"></p>
+<h3 id="端口修改"><a href="#端口修改" class="headerlink" title="端口修改"></a>端口修改</h3><p>可以修改默认的远程登录端口，用来防止一般攻击者和暴力破解，需要在注册表中进行修改</p>
+<p>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp下的Portnumber,双击它进行修改，这里使用的是十六进制，默认是d3d，把想要修改成的端口号转换为16进制，替换这里的值选择确定就可以了，这里替换为1a0c</p>
+<p><img src="/article/4824f591/1606295406433-857b6f92-c7e9-463d-9325-9a22a59bf01f.png" alt="image.png"></p>
+<p>重启计算机后可以看到3389端口变为了6668端口</p>
+<p><img src="/article/4824f591/1606295733422-c9bcfca5-4088-40f0-84f5-2d3bf97392e0.png" alt="image.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这里仅仅是简单介绍了一些日志分析用到的事件ID、状态码、类型码等，并通过两个实例介绍了简单的日志分析和日志分析工具Log Parser Lizard的使用，实际要通过日志准确分析出恶意行为是需要大量实践经验的，同样也需要了解Windows日志中各种事件ID组合、状态码所对应的事件。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://developer.aliyun.com/article/452517" target="_blank" rel="noopener">https://developer.aliyun.com/article/452517</a></p>
+<p><a href="https://bypass007.github.io/Emergency-Response-Notes/LogAnalysis/第1篇：Window日志分析.html" target="_blank" rel="noopener">https://bypass007.github.io/Emergency-Response-Notes/LogAnalysis/%E7%AC%AC1%E7%AF%87%EF%BC%9AWindow%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90.html</a></p>
+<p><a href="https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/" target="_blank" rel="noopener">https://ponderthebits.com/2018/02/windows-rdp-related-event-logs-identification-tracking-and-investigation/</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1689545" target="_blank" rel="noopener">https://cloud.tencent.com/developer/article/1689545</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/4824f591.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/电子取证/">
+              #电子取证
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/日志分析/">
+              #日志分析
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/d2718b8.html" target="_self">电子取证-Windows取证基础</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/b0fb0256.html" target="_self">[译]开源情报收集101</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

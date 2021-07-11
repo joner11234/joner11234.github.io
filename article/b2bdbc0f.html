@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>[译]开源情报收集201 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="渗透测试,信息收集,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>[译]开源情报收集201</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2021-06-12
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>本文首发<a href="https://bbs.ichunqiu.com/forum.php?mod=viewthread&amp;tid=60499&amp;highlight=%E5%BC%80%E6%BA%90%E6%83%85%E6%8A%A5%E6%94%B6%E9%9B%86" target="_blank" rel="noopener">i春秋</a>，未经允许禁止转载</p>
+<p>有很多数据可以被归类为开源网络情报，但并不是所有都很重要，对于渗透测试者来说下面这些数据会更有用</p>
+<ul>
+<li>可以增加攻击面的信息(域名，网络块)</li>
+<li>凭证(邮箱地址、用户名、密码、API)</li>
+<li>敏感信息(客户信息、财务报告)</li>
+<li>基础设施细节(技术栈、硬件设备)</li>
+</ul>
+<blockquote>
+<p>开源信息收集是从公开的来源收集信息</p>
+</blockquote>
+<p>1.SSL/TLS证书在安全测试中用具有非常重要的意义</p>
+<blockquote>
+<p>SSL/TLS证书通常包含域名、子域名、电子邮箱，这使得他们成为攻击者的重要信息来源</p>
+</blockquote>
+<p>在该项证书透明度 (CT)项目下，证书颁发机构 (CA) 必须将其颁发的每个SSL/TLS证书发布到公共日志。几乎每个主要的CA都会在CT日志中记录他们颁发的每个SSL/TLS证书。这些日志是公开的，任何人都可以浏览这些日志。下面的脚本可以从给定域的CT日志中找到的SSL/TLS证书中提取子域</p>
+<p><a href="https://github.com/appsecco/the-art-of-subdomain-enumeration/blob/master/crtsh_enum_psql.py" target="_blank" rel="noopener">https://github.com/appsecco/the-art-of-subdomain-enumeration/blob/master/crtsh_enum_psql.py</a></p>
+<p><img src="/article/b2bdbc0f/1607499800966-71b07b68-e0c5-4b1d-837b-76acd6037dab.png" alt="1_cCNRAHNHmw7RDY37F1Ivqw.png"></p>
+<p>SSLScrape是一个可以查询输入的CIDR中的每个IP的SSL/TLS证书，并从返回的SSL证书中提取主机名，工具可以从这里获得<a href="https://github.com/cheetz/sslScrape" target="_blank" rel="noopener">https://github.com/cheetz/sslScrape</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo python sslScrape.py TARGET_CIDR</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499815757-279735dc-1bd3-44c5-8a2e-794127b4866e.png" alt="1_dOF94BIsWhPmnHpjIW0pGA.png"></p>
+<p>2.WHOIS服务通常在渗透测试期间用于查询与Internet资源的注册用户相关的信息，例如域名或ip地址 (块)。WHOIS枚举对在互联网上有大量存在的目标组织特别有效。</p>
+<blockquote>
+<p>一些公共WHOIS服务器支持高级查询，我们可以使用这些查询收集目标组织的广泛信息。</p>
+</blockquote>
+<p>让我们看一些高级WHOIS查询以收集信息</p>
+<p>我们可以查询ARIN WHOIS服务器以返回具有给定域名的电子邮件地址的所有条目，在本例中为icann.org。我们仅从结果中提取电子邮件地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whois -h whois.arin.net &quot;e @ icann.org&quot; | grep -E -o &quot;\b[a-zA-Z0-9.-]+@[a-zA-Z0–9.-]+\.[a-zA-Z0–9.-]+\b&quot; | uniq</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607500184054-d7c48dd4-75e1-481c-bfdb-34df819c104d.png" alt="1_oYGnT18lLtml0WUfGpACpA (2).png"></p>
+<p>我们可以查询RADB WHOIS服务器以返回属于自治系统编号 (ASN) 的所有网络块</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whois -h whois.radb.net -- &apos;-i origin AS111111&apos; | grep -Eo &quot;([0-9.]+)&#123;4&#125;/[0-9]+&quot; | uniq</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499822792-816ae168-8384-4a26-8f3d-41c3c6416da3.png" alt="1_iXy-zyHi-VGtx80ysAD93w.png"></p>
+<p>我们可以查询ARIN WHOIS服务器以返回给定关键字的所有POC、ASN、组织和最终用户客户。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whois -h whois.arin.net &quot;z wikimedia&quot;</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499868859-a22d20b6-f3d0-407a-8c97-6c9cd99f4b04.png" alt="1_TZfmfe-ollv3vcG-62S1dw.png"></p>
+<p>3.查找自治系统 (AS) 编号将帮助我们识别属于组织的netblock，这反过来可能导致发现netblock中主机上运行的服务。</p>
+<p>Resolve the IP address of a given domain using <code>dig</code> or <code>host</code></p>
+<p>使用dig或host解析给定域的IP地址</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dig +short google.com</span><br></pre></td></tr></table></figure>
+<p>有一些工具可以查找给定IP地址的ASN</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -s http://ip-api.com/json/IP_ADDRESS | jq -r .as</span><br></pre></td></tr></table></figure>
+<p>我们可以使用WHOIS服务或NSE脚本来识别属于ASN编号的所有netblock。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap --script targets-asn --script-args targets-asn.asn=15169</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499889903-f4725ca7-22d5-47b1-9265-38a6f115be6c.png" alt="1_z6W4_GxLJsya69L9cusFXg.png"></p>
+<p>4.云存储的使用已经变得很普遍，尤其是对象/块存储服务，如亚马逊S3、数字海洋空间和Azure Blob存储。在过去的几年中，由于配置错误的S3存储桶而发生了高调的数据泄露。</p>
+<blockquote>
+<p>根据经验，已经看到人们在安全性差的第三方服务上存储各种数据，从纯文本文件中的凭据到宠物的图片。</p>
+</blockquote>
+<p>有一些工具，如Slurp、AWSBucketDump和space Finder，可以搜索特定于服务的可公开访问的对象存储实例。Slurp和Bucket Stream等工具将证书透明度日志数据与基于排列的发现相结合，以识别可公开访问的S3存储桶。</p>
+<p><img src="/article/b2bdbc0f/1607499917963-b0d4a3a1-12d8-4e8b-8368-989636061108.png" alt="1_j6REBngZ8C__74cjXbXLgw.png"></p>
+<p><img src="/article/b2bdbc0f/1607499922729-ca88de94-d6f7-4302-9f41-3b9aca787aba.png" alt="1_FJqT0uGHb8OfN0rzT1Bn_A.png"></p>
+<p>5.Wayback Machine是互联网上万维网和其他信息的大量数字档案。Wayback Machine还包含网站的历史快照。Wayback CDX服务器API使搜索档案变得容易。Waybackurl是搜索与感兴趣的站点相关的数据的简洁工具。</p>
+<blockquote>
+<p>挖掘Wayback Machine存档在识别应用程序中给定域、敏感目录、敏感文件和参数的子域方面非常有用。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">go get github.com/tomnomnom/waybackurls</span><br><span class="line">waybackurls icann.org</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499944943-1268db5d-59be-4006-8723-6927ff1e3618.png" alt="1_ByofojY2taaQgpvoHiOdZw.png"></p>
+<p>6.<a href="http://commoncrawl.org/" target="_blank" rel="noopener">Common Crawl</a> 是一个构建和维护任何人都可以访问和分析的web爬网数据存储库的项目。普通爬网包含网站的历史快照以及有关网站和提供它的服务的元数据。我们可以使用通用爬网API来搜索其索引爬网数据以查找感兴趣的站点。Cc.py是一个简洁的小工具，用于搜索感兴趣的站点的爬网数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python cc.py -o cc_archive_results_icann.org icann.org</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607499963339-e08ab827-9696-45a9-af78-96b37007f40e.png" alt="1_4X5LLtM8Y9w7VZnv6oUHGw.png"></p>
+<p>7.Censys是一个聚集大量互联网范围扫描数据并提供搜索数据集的界面的平台。Censys将数据集分为三种类型: IPv4主机、网站和SSL/TLS证书。如果我们知道要寻找什么以及如何寻找，Censys拥有与Shodan相当的信息宝库。</p>
+<p>Censys有一个API，可用于对数据集运行查询。这里有一个Python脚本，该脚本连接到Censys API，查询给定域的SSL/TLS证书，并提取属于该域的子域和电子邮件地址。脚本可在此处获得-<a href="https://github.com/yamakira/censys-enumeration" target="_blank" rel="noopener">https://github.com/yamakira/censys-enumeration</a></p>
+<p><img src="/article/b2bdbc0f/1607499973648-9505c9d2-ff16-43bb-acee-cd49793dcdea.png" alt="1_lDZBfwWjghMgjrVv9t1rhQ.png"></p>
+<p><img src="/article/b2bdbc0f/1607500066606-10b4c826-051d-46aa-a815-731652eb7c19.png" alt="1_EIZuxVhmLNL8MXewJ0zRbA.png"></p>
+<p>8.Censys项目从多个来源收集SSL/TLS证书。使用的技术之一是探测端口443上公共IPv4地址空间上的所有计算机，并聚合它们返回的SSL/TLS证书。Censys提供了一种将收集的SSL/TLS证书与提供证书的IPv4主机相关联的方法。</p>
+<blockquote>
+<p>使用SSL/TLS证书与提供证书的IPv4主机之间的相关性，可以公开受Cloudflare等服务保护的域的源服务器。</p>
+</blockquote>
+<p>CloudFlair是一种在使用Censys公开域的源服务器方面做得很好的工具。该工具可在此处获得-</p>
+<p><a href="https://github.com/christophetd/CloudFlair" target="_blank" rel="noopener">https://github.com/christophetd/CloudFlair</a></p>
+<p><img src="/article/b2bdbc0f/1607500099555-4d241fcb-f76a-42ae-8e99-0e0640d8a55d.png" alt="1_2lNGZe1j-yPY5kby5yT0Gw.png"></p>
+<p>9.源代码存储库是安全评估期间的信息宝库。源代码可以揭示很多信息，从凭证、潜在漏洞到基础设施细节等。GitHub是一个非常流行的版本控制和协作平台，你应该看看。Gitlab和Bitbucket也是受欢迎的服务，您可以在其中找到目标组织的源代码。</p>
+<p>像Github bcloner这样的工具非常方便地自动克隆Github帐户下的所有存储库。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ python githubcloner.py --org organization -o /tmp/output</span><br></pre></td></tr></table></figure>
+<p>有各种工具可以自动在源代码存储库中查找秘密，例如Gitrob、truffleHog、git-all-secret等。</p>
+<p>10.转发DNS数据集作为Rapid7开放数据项目的一部分发布。该数据是对Rapid7的Project Sonar已知的所有转发DNS名称的DNS请求的响应的集合。数据格式为gzip压缩的JSON文件。我们可以解析数据集以查找给定域的子域。但是数据集很大 (压缩20 + GB，未压缩300 + GB)。最近，数据集已根据数据包含的DNS记录类型分为多个文件。</p>
+<p><img src="/article/b2bdbc0f/1607500119569-e3577d90-e130-4fb4-aa4a-90dc8c2744af.png" alt="1_bV2B51GoRdiMSv0Yb28HEA.png"></p>
+<p>11.内容安全策略 (CSP) 定义了<code>Content-Security-Policy</code>HTTP头，这使我们能够创建受信任内容源的白名单，并指示浏览器仅执行或呈现来自这些源的资源</p>
+<p>Content-Security-Policy header will list a bunch of sources(domains) that might be of interest to us as an attackers. We wrote a simple script to parse and resolve the domain names listed in a CSP header. The script is available here —</p>
+<p>Content-Security-Policy标头将列出一堆我们作为攻击者可能感兴趣的源 (域)。这里有一个简单的脚本来解析和解析CSP标头中列出的域名。脚本可在此处获得-<a href="https://github.com/0xbharath/domains-from-csp" target="_blank" rel="noopener">https://github.com/0xbharath/domains-from-csp</a></p>
+<p><img src="/article/b2bdbc0f/1607500245760-05871497-dbf3-4bc7-bcee-baf6b46786a5.png" alt="1_olkJf6qPuSn9VDLEPTaivQ.png"></p>
+<p>12.发送者策略框架 (SPF) 记录，用于指示接收邮件交换哪些主机被授权为给定域发送邮件</p>
+<p>简而言之，SPF记录列出了所有被授权代表域发送电子邮件的主机。有时SPF记录会泄露内部网络块和域名。</p>
+<p>安全跟踪等服务提供DNS记录的历史快照。我们可以查看历史SPF记录，以发现SPF记录中列出的给定域的内部网络块和域名。</p>
+<p><img src="/article/b2bdbc0f/1607500259005-68909a40-30b2-4299-8e8d-a5c2dc9bf6aa.png" alt="1_p8L72lfNQaAtbKFKBqLmIw.png"><br>Icann.org的历史SPF记录由安全跟踪显示</p>
+<p>下面的脚本可以从给定域的SPF记录中提取netblock和域。当使用-a选项运行时，脚本还可以返回每个资产的ASN详细信息。脚本可在此处获得-<a href="https://github.com/0xbharath/assets-from-spf" target="_blank" rel="noopener">https://github.com/0xbharath/assets-from-spf</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python assets_from_spf.py icann.org -a | jq .</span><br></pre></td></tr></table></figure>
+<p><img src="/article/b2bdbc0f/1607500271637-f53be007-48a6-46c9-997e-3bfa9bcb29b3.gif" alt="1_fkWAcHMa6gJHjiANNjOQxA.gif"></p>
+<p>在本文中，我们研究了在安全评估中日常使用的各种OSINT技术。尽管本文内容广泛，但并非详尽无遗。OSINT不断变化，没有一种方式适合所有人。多了解一点姿势，可以帮助我们更好的进行网络信息收集</p>
+<p><strong>原文地址 <a href="https://blog.appsecco.com/open-source-intelligence-gathering-201-covering-12-additional-techniques-b76417b5a544" target="_blank" rel="noopener">blog.appsecco.com</a></strong></p>
+<ul>
+<li><a href="https://blog.appsecco.com/open-source-intelligence-gathering-101-d2861d4429e3" target="_blank" rel="noopener">https://blog.appsecco.com/open-source-intelligence-gathering-101-d2861d4429e3</a></li>
+<li><a href="https://blog.appsecco.com/certificate-transparency-part-3-the-dark-side-9d401809b025" target="_blank" rel="noopener">https://blog.appsecco.com/certificate-transparency-part-3-the-dark-side-9d401809b025</a></li>
+<li><a href="https://blog.appsecco.com/a-penetration-testers-guide-to-sub-domain-enumeration-7d842d5570f6" target="_blank" rel="noopener">https://blog.appsecco.com/a-penetration-testers-guide-to-sub-domain-enumeration-7d842d5570f6</a></li>
+<li><a href="https://www.certificate-transparency.org](https://www.certificate-transparency.org/)" target="_blank" rel="noopener">https://www.certificate-transparency.org](https://www.certificate-transparency.org/)</a></li>
+<li><a href="https://www.arin.net/resources/services/whois_guide.html" target="_blank" rel="noopener">https://www.arin.net/resources/services/whois_guide.html</a></li>
+<li><a href="https://index.commoncrawl.org/" target="_blank" rel="noopener">https://index.commoncrawl.org/</a></li>
+<li><a href="https://www.upguard.com/breaches/cloud-leak-accenture" target="_blank" rel="noopener">https://www.upguard.com/breaches/cloud-leak-accenture</a></li>
+<li><a href="https://www.0xpatrik.com/censys-guide/" target="_blank" rel="noopener">https://www.0xpatrik.com/censys-guide/</a></li>
+<li><a href="https://www.0xpatrik.com/osint-domains/" target="_blank" rel="noopener">https://www.0xpatrik.com/osint-domains/</a></li>
+<li><a href="https://opendata.rapid7.com/sonar.fdns_v2/" target="_blank" rel="noopener">https://opendata.rapid7.com/sonar.fdns_v2/</a></li>
+</ul>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/b2bdbc0f.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/渗透测试/">
+              #渗透测试
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/信息收集/">
+              #信息收集
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/b0fb0256.html" target="_self">[译]开源情报收集101</a>
+      </div>
+    
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

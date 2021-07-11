@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>[译]开源情报收集101 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="渗透测试,信息收集,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>[译]开源情报收集101</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2021-06-11
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>本文首发<a href="https://bbs.ichunqiu.com/forum.php?mod=viewthread&amp;tid=60475&amp;highlight=%E5%BC%80%E6%BA%90%E6%83%85%E6%8A%A5%E6%94%B6%E9%9B%86" target="_blank" rel="noopener">i春秋</a>，未经允许禁止转载</p>
+<p>通过开源情报收集技术可以发现大量的数据，特别是对于那些在网上有大量存在的公司。总是会有一些很小的代码片段，一个技术论坛的问题，详细的细节，一个长期被遗忘的子域名，甚至是一个 PDF 文档，其中包含可用于攻击目标网站的元数据营销材料。即使是简单的谷歌搜索通常也会产生有趣的结果。以下是我们在获得客户(域名)名称后所做的一些事情(没有特定的顺序) </p>
+<p>1.使用Whois查找管理员联系人和其他电子邮件地址。</p>
+<p>这些电子邮件地址通常也以有效用户的身份存在于应用程序中。电子邮件地址可以通过数据库泄露或HaveIBeenPwned这样的搜索服务来搜索，告诉你电子邮件是否被泄露了。</p>
+<p><img src="/article/b0fb0256/1607353866261-c2abb4da-78ca-4efc-b4e7-75460223f8c6.png" alt="image.png"></p>
+<p>除了电子邮件地址，whois 查询可以返回 IP 历史信息，域名过期日期，甚至电话号码，这些可用于社工。</p>
+<p><img src="/article/b0fb0256/1607411732105-ed067d8e-e715-4706-a3f9-a5c7e5029bf8.png" alt="1607411732105-ed067d8e-e715-4706-a3f9-a5c7e5029bf8"></p>
+<p>2.谷歌高级搜索</p>
+<p>使用站点操作符限制在目标域，找到 php (或任何服务器端脚本文件类型) ，txt 或日志文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">site:*.example.org ext:php | ext:txt | ext:log</span><br></pre></td></tr></table></figure>
+<p>在一些情况下，我们使用这样的搜索查询确定了一些有趣的文件(例如日志文件) ，这些文件包含敏感信息和应用程序的完整系统路径。你可以将此查询与一个减号运算符结合起来，以排除特定的搜索结果。</p>
+<p><img src="/article/b0fb0256/1607411753805-7b0a5133-b1d4-4b16-8093-414df8b0aede.png" alt="1607411753805-7b0a5133-b1d4-4b16-8093-414df8b0aede"></p>
+<p>3.在域名(或子域)上搜索过时的文档</p>
+<p>文件类型首先包括 PDF、 Excel、 Word 和 PowerPoint。这些文档可能包含可用于其他攻击的信息。通常，包含在文件属性中的文档元数据(作者名等)可以用作应用程序中的有效用户名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">site:*.example.org ext:pdf | ext:doc| ext:docx | ext:ppt | ext:pptx | ext:xls | ext:xlsx | ext:csv</span><br></pre></td></tr></table></figure>
+<p>你可以在本地下载这些文件，并通过文档元数据提取器或查看每个文件的属性运行它们，以查看哪些信息被泄漏。</p>
+<p>要查看所有可用于搜索数据的选项，请参考 <a href="https://www.google.co.in/advanced_search。此外，谷歌黑客数据库(现在在exploit-db)允许您使用预先制定的查询来搜索互联网上具体和有趣的东西。" target="_blank" rel="noopener">https://www.google.co.in/advanced_search。此外，谷歌黑客数据库(现在在exploit-db)允许您使用预先制定的查询来搜索互联网上具体和有趣的东西。</a></p>
+<p><img src="/article/b0fb0256/1607411782677-37caa781-061d-4f41-b39d-b5121d3aa378.png" alt="1607411782677-37caa781-061d-4f41-b39d-b5121d3aa378"></p>
+<p>4.检查 robots.txt 文件中隐藏的、有趣的目录</p>
+<p>大多数商城、框架和内容管理系统都有定义良好的目录结构。因此，管理员目录通常是/admin 或/administration 。如果没有，robots.txt 很可能包含您要查找的目录名。</p>
+<p><img src="/article/b0fb0256/1607411791814-82c78a21-0ad0-404e-a787-861756cdca83.png" alt="1_cfw6vicXCwQc1xh5PlZz_g.png"></p>
+<p>5.查看 HTML 源码来识别框架</p>
+<p>识别应用程序类型有助于将攻击集中到应用程序中具有漏洞组件的区域(例如插件和主题)。例如，如果你查看页面源代码并看到 wp-content，那么你就可以确定你正在查看一个 WordPress 站点。</p>
+<p>许多公开可用的浏览器插件也可以用来识别网站框架。的 Wappalyzer 在识别几种不同的服务器类型、服务器和客户端框架以及网站上的第三方插件方面做得很好。</p>
+<p><img src="/article/b0fb0256/1607411803477-0a1308ca-1466-4165-a66d-d3cd52ef07d5.png" alt="1_LLK4o3wfggc_zvHYhLDYSA.png"></p>
+<p>6.通常情况下，如果您正在查看的站点是由第三方供应商创建的，那么您很可能会在主页底部看到“由第三方开发者公司技术支持”的字样。</p>
+<p>利用这个跟踪你的信息收集到承包商的网站也可以成为令人难以置信的回报。浏览它可能会发现构建它们的框架类型和版本号。作为其开发计划的一部分，承包商很可能在客户的站点上有一个测试/管理帐户。</p>
+<p>根据我的经验，许多网站管理员/开发人员经常使用公司名称(客户的公司或承包商的公司)的变种密码，以及一些最后带有/没有特殊字符的数字。例如，如果承包商公司被称为“example” ，那么001Example、 Example001、00example、 example00等就是在客户网站登录面板上的测试密码。</p>
+<p>(请注意我们的下一篇文章，关于我们如何使用这种技术来侵入和访问客户端的服务器并在其上运行 shell 命令。)</p>
+<p>7.浏览公司的 领英 资料，找出高级经理、董事和非技术人员。很多时候，在许多公司里非技术人员经常使用弱密码。通过搜索公司网站上的“关于我们”页面也可以找到目标。</p>
+<p>通过对电子邮件的发现，可以推测出用户名的格式。一旦用户名格式被理解，一个电子邮件地址列表和等价的用户名可以被创建，然后可以用来执行其他攻击，包括暴力登录页面，甚至利用弱密码重置功能。(我们不止一次发现搜索电子邮件地址和可能的用户名是有用的，这导致了由于使用弱密码而导致的完整的应用程序和服务器损害。)</p>
+<p>8.执行 IP 地址相关检查。由于在同一 IP (共享主机)上的应用程序不同且较弱，因此应用程序经常会受到损害。使用反向 IP 查找，您可以识别其他目标来查找。Bing有一个很好的搜索使用 IP 功能。</p>
+<p><img src="/article/b0fb0256/1607411853407-78621c1c-f7b3-4ae1-97c9-f1e90264b11f.png" alt="1607411853407-78621c1c-f7b3-4ae1-97c9-f1e90264b11f"></p>
+<p>在<a href="http://www.yougetsignal.com/tools/web-sites-on-web-server/" target="_blank" rel="noopener">you get signal </a>和 <a href="http://www.ip-address.org/reverse-lookup/reverse-ip.php" target="_blank" rel="noopener">IP Address</a>也提供了一个反向查找工具。</p>
+<p><img src="/article/b0fb0256/1607411863250-13a4d33b-d3ec-4aa8-b432-88d8642bca1a.png" alt="1_kBxqbCyMWL7cEObyyky5OA.png"></p>
+<p>作为检查 IP 地址的一部分，还必须注意域名的 A和 PTR 记录。有时由于配置不当，当使用 PTR 或站点的A记录时，可以访问不同的站点。这些信息可以通过 nslookup 或 dig 命令获得</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dig -x 8.8.8.8</span><br><span class="line">nslookup 8.8.8.8</span><br></pre></td></tr></table></figure>
+<p>9.枚举子域以查找容易实现的目标和客户端托管基础设施的较弱的入口点。子域枚举很容易成为评估和发现客户在网上公开的资产的最重要步骤之一，无论是作为他们业务的一部分，还是由于错误配置而意外发现的。</p>
+<p>可以使用许多工具进行子域名枚举，比如 dnscrecon，subbrute，knock.py，还可以使用谷歌搜索语法，或者像 dnsdumpster，甚至 virustotal. com 这样的站点。这些工具中的大多数都使用一个包含常见描述性词汇的大字典，比如 admin、 pages、 people、 hr、 downloads、 blog、 dev、 staging 等等。这些单词被附加到 主域名后面ーexample. org，创建一个子域名列表，例如 admin.example.org、 pages.example.org、 people.example.org 等等。然后可以根据 DNS 服务器检查这些名称中的每一个，以验证条目是否存在。</p>
+<p><img src="/article/b0fb0256/1607411876920-079e6b6a-96b3-4a08-87b4-c59a979667ae.png" alt="1_xSFqM6qaDY6f5d5hddhALw.png"></p>
+<p>10.为不同类型的资源请求查找 HTTP 状态代码和响应头。对于有效的、不存在的、重定向的页面、目录名等等。注意响应标头中的细微错误、额外空格和冗余值。</p>
+<p><img src="/article/b0fb0256/1607411885516-66f239c1-520a-4b1a-b0fb-e3a40002a777.png" alt="1607411885516-66f239c1-520a-4b1a-b0fb-e3a40002a777"></p>
+<p>另外，注意 CSP 头。这些包含允许脚本加载的域名和源代码。有时候，在 CSP 头部列出的域名中的输入错误或者不安全的 JavaScript 托管 CDN 可能是您执行 XSS 有效负载的唯一方法:)</p>
+<p>11.通过 Shodan 和 Censys 搜索客户端的域名，查找文件、 IP 地址、公开的服务和错误消息。Shodan 和 censys 的工作人员煞费苦心地对互联网进行了端口扫描，列举了各种服务，并对他们的发现进行了分类，使其可以用简单的关键词进行搜索。这些服务可以用来发现大量有趣的东西，包括开放摄像头、思科设备、医院设施管理服务器、配置薄弱的 telnet 和 snmp 服务以及 SCADA 系统。Censys 过去曾被用于寻找有趣的端点，这些端点托管了完整应用程序的源代码和整个 docker 镜像。</p>
+<p><img src="/article/b0fb0256/1607411895436-ec53a530-7d2f-4e88-b210-60b3bb46bb4c.png" alt="1_FQOpNMfAb7A36nD0A72U_A.png"></p>
+<p>12.在诸如 github、 gitlab、 bitbucket 等代码托管服务上查找客户端。各种有趣的事情可以在代码托管在线通过搜索存储库，包括网络漏洞，web程序的0day，配置问题，AWS 和其他秘密密钥。</p>
+<p><strong>开发人员经常提交带有产品密码或 API 访问密钥的代码，只是为了后来意识到并删除敏感信息并进行额外的提交。但是，使用提交日志和检查特定的提交可以检索这些敏感的信息片段，然后可以使用这些信息对客户端托管的基础设施发起全面攻击。</strong></p>
+<p>像 Gitrob 这样的工具可以用来查询 Github，并从命令行本身搜索敏感文件，以查找特定的组织。</p>
+<p>13.浏览站点的 HTML 源代码，以确定客户端是否在云上托管任何静态内容。像图片、 js 和 css 文件这样的内容可能托管在客户端拥有的 s3 bucket 上。如果客户使用云下载静态/动态内容，也可以在进行检测时识别。在这种情况下，如果客户端在存储上配置了错误的权限，那么查找客户端使用的存储库确实是有益的。在面向公众的存储里可以找到大量有趣的信息。</p>
+<p>像 diginina 的 Bucket Finder 这样的工具可以通过强行命名 Bucket 来自动化搜索过程。这个工具需要一个精心组织的存储库名和潜在的完整 url 列表才能有效。</p>
+<p><img src="/article/b0fb0256/1607411913451-7a113753-bf9f-4bb7-9df0-94014d1c7000.png" alt="1607411913451-7a113753-bf9f-4bb7-9df0-94014d1c7000"></p>
+<p><img src="/article/b0fb0256/1607415507008-1d912040-59f6-4a5d-a075-eaebdd29455c.png" alt="1_I-UpzxJV6OgLbh4FGgopQg.png"></p>
+<p>开源网络情报本身就是一个不断发展和不断提高的研究领域。使用我上面列出的方法和其他技术，可以建立目标的档案，并发现一些弱点，有时甚至不需要从系统中发送一个数据包。</p>
+<p>原文：<a href="https://blog.appsecco.com/open-source-intelligence-gathering-101-d2861d4429e3" target="_blank" rel="noopener">https://blog.appsecco.com/open-source-intelligence-gathering-101-d2861d4429e3</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/b0fb0256.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/渗透测试/">
+              #渗透测试
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/信息收集/">
+              #信息收集
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/4824f591.html" target="_self">电子取证-Windows日志分析</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/b2bdbc0f.html" target="_self">[译]开源情报收集201</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

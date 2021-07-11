@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>电子取证-Windows取证基础 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="CTF,电子取证,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>电子取证-Windows取证基础</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-11-17
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>本文首发<a href="https://bbs.ichunqiu.com/thread-59102-1-1.html" target="_blank" rel="noopener">i春秋</a>，未经允许禁止转载</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>取证通常作为一个公司的事件响应调查人员或者司法调查的取证人员，通过调查被入侵的机器，将被入侵者的行为轨迹梳理出来，还原整个入侵的过程。对于入侵者而言，了解电子取证，可以更全面的了解到自己能够在系统中留下的痕迹，从而具有针对性的消除痕迹，而对于取证人员来说，电子取证无疑是了解整个入侵过程的关键。电子取证近年来也发展为了一个独立的学科，其中在安全竞赛中，电子取证也作为一部分考察内容，被纳入到杂项的大类中，也有只考察取证的竞赛。下面从技术层面介绍Windows取证的相关知识。</p>
+<h2 id="取证的分类"><a href="#取证的分类" class="headerlink" title="取证的分类"></a>取证的分类</h2><h3 id="活取证"><a href="#活取证" class="headerlink" title="活取证"></a>活取证</h3><ul>
+<li>抓取文件的metadata、创建是时间线、命令历史、分析日志文件、哈希摘要、转存内存信息</li>
+<li>使用未受感染的干净程序进行取证</li>
+<li>U盘、网络、存储设备收集到的数据</li>
+</ul>
+<h3 id="死取证"><a href="#死取证" class="headerlink" title="死取证"></a>死取证</h3><ul>
+<li>系统关机后制作硬盘镜像、分析镜像</li>
+</ul>
+<h2 id="获取内存工具"><a href="#获取内存工具" class="headerlink" title="获取内存工具"></a>获取内存工具</h2><p>在活取证中，可以使用内存dump工具，将被入侵的机器的内存保存下来，其中在Windows中经常使用的工具是Dumpit</p>
+<blockquote>
+<p>DumpIt 是一款绿色免安装的 windows 内存镜像取证工具。利用它我们可以轻松地将一个系统的完整内存镜像下来，并用于后续的调查取证工作</p>
+</blockquote>
+<ul>
+<li><a href="https://github.com/thimbleweed/All-In-USB/tree/master/utilities/DumpIt" target="_blank" rel="noopener">下载地址</a></li>
+</ul>
+<p><strong>在dump内存后，获取到的文件大小约等于主机内存的大小，所以在自己进行测试的时候，可以尽量把测试机的内存调小一点。</strong></p>
+<h2 id="Dump内存"><a href="#Dump内存" class="headerlink" title="Dump内存"></a>Dump内存</h2><p>这里使用上面说的Dumpit工具，下载之后放到虚拟机中，双击之后输入y，即可获取当前的状态的内存文件，保存后是一个raw格式的文件，这里我在测试机上dump了一下内存，获取到了一个文件，用于下面的示例讲解，大家可以根据下面的讲解自己创建镜像进行测试。</p>
+<h2 id="取证工具"><a href="#取证工具" class="headerlink" title="取证工具"></a><strong>取证工具</strong></h2><p>在取证工具中，比较有名的是<strong>Volatility</strong>，他是一个用于事件响应和恶意软件分析的开源内存取证框架。它是用Python编写的，支持Microsoft Windows，macOS和Linux，volatility框架是一个完全开放的工具集合，在GNU通用许可证下用Python实现，用于从易失性存储器（RAM）样本总提取数字镜像。提取技术完全独立于被取证的系统而执行，但可以查看到系统运行时的状态信息。该框架旨在向人们介绍从内存样本中提取的数字镜像相关的技术，并为进一步研究该领域提供一个平台，它可以分析 .raw、.vmem、.img后缀的文件</p>
+<h3 id="安装方法"><a href="#安装方法" class="headerlink" title="安装方法"></a>安装方法</h3><p>在windows中可以直接下载exe的程序，放入环境变量中使用，而linux下需要进行安装，这里介绍linux下的安装方法</p>
+<p>首先下载文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/volatilityfoundation/volatility.git</span><br></pre></td></tr></table></figure>
+<p>Volatility需要使用python2环境，所以需要保证使用的是python2</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd volatility</span><br><span class="line">python setup.py build</span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure>
+<p>安装完成后可以在volatility目录下执行 <code>python vol.py --info</code> 来测试是否安装成功可以将Volatilty的目录放入环境变量中，这样就可以在任意目录下执行 <code>vol.py</code> </p>
+<p><img src="/article/d2718b8/1604413243331-323721bc-bdcb-4e48-97d2-839ecb9b9595.png" alt="image.png"></p>
+<p>如果在运行中报错或者提示错误信息，可以根据提示下载相应的模块，例如下面几个</p>
+<p><strong>Distorm3:</strong>反编译库</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install distorm3</span><br></pre></td></tr></table></figure>
+<p><strong>Yara:</strong>恶意软件分类工具</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install yara</span><br></pre></td></tr></table></figure>
+<p><strong>PyCrypto:</strong>加密工具集</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install pycrypto</span><br></pre></td></tr></table></figure>
+<p><strong>PIL:</strong>图片处理库</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install pil</span><br></pre></td></tr></table></figure>
+<p><strong>OpenPyxl:</strong>读写excel文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install openpyxl</span><br></pre></td></tr></table></figure>
+<p><strong>ujson:</strong>JSON解析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install ujson</span><br></pre></td></tr></table></figure>
+<p>在进行安装时，部分模块可能会报错，这就需要到<a href="https://pypi.org/project/搜索相应版本的模块的源码，进行手动安装" target="_blank" rel="noopener">https://pypi.org/project/搜索相应版本的模块的源码，进行手动安装</a></p>
+<h3 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h3><p>Volatility命令的基本格式如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f [image] ‐-profile=[profile][plugin]</span><br></pre></td></tr></table></figure>
+<p>其中 <code>-f</code> 后面加的是要取证的文件， <code>--profile</code> 后加的是工具识别出的系统版本， <code>[plugin]</code> 是指使用的插件，其中默认存在一些插件，另外还可以自己下载一些插件扩充。</p>
+<p>可以使用 <code>-h</code> 参数获取使用方法和插件介绍，这里只列举几个常用到的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">imageinfo：显示目标镜像的摘要信息，这常常是第一步---获取内存的操作系统类型及版本，之后可以在 –profile 中带上对应的操作系统，后续操作都要带上这一参数</span><br><span class="line">pslist：该插件列举出系统进程，但它不能检测到隐藏或者解链的进程，psscan可以</span><br><span class="line">notepad：查看当前展示的 notepad 文本</span><br><span class="line">editbox：显示有关编辑控件的信息</span><br><span class="line">screenshot：保存基于GDI窗口的伪截屏</span><br><span class="line">psscan：可以找到先前已终止(不活动)的进程以及被rootkit隐藏或解链的进程</span><br><span class="line">pstree：以树的形式查看进程列表，和pslist一样，也无法检测隐藏或解链的进程</span><br><span class="line">memdump：提取出指定进程，常用foremost 来分离里面的文件(历年美亚杯有此题)</span><br><span class="line">filescan：扫描所有的文件列表</span><br><span class="line">hashdump：查看当前操作系统中的 password hash，例如 Windows 的 SAM 文件内容(实际中没有mimikatz效果好)</span><br><span class="line">svcscan：扫描 Windows 的服务</span><br><span class="line">connscan：查看网络连接</span><br><span class="line">cmdscan：可用于查看终端记录</span><br><span class="line">dlllist: 列出某一进程加载的所有dll文件</span><br><span class="line">dumpfiles：导出某一文件(指定虚拟地址)</span><br><span class="line">hivelist: 列出所有的注册表项及其虚拟地址和物理地址</span><br><span class="line">timeliner: 将所有操作系统事件以时间线的方式展开</span><br></pre></td></tr></table></figure>
+<h2 id="示例讲解"><a href="#示例讲解" class="headerlink" title="示例讲解"></a>示例讲解</h2><p>下面使用Volatility对前面获取的内存镜像进行分析</p>
+<p>首先获取镜像的摘要信息，一般这是进行镜像分析的第一步</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw imageinfo</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604413869649-1145ced0-ba43-4859-b98d-4996114656c0.png" alt="image.png"></p>
+<p>这其中比较有用的信息就是Suggested Profile(s) ，这个是工具识别的系统版本，存在多个的原因是这是根据一些特征识别的，所以可能有误报，就把各种结果按照可能性排列出来了，一般直接选择第一个，如果加载插件报错的话，可以尝试后面的。</p>
+<p>这里根据给出的结果选择第一个，然后使用 <code>pslist</code> 插件，看一下系统中运行的进程。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 pslist</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604414304320-56d25f71-1e4a-4e20-b650-6a89488ed61c.png" alt="image.png"></p>
+<p>图中标红的是几个需要注意的点，其中前两个说明系统运行着 <code>http</code> 和 <code>mysql</code> 服务，后面的 <code>notepad.exe</code> 是指正在运行一个记事本程序，而 <code>mspaint.exe</code> 是指是微软画图程序， <code>cmd.exe</code> 指正在运行命令行程序， <code>DumpIt.exe</code> 是之前说的用于获取内存镜像的工具。下面针对说到的几个进行进行分析。</p>
+<h3 id="获取记事本数据"><a href="#获取记事本数据" class="headerlink" title="获取记事本数据"></a>获取记事本数据</h3><p>在上面介绍插件的时候，其中有两个关于记事本的插件 <code>notepad</code> 、 <code>editbox</code> </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 notepad</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604415295693-e3381b79-af10-4666-bc48-aaca851e3a79.png" alt="image.png"></p>
+<p>显示该这个插件不支持这个系统，这时可以使用 <code>editbox</code> 查看</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 editbox</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604416779136-4229baff-288c-4f83-ad29-a63ff6e195d0.png" alt="image.png"></p>
+<p>可以看到这样就能查看到当前打开的记事本中的内容了</p>
+<h3 id="查看当前桌面截图"><a href="#查看当前桌面截图" class="headerlink" title="查看当前桌面截图"></a>查看当前桌面截图</h3><p>可以使用 <code>screenshot</code> 查看查看当前桌面的伪截图，其中会显示桌面上窗口的框，不会显示其中的内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 screenshot -D ./tmp</span><br></pre></td></tr></table></figure>
+<p>其中 <code>-D</code> 参数是导出的地址</p>
+<p><img src="/article/d2718b8/1604417148078-9bee63d1-f7da-4731-a0cb-df87dd5808be.png" alt="image.png"></p>
+<p>在保存下来的图片中可以看到有一张显示了当时桌面的状态</p>
+<p><img src="/article/d2718b8/1604417238429-89ec762f-ed56-4191-acf2-25e5697640c5.png" alt="session_1.WinSta0.Default.png"></p>
+<p>可以看到有一个DumpIt.exe 的窗口，还有另外两个窗口</p>
+<h3 id="查看画图图像"><a href="#查看画图图像" class="headerlink" title="查看画图图像"></a>查看画图图像</h3><p>在上面的进程中可以看到，存在一个 <code>mspaint.exe</code> 的进程，它是微软的画图软件，对于这样的情况，可以使用工具还原内存中的图片,来当时查看的图片或者当时状态的图片，是用的工具是<strong>gimp</strong>，可以在linux上安装使用。</p>
+<p>这里首先将 <code>mspaint.exe</code> 的进程内存dump出来，使用 <code>memdump</code> 插件，在之前列举进程的截图中，进程名字后面一行就是该进程的PID。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 memdump -p 1616 -D ./</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604419074409-46d69d38-88c4-4d95-a4cf-c18e0c291f05.png" alt="image.png"></p>
+<p>将获取到的1616.dmp文件改名为1616.data，然后在gime中点击显示全部文件，选择1616.data打开</p>
+<p><img src="/article/d2718b8/1604419198479-73fb5615-d677-45ec-8323-38f3edad3833.png" alt="image.png"></p>
+<p><strong>调节技巧</strong></p>
+<p>首先选择一个固定的宽度，这里选择1000，然后调节高度把屏幕铺满，然后再大幅度拖动Image下的Offset的滑块，当看到图片类似下图时停止，可以看到隐隐约约有一张图，但是有点重叠，这时，点击上下箭头缓慢调节Width，其中Heigth在调节中作用是不大的，主要是Width和Offset的调节决定是否能看到图片</p>
+<p><img src="/article/d2718b8/1604480129731-0b1f79e3-ecc1-4196-954b-3684ad2d7277.png" alt="image.png"></p>
+<p>当调节到一定程度后，可以看到大致恢复出了画图程序当时的图像，但是有点倾斜，如果更加细致的调节，是可以调正的，同样也可以找到彩色界面图片。</p>
+<p><img src="/article/d2718b8/1604479748304-8ca9d1b8-e9bb-4256-a898-1cce1d3019e9.png" alt="image.png"></p>
+<p>当参数调节为以下时，可以看到当时图片的彩色图片，这时仅仅是图片，没有画图程序的界面。</p>
+<p><img src="/article/d2718b8/1604478988748-10dc0baa-f63e-416d-befc-3b6f376d2dae.png" alt="image.png"></p>
+<p>在调节时，不仅仅只能看到画图程序的图片，如下图，就调出了另一个状态的一个系统图片</p>
+<p><img src="/article/d2718b8/1604479832348-2f527386-e66d-4564-b63b-e977fc9e16c5.png" alt="image.png"></p>
+<h3 id="获取系统中的用户以及密码"><a href="#获取系统中的用户以及密码" class="headerlink" title="获取系统中的用户以及密码"></a>获取系统中的用户以及密码</h3><blockquote>
+<p>Hash，一般翻译为”散列”，也有直接音译为”哈希”的，就是把任意长度的输入（又叫做预映射，pre-image），通过散列算法，变换成固定长度的输出，该输出就是散列值。这种转换是一种压缩映射，也就是散列值的空间通常远小于输入的空间，不同的输入可能会散列成相同的输出，而不可能从散列值来唯一的确定输入值。简单的说就是一种将任意长度的消息压缩到某一固定长度的消息摘要的函数。</p>
+</blockquote>
+<p>使用hashdump插件可以获取计算机内存中的用户hash</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 hashdump</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604482032253-fc1f7b00-8d93-42bf-bd03-2ff268b54889.png" alt="image.png"></p>
+<p>可以看到系统中存在六个账户，后面三个是隐藏账户，可能是入侵者创建的，下面介绍一下Windows下的Hash密码值的格式</p>
+<p>Windows系统下的hash密码格式为：用户名称:RID:LM-HASH值:NT-HASH值，例如：</p>
+<p>Administrator:500:C8825DB10F2590EAAAD3B435B51404EE:683020925C5D8569C23AA724774CE6CC:::表示</p>
+<p>用户名称为：Administrator</p>
+<p>RID为：500</p>
+<p>LM-HASH值为：C8825DB10F2590EAAAD3B435B51404EE</p>
+<p>NT-HASH值为：683020925C5D8569C23AA724774CE6CC</p>
+<p>所以可以将获取的hash值拿到<a href="https://www.cmd5.com/" target="_blank" rel="noopener">破解网站</a>获得明文，类型选择NTLM</p>
+<p><img src="/article/d2718b8/1604482184691-2c572dc1-788a-433c-9f33-e8d3e05112ff.png" alt="image.png"></p>
+<p>另外还可以从注册表中，获取系统中的用户，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 printkey -K &quot;SAM\Domains\Account\Users\Names&quot;</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604482722294-4e8f1c92-6696-4cb8-b6fe-27f0bd7d924d.png" alt="image.png"></p>
+<p>可以看到这里获取到的结果与使用hashdump获取的不同，通过hashdump可以看到系统中共存在三个隐藏账户，其中的W4$仅仅是通过添加了$来进行了隐藏，这时，通过net user命令是看不到此用户的，如下图所示</p>
+<p><img src="/article/d2718b8/1604483081496-f8bd2464-c873-4f6d-b7c6-92bb731e6ba6.png" alt="image.png"></p>
+<p>但是在注册表中，还存在该用户的信息，所以可以通过查看注册表的方式来找出该用户。</p>
+<p>而HomeGroupUser和hacker两个用户在添加了$符号的同时，还在注册表中删除了信息，所以通过注册表是无法获取到这两个用户的</p>
+<p><img src="/article/d2718b8/1604483569459-262e4847-388e-4ff3-b16e-62e4a5b31e86.png" alt="image.png"></p>
+<p>在NT/2000/XP下有一个叫<strong>HideAdmin</strong>的工具，可以自动创建隐藏的具有管理员权限的用户，创建后，通过<code>net user</code>命令和注册表都无法看到用户，甚至在计算机管理中，也无法看到隐藏用户，如下图</p>
+<p><img src="/article/d2718b8/1604483930696-538803e0-87bc-4654-95c1-f1174fcf046a.png" alt="image.png"></p>
+<h3 id="获取运行过的命令"><a href="#获取运行过的命令" class="headerlink" title="获取运行过的命令"></a>获取运行过的命令</h3><p>在上面查看进程时，可以看到存在一个cmd进程，那么可以使用cmdscan插件来查看运行过的命令，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 cmdscan</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604484194508-691d45e1-90f0-4220-b812-95862b9271f4.png" alt="image.png"></p>
+<p>可以看到执行了<code>whoami</code>、<code>ifconfig</code>、<code>ipconfig</code>这三个命令</p>
+<h3 id="查看系统中的文件"><a href="#查看系统中的文件" class="headerlink" title="查看系统中的文件"></a>查看系统中的文件</h3><p>通过filescan命令，可以扫描当前状态下的一些文件，例如桌面的文件，或者特定类型的文件，这些都是结合<code>grep</code>命令来实现的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 filescan | grep -E &quot;zip|txt|doc|pdf&quot;</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604484835158-37107ec5-5790-4574-b2b8-1be1b7a5155c.png" alt="image.png">查看桌面的文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vol.py -f TEST-PC.raw --profile=Win7SP1x64 filescan | grep  &quot;Desktop&quot;</span><br></pre></td></tr></table></figure>
+<p><img src="/article/d2718b8/1604485036228-41c9d5e5-0dfc-4cdc-b761-dbd93fc3caf4.png" alt="image.png"></p>
+<p>这里可以看到桌面有一个yep.txt的文件，下一步把他dump出来</p>
+<h3 id="dump扫描到的文件"><a href="#dump扫描到的文件" class="headerlink" title="dump扫描到的文件"></a>dump扫描到的文件</h3><p>在上一步中，发现了桌面的一个yep.txt，那么可以使用dumpfiles命令来将文件dump出来</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python vol.py -f TEST-PC.raw --profile=Win7SP1x64 dumpfiles -Q 0x000000003d87bf20 -D ./</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>-Q</code>  参数是前面扫描时候的第一个参数，标记了文件的转储的物理地址</p>
+<p><img src="/article/d2718b8/1604485273234-9d637ae5-4c06-4346-9b24-05647d4bbdf1.png" alt="image.png"></p>
+<p>dump 出的文件默认是dat后缀的，可以使用linux 下的 <code>file</code> 命令来查看获取的文件类型，或者是根据之前扫描文件获取到的文件名来修改后缀</p>
+<p><img src="/article/d2718b8/1604485413740-406110b2-9ce2-449d-bee5-7c7c4abe27b4.png" alt="image.png"></p>
+<p>修改后可以看到文件的内容</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本篇文章仅是简单介绍了一下电子取证以及Volatility的简单用法，实际电子取证还有很多内容，Volatility也有很多其他功能，想要详细了解还需要继续深入学习，并且多找机会练习，多积累经验，这样在拿到一个镜像后，才有分析的方向。在上面的示例讲解中，对使用Volatility取证的步骤做了简单的介绍，并对notepad、editbox、memdump、hashdump、printkey、filescan、dumpfiles、cmdscan插件的使用做了相关示例的讲解，另外介绍了gime的一个功能，在后面的文章中将会更深入介绍取证工具的使用和针对不同环境的取证方法。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://www.jianshu.com/p/5f13ee20f5b0" target="_blank" rel="noopener">https://www.jianshu.com/p/5f13ee20f5b0</a></p>
+<p><a href="https://www.w3xue.com/exp/article/20192/22237.html" target="_blank" rel="noopener">https://www.w3xue.com/exp/article/20192/22237.html</a></p>
+<p><a href="https://blog.51cto.com/13352079/2434792" target="_blank" rel="noopener">https://blog.51cto.com/13352079/2434792</a></p>
+<p><a href="https://github.com/volatilityfoundation/volatility/wiki/Command-Reference" target="_blank" rel="noopener">https://github.com/volatilityfoundation/volatility/wiki/Command-Reference</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/d2718b8.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/CTF/">
+              #CTF
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/电子取证/">
+              #电子取证
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/5d927c8d.html" target="_self">页面图片验证码测试思路</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/4824f591.html" target="_self">电子取证-Windows日志分析</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

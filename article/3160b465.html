@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>渗透环境搭建 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="环境搭建,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>渗透环境搭建</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-08
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="搭建DVWA漏洞环境"><a href="#搭建DVWA漏洞环境" class="headerlink" title="搭建DVWA漏洞环境"></a>搭建DVWA漏洞环境</h2><h3 id="DVWA介绍"><a href="#DVWA介绍" class="headerlink" title="DVWA介绍"></a>DVWA介绍</h3><p>DVWA是一款开源的渗透测试漏洞练习平台，其中内含XSS、SQL注入、文件上传漏洞、文件包含、CSRF和暴力破解等各个难度的测试环境。</p>
+<p>DVWA一共包含十个模块，每个模块的代码都有4种安全等级：Low、Medium、High、Impossible，下面是是个模块的内容</p>
+<p>1.Bruce Force //暴力破解</p>
+<p>2.Command Injection //命令注入</p>
+<p>3.CSRF //跨站请求伪造</p>
+<p>4.File Inclusion //文件包含</p>
+<p>5.File Upload //文件上传漏洞</p>
+<p>6.Insecure CAPTCHA //不安全的验证</p>
+<p>7.SQL Injection //sql注入</p>
+<p>8.SQL Injection（Blind） //sql注入（盲注）</p>
+<p>9.XSS（Reflected） //反射型XSS</p>
+<p>10.XSS（Stored） //存储型XSS</p>
+<h3 id="安装DVWA"><a href="#安装DVWA" class="headerlink" title="安装DVWA"></a>安装DVWA</h3><p><a href="https://github.com/ethicalhack3r/DVWA" target="_blank" rel="noopener">DVWA</a></p>
+<p>在github上下载DVWA项目，将它放到站点目录下，然后到<code>config</code>目录下修改<code>config.inc.php.dist</code>文件，将以下几处根据自己的情况做修改</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$_DVWA = <span class="keyword">array</span>();</span><br><span class="line">$_DVWA[ <span class="string">'db_server'</span> ]   = <span class="string">'127.0.0.1'</span>;</span><br><span class="line">$_DVWA[ <span class="string">'db_database'</span> ] = <span class="string">'dvwa'</span>;	<span class="comment">#数据库名称</span></span><br><span class="line">$_DVWA[ <span class="string">'db_user'</span> ]     = <span class="string">'root'</span>;	<span class="comment">#数据库用户名</span></span><br><span class="line">$_DVWA[ <span class="string">'db_password'</span> ] = <span class="string">'p@ssw0rd'</span>;<span class="comment">#数据库密码</span></span><br></pre></td></tr></table></figure>
+<p>修改完成后，<strong>将文件名后面的.dist去掉</strong>，然后进入通过浏览器进入<code>http://127.0.0.1/DVWA-master/setup.php</code>，单击<code>Create/Reset Database</code>按钮进行安装，安装后使用默认用户名密码<code>admin/password</code>即可进入</p>
+<h2 id="搭建sqli-labs注入平台"><a href="#搭建sqli-labs注入平台" class="headerlink" title="搭建sqli-labs注入平台"></a>搭建sqli-labs注入平台</h2><h3 id="sqli-labs介绍"><a href="#sqli-labs介绍" class="headerlink" title="sqli-labs介绍"></a>sqli-labs介绍</h3><p>sqli-labs是一款学SQL注入的开源平台，共有75种不同类型的注入</p>
+<ul>
+<li><a href="https://github.com/Audi-1/sqli-labs" target="_blank" rel="noopener">地址</a></li>
+</ul>
+<h3 id="安装sqli-labs"><a href="#安装sqli-labs" class="headerlink" title="安装sqli-labs"></a>安装sqli-labs</h3><p>在github上下载源码后，打开<code>sql-connections</code>文件夹中的<code>db-creds.inc</code>文件，在下面几处根据自己的情况做修改，</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="comment">//give your mysql connection username n password</span></span><br><span class="line">$dbuser =<span class="string">'root'</span>;	 <span class="comment">#数据库用户名	</span></span><br><span class="line">$dbpass =<span class="string">'11111'</span>;	 <span class="comment">#数据库密码</span></span><br><span class="line">$dbname =<span class="string">"security"</span>; <span class="comment">#数据库名称</span></span><br><span class="line">$host = <span class="string">'localhost'</span>; <span class="comment">#地址</span></span><br><span class="line">$dbname1 = <span class="string">"challenges"</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>然后在浏览器中打开<code>http://127.0.0.1/sqli-labs-master</code>，点击<code>Setup/reset Database for labs</code>进行安装。当页面出现数据库等创建成功的页面时，就表示安装成功了。</p>
+<h2 id="搭建XSS测试平台"><a href="#搭建XSS测试平台" class="headerlink" title="搭建XSS测试平台"></a>搭建XSS测试平台</h2><h3 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h3><p>XSS测试平台是测试XSS漏洞获取cookie并接收Web页面的平台，XSS可以做JS所有能做的事，包括但不仅限于窃取cookie、后台文章处理、钓鱼、网页重定向、获取用户信息等，下面使用的是xsser测试平台的源码。</p>
+<h3 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h3><p>下载源码后，将它解压到网站目录，打开<code>config.php</code>文件，修改如下部分的代码</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$config[<span class="string">'dbHost'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库地址</span></span><br><span class="line">$config[<span class="string">'dbUser'</span>]		= <span class="string">""</span>;				<span class="comment">//用户</span></span><br><span class="line">$config[<span class="string">'dbPwd'</span>]		= <span class="string">""</span>;				<span class="comment">//密码</span></span><br><span class="line">$config[<span class="string">'database'</span>]		= <span class="string">""</span>;			<span class="comment">//数据库名</span></span><br><span class="line">$config[<span class="string">'charset'</span>]		=<span class="string">'utf8'</span>;				<span class="comment">//数据库字符集</span></span><br><span class="line">$config[<span class="string">'tbPrefix'</span>]		=<span class="string">'oc_'</span>;					<span class="comment">//表名前缀</span></span><br><span class="line">$config[<span class="string">'dbType'</span>]		=<span class="string">'mysql'</span>;			<span class="comment">//数据库类型(目前只支持mysql)</span></span><br><span class="line"><span class="comment">/* 注册配置 */</span></span><br><span class="line">$config[<span class="string">'register'</span>]		=<span class="string">'normal'</span>;				<span class="comment">//normal,正常;invite,只允许邀请注册;close,关闭注册功能</span></span><br><span class="line">$config[<span class="string">'mailauth'</span>]		=<span class="keyword">false</span>;</span><br></pre></td></tr></table></figure>
+<p>首先在数据库中建立一个专门的库，这里以<code>xsser</code>举例，然后选中这个库，导入文件夹中的<code>xssplatform.sql</code>数据库文件，然后执行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">update</span> oc_module SETcode=<span class="keyword">REPLACE</span>(code,<span class="string">'http://xsser.me'</span>,<span class="string">'http://localhost/xsserme'</span>)</span><br></pre></td></tr></table></figure>
+<p>同时需要修改<code>authtest.php</code>中的网址改为自己的URL。</p>
+<p>接下来访问搭建XSS平台的URL,首先注册新用户，然后在oc_user表中修改注册用户的adminLevel为1，再将config.php注册配置中的normal改为invite。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/3160b465.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/环境搭建/">
+              #环境搭建
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/bf579251.html" target="_self">sqli-labs Less9-10 基于时间的盲注</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/936c561b.html" target="_self">SQLMap使用</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

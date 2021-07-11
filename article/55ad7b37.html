@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="utf-8">
+  
+  
+  
+  <title>在Windows10中安装Kali子系统 | W4rnIn9</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="环境搭建,">
+  
+
+
+  
+    <meta name="description" content="网络安全爱好者 CTFer">
+  
+
+  
+
+  
+    <link rel="icon" href="/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/images/touch-icon.png">
+  
+
+  <link href="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/icon/iconfont.css">
+<link rel="stylesheet" href="/css/github-markdown.css">
+<link rel="stylesheet" href="/css/highlight.css">
+
+  <script src="/js/util.js"></script>
+<script src="/js/valine.min.js"></script>
+
+  
+
+  
+    <link href="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/aplayer/1.10.1/APlayer.min.js" async></script>
+  
+
+  
+    <link href="https://cdn.bootcss.com/social-share.js/1.0.16/css/share.min.css" rel="stylesheet">
+  
+  
+  <script src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js" async></script>
+  
+  
+    <script src="//cdn.jsdelivr.net/npm/leancloud-storage@3.11.0/dist/av-min.js"></script>
+  
+
+</head>
+
+  <body>
+
+    
+
+    <div id="app">
+
+      <div class="header-wrap">
+  <header>
+    <div class="site-brand">
+      <div class="site-title">
+        <a href="/">JONER</a>
+      </div>
+    </div>
+    <nav class="site-navigation">
+      <ul class="nav-menu">
+      
+        <li class="nav-item" data-path="/">
+          
+            <a href="/" target="_self">
+              主页
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path="/archives/">
+          
+            <a href="/archives/" target="_self">
+              归档
+            </a>
+          
+        </li>
+      
+        <li class="nav-item" data-path>
+          
+            <a href="javascript:void(0);" v-else>我</a>
+            <ul class="nav-menu--dropdown">
+              
+                <li>
+                  <a href="https://github.com/joner11234" target="_blank">
+                    Github
+                  </a>
+                </li>
+              
+            </ul>
+          
+        </li>
+      
+      </ul>
+    </nav>
+    <i class="iconfont icon-menu"></i>
+  </header>
+</div>
+
+<script>
+  let links = document.querySelectorAll('.nav-item');
+  for(let link of links){
+    let childrenLink = link.querySelector('ul');
+    link.addEventListener('mouseenter', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown active";
+      }
+    })
+    link.addEventListener('mouseleave', () => {
+      if(childrenLink) {
+        childrenLink.className = "nav-menu--dropdown";
+      }
+    })
+  }
+  let rootRealPath = getRealPath(window.location.pathname, true);
+  for(let link of links) {
+    let linkPath = link.getAttribute("data-path");
+    if(linkPath && getRealPath(linkPath, true) === rootRealPath) {
+      link.className = "nav-item hover";
+    }
+  }
+
+  let iconMenu = document.querySelector("i.iconfont.icon-menu"),
+    iconMenuClicked = false;
+  let navDOM = document.querySelector("nav.site-navigation");
+  iconMenu.addEventListener("click", () => {
+    iconMenuClicked 
+      ? navDOM.className = "site-navigation active"
+      : navDOM.className = "site-navigation";
+    iconMenuClicked = !iconMenuClicked;
+  })
+</script>
+
+      
+
+
+
+
+
+
+
+
+<div class="container post-index">
+
+  
+
+<div class="post">
+  <h1 class="article-title">
+    <span>在Windows10中安装Kali子系统</span>
+  </h1>
+  <div class="article-top-meta">
+    <span>
+      发布 : 
+      2019-11-28
+    </span>
+    
+    
+  </div>
+
+  
+
+  <div class="article-content">
+    <div class="markdown-body">
+      <h2 id="什么是WSL"><a href="#什么是WSL" class="headerlink" title="什么是WSL"></a>什么是WSL</h2><blockquote>
+<p>WSL - Windows Subsystem for LinuxThe Windows Subsystem for Linux lets developers run Linux environments – including most command-line tools, utilities, and applications – directly on Windows, unmodified, without the overhead of a virtual machine.</p>
+</blockquote>
+<h2 id="开启子系统功能"><a href="#开启子系统功能" class="headerlink" title="开启子系统功能"></a>开启子系统功能</h2><p>首先在开发者选项中选择开发人员模式<br><img src="/article/55ad7b37/345-43-51.png" alt><br>打开控制面板-&gt;程序-&gt;程序和功能-&gt;启用或关闭Windows功能，将适用于Linux的Windows子系统前面的对号点上，等待后重启计算机。<br><img src="/article/55ad7b37/019-47-18.png" alt></p>
+<h2 id="安装kali子系统"><a href="#安装kali子系统" class="headerlink" title="安装kali子系统"></a>安装kali子系统</h2><p>进入微软的应用商店，搜索Kali,点击获取，安装后启动，首先会提示你设置用户名和密码，设置后就进入到系统了。<br><img src="/article/55ad7b37/012-02-27.png" alt><br><strong>注意子系统是默认安装在系统盘的，也能安装到非系统盘，需要手动部署WSL，具体可以百度一下。</strong></p>
+<h2 id="Kali的基本配置"><a href="#Kali的基本配置" class="headerlink" title="Kali的基本配置"></a>Kali的基本配置</h2><h3 id="更换源"><a href="#更换源" class="headerlink" title="更换源"></a>更换源</h3><p>首先修改kali的源，将源改为国内的<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vi /etc/apt/sources.list</span><br></pre></td></tr></table></figure></p>
+<p>将下面的内容复制到文件中<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">中科大</span></span><br><span class="line">deb http://mirrors.ustc.edu.cn/kali kali-rolling main non-free contrib</span><br><span class="line">deb-src http://mirrors.ustc.edu.cn/kali kali-rolling main non-free contrib</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">阿里云</span></span><br><span class="line">deb http://mirrors.aliyun.com/kali kali-rolling main non-free contrib</span><br><span class="line">deb-src http://mirrors.aliyun.com/kali kali-rolling main non-free contrib</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">清华大学</span></span><br><span class="line">deb http://mirrors.tuna.tsinghua.edu.cn/kali kali-rolling main contrib non-free</span><br><span class="line">deb-src https://mirrors.tuna.tsinghua.edu.cn/kali kali-rolling main contrib non-free</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">浙大</span></span><br><span class="line">deb http://mirrors.zju.edu.cn/kali kali-rolling main contrib non-free</span><br><span class="line">deb-src http://mirrors.zju.edu.cn/kali kali-rolling main contrib non-free</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash">官方源</span></span><br><span class="line">deb http://http.kali.org/kali kali-rolling main non-free contrib</span><br><span class="line">deb-src http://http.kali.org/kali kali-rolling main non-free contrib</span><br></pre></td></tr></table></figure></p>
+<p>保存后执行命令<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get update &amp; sudo apt-get upgrade &amp; sudo apt-get &amp; sudo dist-upgrade &amp; sudo apt-get clean</span><br></pre></td></tr></table></figure></p>
+<h3 id="设置中文字体"><a href="#设置中文字体" class="headerlink" title="设置中文字体"></a>设置中文字体</h3><p>安装中文字体<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install ttf-wqy-zenhei</span><br></pre></td></tr></table></figure></p>
+<p>文本设置字体<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install locales</span><br><span class="line">sudo dpkg-reconfigure locales</span><br></pre></td></tr></table></figure></p>
+<p>文本将需要的字体打勾，<br>需要设置这三个字体：<code>en_US.UTF-8</code>、<code>zh_CN.GBK</code>、<code>zh_CN.UTF-8</code>(空格为选中，选择好后TAB键可切换到ok按钮，回车进入下一步)<br>选择默认字体按下键选择<code>zh_CN.UTF-8</code>为默认字体，<code>TAB</code>切换<code>OK</code><br>重启生效</p>
+<h2 id="安装图形界面"><a href="#安装图形界面" class="headerlink" title="安装图形界面"></a>安装图形界面</h2><p>依次运行下面的命令<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install xfce4</span><br><span class="line">sudo /etc/init.d/xrdp start  #启动桌面程序</span><br><span class="line"></span><br><span class="line">sudo apt-get install kali-defaults kali-root-login desktop-base xfce4 xfce4-places-plugin xfce4-goodies</span><br></pre></td></tr></table></figure></p>
+<p>xrdp默认监听的是3389端口，启动xrdp后，剩下要做的就是连接到Kali。机器在localhost上运行，如果使用默认端口会和windows上的监听端口冲突，所以需要修改一下xrdp的监听端口<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vi /etc/xrdp/xrdp.ini</span><br></pre></td></tr></table></figure></p>
+<p><img src="/article/55ad7b37/710-25-31.png" alt></p>
+<p>打开后修改端口，这里改成了3399端口，之后应用修改</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo echo xfce4-session &gt; ~/.xsession</span><br><span class="line">sudo /etc/init.d/xrdp restart</span><br></pre></td></tr></table></figure>
+<p>这里使用Windows附带的远程桌面连接程序</p>
+<p><img src="/article/55ad7b37/335-39-55.png" alt> </p>
+<p>连接后输入设置的用户名密码，进入桌面</p>
+<p><img src="/article/55ad7b37/090-14-06.png" alt></p>
+<h2 id="升级完整版"><a href="#升级完整版" class="headerlink" title="升级完整版"></a>升级完整版</h2><p>打开linux终端，输入下面的命令升级完整版，经过<strong>很长时间</strong>后，即可升级为完整版。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install kali-liunx-full</span><br></pre></td></tr></table></figure></p>
+<p><img src="/article/55ad7b37/256-00-45.png" alt></p>
+<p>注意：</p>
+<p>目前在2019.3版本以后的，元数据包得到了大量的改变，例如：</p>
+<blockquote>
+<p>kali-linux-default 现在是默认的kali linux元数据包</p>
+<p>kali-linux-full 变为 kali-linux-large</p>
+<p><strong>kali-linux-all</strong> 变为 <strong>kali-linux-everything</strong></p>
+<p>kali-linux-top10 变为 kali-tools-top10</p>
+</blockquote>
+<p>但是升级完整版后有一个问题，在桌面系统上并没有像原生kali系统一样分类列出各种工具，而且一些工具使用会出现错误。但是轻度使用的话，这些东西没有很大的影响。</p>
+<h2 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h2><h3 id="打开系统"><a href="#打开系统" class="headerlink" title="打开系统"></a>打开系统</h3><p>打开Linux子系统可以点击图标打开、但是这样的中终端有点丑<br>或者在cmd上输入<code>bash</code>，即可进入Linux系统，这里我使用的Terminal是美化了的。想要美化的可以百度一下相关的教程。</p>
+<h3 id="系统重启"><a href="#系统重启" class="headerlink" title="系统重启"></a>系统重启</h3><p>使用子系统执行<code>reboot</code>命令不会重启，需要直接开关相应的服务或者使用命令行重启，使用管理员权限打开cmd(不是linux的终端),之后输入下面两个命令进行重启。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">net stop LxssManager        #关闭服务</span><br><span class="line">net start LxssManager       #开启服务</span><br></pre></td></tr></table></figure></p>
+<h3 id="访问Windows文件"><a href="#访问Windows文件" class="headerlink" title="访问Windows文件"></a>访问Windows文件</h3><p>Kali系统的目录位置是<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C:\Users\用户名\AppData\Local\Packages\KaliLinux.54290C8133FEE_ey8k8hqnwqnmg\LocalState\rootfs</span><br></pre></td></tr></table></figure></p>
+<p>WSL中访问本地文件在“/mnt”目录下有“c”、“d”、“e”等文件夹，分别表示本地的C盘、D盘、E盘，直接cd到相应路径下即可。</p>
+<p><img src="/article/55ad7b37/219-19-40.png" alt></p>
+<h3 id="快速开启子系统"><a href="#快速开启子系统" class="headerlink" title="快速开启子系统"></a>快速开启子系统</h3><p>只需要在任意位置打开cmd窗口，输入<code>bash</code>，即可快速进入kali系统，且路径为当前路径。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><p><a href="https://eecs.blog/wsl-gui-installation-for-kali-linux/" target="_blank" rel="noopener">https://eecs.blog/wsl-gui-installation-for-kali-linux/</a></p>
+<p><a href="https://zhuanlan.zhihu.com/p/36482795" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/36482795</a></p>
+<p><a href="https://www.hantao.org/share/1349.html" target="_blank" rel="noopener">https://www.hantao.org/share/1349.html</a></p>
+    </div>
+  </div>
+  
+    <div class="copy-right">
+      <div class="markdown-body">
+        <blockquote>
+        
+        
+          本文作者 : JONER <br>
+        
+        原文链接 : <a href>http://joner11234.github.io/article/55ad7b37.html</a><br>
+        版权声明 : 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议。转载请注明出处！
+        </blockquote>
+      </div>
+    </div>
+  
+  
+  
+    <div class="social-share" style="margin-top: -2rem" data-wechat-qrcode-title="<p>微信扫一扫</p>" data-wechat-qrcode-helper="<p>微信右上角, 扫一扫分享</p>" data-sites="qzone, qq, weibo, wechat, douban, google, facebook, twitter">
+  <span style="color: #6b7487; font-size: 1.4rem;">分享到: </span>
+</div>
+<script src="https://cdn.bootcss.com/social-share.js/1.0.16/js/social-share.min.js" async></script>
+  
+
+  
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+      <span>
+        
+          <i class="iconfont icon-06tags"></i>标签: 
+          
+          <span class="span--tag">
+            <a href="/tags/环境搭建/">
+              #环境搭建
+            </a>
+          </span>
+          
+        
+      </span>
+    </div>
+    <div class="article-meta pull-right">
+    </div>
+  </div>
+</div>
+
+
+  <aside id="sidebar">
+    <p id="sidebar-header"></p>
+    <ol id="sidebar-toc"></ol>
+  </aside>
+  <script async>setTimeout(generateToc, 10);</script>
+
+
+  <nav class="post-navigation">
+    
+      <div class="nav-pre">
+        <i class="iconfont icon-prev"></i>
+        上一篇:
+        <a href="/article/85357d8d.html" target="_self">NTFS交换数据流隐写</a>
+      </div>
+    
+    
+      <div class="nav-next">
+        下一篇:
+        <a href="/article/6fb83261.html" target="_self">i春秋CTF答题夺旗赛第三季-Web部分Writeup</a>
+        <i class="iconfont icon-next"></i>
+      </div>
+    
+  </nav>
+
+  
+    <a href="#comment" class="comment-anchor"></a>
+<div class="comment-title"><i class="iconfont icon-footprint"></i> 留下足迹 <i class="iconfont icon-footprint"></i></div>
+<div id="vcomments"></div>
+
+<script defer>
+  if( true ) {
+    let path = getRealPath()
+    new Valine({
+      el: "#vcomments",
+      appId: "1NXTyN2WX8S3WVndpU432Q6j-gzGzoHsz",
+      appKey: "qKRwkiwKUs1Q6PynhoYXoF4t",
+      notify: false,
+      verify: false,
+      avatar: "robohash",
+      placeholder: "正确填写邮箱, 才能及时收到回复哦♪(^∇^*)",
+      path
+    });
+  }
+</script>
+   
+
+   
+
+</div>
+
+
+      <footer>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+  <p class="site-info">
+    博客已运行<span id="time-to-now"></span><span class="my-face">👦</span>
+    <br>
+    
+  </p>
+  <span id="busuanzi_container_site_pv">
+    本站总访问量<span id="busuanzi_value_site_pv"></span>次
+</span>
+</footer>
+
+
+
+<script>
+const timeToNowDOM = document.querySelector("#time-to-now");
+const startTimestamp = new Date(2019, 3, 2).getTime();
+
+const updateTimeStr = () => {
+  let offset = parseInt(
+      (new Date().getTime() - startTimestamp) / 1000,
+      10
+    ),
+    day = Math.floor(offset / 86400),
+    hour = Math.floor((offset % 86400) / 3600),
+    minute = Math.floor(((offset % 86400) % 3600) / 60),
+    second = Math.floor(((offset % 86400) % 3600) % 60);
+  timeToNowDOM.innerHTML =
+    day + "天" + hour + "小时" + minute + "分钟" + second + "秒";
+  setTimeout(updateTimeStr, 500);
+}
+
+setTimeout(updateTimeStr, 500);
+</script>
+
+
+      <div class="back-to-top hidden">
+  <span>
+    <i class="iconfont icon-60"></i><span></span>%
+  </span>
+</div>
+
+<script>
+const updateIconToTop = percent => {
+  let dom = document.querySelector(".back-to-top span span");
+  dom.innerText = percent;
+  if(percent < 1) {
+    document.querySelector(".back-to-top").className = "back-to-top hidden";
+  } else {
+    document.querySelector(".back-to-top").className = "back-to-top";
+  }
+}
+
+const handleScoll = () => {
+  let isRunning = false;
+  return () => {
+    if (isRunning) return;
+    isRunning = true;
+    window.requestAnimationFrame(timestamp => {
+      let scrollTop =
+          document.documentElement.scrollTop || document.body.scrollTop,
+        scrollHeight =
+          document.documentElement.scrollHeight ||
+          document.body.scrollHeight,
+        clientHeight =
+          document.documentElement.clientHeight ||
+          document.body.clientHeight;
+      isRunning = false;
+      if (scrollTop <= 1) {
+        updateIconToTop(0);
+        return;
+      }
+      if (scrollTop + clientHeight >= scrollHeight) {
+        updateIconToTop(100);
+      } else {
+        updateIconToTop(parseInt(
+          100 * scrollTop / (scrollHeight - clientHeight),
+          10
+        ));
+      }
+    });
+  };
+}
+
+const backToTop = () => {
+  let scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop,
+    delay = 10,
+    time = 200;
+  if (scrollTop <= 20) {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    return;
+  }
+  let step = Math.ceil(scrollTop * delay / time);
+  let timer = setInterval(() => {
+    scrollTop =
+      document.documentElement.scrollTop || document.body.scrollTop;
+    if (scrollTop - step <= 0) {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      clearInterval(timer);
+    } else {
+      document.documentElement.scrollTop = scrollTop - step;
+      document.body.scrollTop = scrollTop - step;
+    }
+  }, delay);
+}
+
+document.addEventListener("scroll", handleScoll(), false);
+
+document.querySelector(".back-to-top").addEventListener("click", backToTop, false);
+
+</script>
+
+    </div>
+
+    
+      <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML" async></script>
+<script>
+  (() => {
+    const mathjaxConfig = {
+      showProcessingMessages: false, //关闭js加载过程信息
+      messageStyle: "none", //不显示信息
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]], //行内公式选择符
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]], //段内公式选择符
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"] //避开某些标签
+      },
+      "HTML-CSS": {
+        availableFonts: ["STIX", "TeX"], //可选字体
+        showMathMenu: false //关闭右击菜单显示
+      }
+    }
+
+    let mathjaxInterval = setInterval(() => {
+      if(!window.MathJax){
+        return;
+      }
+      window.MathJax.Hub.Config(mathjaxConfig)
+      window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')])
+
+      clearInterval(mathjaxInterval)
+    }, 10)    
+  })()
+</script>
+    
+
+    <script src="https://cdn.bootcss.com/fancybox/3.5.2/jquery.fancybox.min.js" async></script>
+<script async>
+  let fancyTimer = setInterval(function(){
+    if(!window.$){
+      return;
+    }
+    $(document).ready(function() {
+      $(".post img").each(function () {
+        if($(this).parent().get(0).tagName.toLowerCase() === "a") {
+          return;
+        }
+        // $(this).attr("data-fancybox", "gallery"); // if you add 'data-fancybox', img will display after showed
+        var element = document.createElement("a");
+        $(element).attr("data-fancybox", "gallery");
+        $(element).attr("href", $(this).attr("src"));
+        $(this).wrap(element);
+      });
+      
+      clearInterval(fancyTimer);
+    });
+  }, 10);
+</script>
+
+    
+  </body>
+
+</html>
